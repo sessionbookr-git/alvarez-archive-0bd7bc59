@@ -1,7 +1,12 @@
 import { Link } from "react-router-dom";
+import { LogOut } from "lucide-react";
 import alvarezLogo from "@/assets/alvarez-logo.png";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 const Header = () => {
+  const { user, signOut } = useAuth();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container-wide flex h-20 items-center justify-between">
@@ -41,6 +46,17 @@ const Header = () => {
           >
             Submit
           </Link>
+          {user && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={signOut}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          )}
         </nav>
       </div>
     </header>
