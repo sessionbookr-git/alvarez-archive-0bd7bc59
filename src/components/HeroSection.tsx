@@ -11,7 +11,7 @@ const HeroSection = () => {
           <img 
             src={alvarezGoldLogo} 
             alt="Alvarez Guitars" 
-            className="h-24 md:h-32 lg:h-40 w-auto mb-8 opacity-0 animate-fade-in"
+            className="w-[400px] h-auto mb-8 opacity-0 animate-fade-in"
           />
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-6 leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "50ms" }}>
             Identify Your Guitar
