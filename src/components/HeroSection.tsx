@@ -3,18 +3,14 @@ import yairiHero from "@/assets/yairi-hero.png";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-[70vh] flex items-center overflow-hidden">
-      {/* Guitar Image - rotated 90 degrees, full width background */}
+    <section className="relative min-h-[70vh] flex items-center overflow-hidden bg-background">
+      {/* Guitar Image - rotated 90 degrees, flipped so body is on left, full width */}
       <div className="absolute inset-0">
         <img
           src={yairiHero}
           alt="Alvarez Yairi DYM70 Sunburst acoustic guitar"
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-90 h-auto w-[140%] max-w-none object-contain opacity-40"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-90 h-auto w-[140%] max-w-none object-contain"
         />
-        {/* Fade overlay from left for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/70" />
-        {/* Additional top/bottom fade */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/50" />
       </div>
 
       {/* Content */}
