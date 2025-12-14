@@ -29,8 +29,7 @@ const HeroSection = () => {
           </div>
         </div>
 
-        {/* Right: Hero guitar image */}
-        <div className="w-full md:w-1/2 lg:w-[55%] mt-10 md:mt-0 relative flex justify-center md:justify-end">
+        <div className="w-full md:w-1/2 lg:w-[55%] mt-10 md:-mt-16 lg:-mt-24 relative flex justify-center md:justify-end">
           <div className="relative w-full max-w-xl md:max-w-2xl">
             {/* Soft circle glow behind guitar */}
             <div className="absolute inset-0 rounded-full bg-warm/60 blur-3xl translate-x-10 md:translate-x-16 translate-y-6" />
