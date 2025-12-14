@@ -366,7 +366,7 @@ const FeatureCard = ({ feature, onEdit, onDelete }: FeatureCardProps) => (
           <CardTitle className="text-base">{feature.feature_name}</CardTitle>
           <p className="text-sm text-muted-foreground">
             {feature.feature_value && `${feature.feature_value} • `}
-            {feature.era_start && feature.era_end && `${feature.era_start}-${feature.era_end}`}
+            {feature.era_start && `${feature.era_start}-${feature.era_end || 'present'}`}
           </p>
         </div>
         <div className="flex gap-1">
