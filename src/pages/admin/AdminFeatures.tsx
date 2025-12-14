@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ArrowLeft, Image } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowLeft, Image, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -176,6 +176,11 @@ const AdminFeatures = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Button variant="outline" asChild>
+              <Link to="/admin/import?type=features">
+                <Upload className="h-4 w-4 mr-2" /> Bulk Import
+              </Link>
+            </Button>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => { setEditingId(null); setForm(emptyForm); }}>

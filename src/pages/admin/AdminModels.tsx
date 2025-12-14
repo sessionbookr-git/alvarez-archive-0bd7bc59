@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ArrowLeft, Layers } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowLeft, Layers, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -136,12 +136,18 @@ const AdminModels = () => {
               <p className="text-muted-foreground">Add and manage guitar models</p>
             </div>
           </div>
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => { setEditingId(null); setForm(emptyForm); }}>
-                <Plus className="h-4 w-4 mr-2" /> Add Model
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/admin/import?type=models">
+                <Upload className="h-4 w-4 mr-2" /> Bulk Import
+              </Link>
+            </Button>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => { setEditingId(null); setForm(emptyForm); }}>
+                  <Plus className="h-4 w-4 mr-2" /> Add Model
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>{editingId ? "Edit Model" : "Add New Model"}</DialogTitle>
@@ -238,6 +244,7 @@ const AdminModels = () => {
               </form>
             </DialogContent>
           </Dialog>
+        </div>
         </div>
 
         {isLoading ? (

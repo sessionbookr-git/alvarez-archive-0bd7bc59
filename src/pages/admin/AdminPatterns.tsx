@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ArrowLeft, TestTube } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowLeft, TestTube, Upload } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -183,12 +183,18 @@ const AdminPatterns = () => {
               <p className="text-muted-foreground">Define serial number patterns for dating guitars</p>
             </div>
           </div>
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => { setEditingId(null); setForm(emptyForm); }}>
-                <Plus className="h-4 w-4 mr-2" /> Add Pattern
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/admin/import?type=patterns">
+                <Upload className="h-4 w-4 mr-2" /> Bulk Import
+              </Link>
+            </Button>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => { setEditingId(null); setForm(emptyForm); }}>
+                  <Plus className="h-4 w-4 mr-2" /> Add Pattern
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editingId ? "Edit Pattern" : "Add New Pattern"}</DialogTitle>
@@ -279,6 +285,7 @@ const AdminPatterns = () => {
               </form>
             </DialogContent>
           </Dialog>
+        </div>
         </div>
 
         {/* Pattern Tester */}
