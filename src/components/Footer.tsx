@@ -53,8 +53,8 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/timeline" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  History Timeline
+                <Link to="/my-submissions" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  My Submissions
                 </Link>
               </li>
               <li>
@@ -66,7 +66,16 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-border">
+        <div className="mt-8 pt-6 border-t border-border flex flex-wrap justify-center gap-6">
+          <Link to="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            Terms of Service
+          </Link>
+          <Link to="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            Privacy Policy
+          </Link>
+        </div>
+
+        <div className="mt-6">
           <p className="text-xs text-muted-foreground text-center">
             © {new Date().getFullYear()} Alvarez Legacy Archive. Not affiliated with Alvarez Guitars or St. Louis Music.
           </p>
