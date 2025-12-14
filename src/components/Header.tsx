@@ -4,12 +4,12 @@ import alvarezLogo from "@/assets/alvarez-logo.png";
 const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container-wide flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-3">
+      <div className="container-wide flex h-20 items-center justify-between">
+        <Link to="/" className="flex items-center gap-4">
           <img 
             src={alvarezLogo} 
             alt="Alvarez Guitars" 
-            className="h-8 w-auto"
+            className="h-12 w-auto"
           />
           <span className="hidden sm:inline-block text-sm font-medium text-muted-foreground">
             Legacy Archive
