@@ -1,5 +1,6 @@
 import SerialSearch from "@/components/SerialSearch";
 import yairiHero from "@/assets/yairi-hero.png";
+import alvarezLogo from "@/assets/alvarez-logo.png";
 
 const HeroSection = () => {
   return (
@@ -7,8 +8,13 @@ const HeroSection = () => {
       <div className="container-wide relative flex flex-col md:flex-row items-center min-h-[70vh] py-14 md:py-20">
         {/* Left: Text + search */}
         <div className="w-full md:w-1/2 lg:w-[45%] md:pr-10 lg:pr-16 py-6">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold mb-6 leading-tight opacity-0 animate-fade-in">
-            Identify Your Alvarez Guitar
+          <img 
+            src={alvarezLogo} 
+            alt="Alvarez Guitars" 
+            className="h-24 md:h-32 lg:h-40 w-auto mb-8 opacity-0 animate-fade-in"
+          />
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-6 leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "50ms" }}>
+            Identify Your Guitar
           </h1>
           <p
             className="text-lg text-muted-foreground mb-10 max-w-xl opacity-0 animate-fade-in"
