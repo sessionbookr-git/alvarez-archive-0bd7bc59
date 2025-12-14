@@ -35,16 +35,17 @@ const emptyForm: FeatureForm = {
 };
 
 const categories = [
-  "Tuners",
-  "Bridge",
-  "Label",
-  "Truss Rod",
-  "Headstock",
-  "Binding",
-  "Inlay",
-  "Rosette",
-  "Bracing",
-  "Other",
+  { value: "tuner", label: "Tuner" },
+  { value: "bridge", label: "Bridge" },
+  { value: "label", label: "Label" },
+  { value: "truss_rod", label: "Truss Rod" },
+  { value: "body_shape", label: "Body Shape" },
+  { value: "headstock", label: "Headstock" },
+  { value: "binding", label: "Binding" },
+  { value: "inlay", label: "Inlay" },
+  { value: "rosette", label: "Rosette" },
+  { value: "bracing", label: "Bracing" },
+  { value: "other", label: "Other" },
 ];
 
 const AdminFeatures = () => {
@@ -172,7 +173,7 @@ const AdminFeatures = () => {
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -204,7 +205,7 @@ const AdminFeatures = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
