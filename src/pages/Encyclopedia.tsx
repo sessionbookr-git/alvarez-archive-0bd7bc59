@@ -2,25 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useModels } from "@/hooks/useModels";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Filter } from "lucide-react";
-
-// Sample model data
-const allModels = [
-  { id: "5014", name: "5014 Dreadnought", years: "1974-1982", country: "Japan", series: "5000 Series", decade: "1970s", examples: 47 },
-  { id: "5024", name: "5024 Folk", years: "1975-1983", country: "Japan", series: "5000 Series", decade: "1970s", examples: 32 },
-  { id: "5054", name: "5054 Jumbo", years: "1976-1984", country: "Japan", series: "5000 Series", decade: "1970s", examples: 28 },
-  { id: "5068", name: "5068 12-String", years: "1977-1986", country: "Japan", series: "5000 Series", decade: "1970s", examples: 19 },
-  { id: "dy-77", name: "DY-77 Artist", years: "1978-1985", country: "Japan", series: "Artist Series", decade: "1970s", examples: 41 },
-  { id: "dy-91", name: "DY-91 Artist", years: "1980-1988", country: "Japan", series: "Artist Series", decade: "1980s", examples: 35 },
-  { id: "rd-8", name: "RD-8 Regent", years: "1985-1995", country: "Korea", series: "Regent Series", decade: "1980s", examples: 56 },
-  { id: "rd-10", name: "RD-10 Regent", years: "1985-1995", country: "Korea", series: "Regent Series", decade: "1980s", examples: 44 },
-  { id: "ad-60", name: "AD-60 Artist", years: "1990-2000", country: "Korea", series: "Artist Series", decade: "1990s", examples: 38 },
-  { id: "md-80", name: "MD-80 Masterworks", years: "1995-2005", country: "Japan", series: "Masterworks", decade: "1990s", examples: 22 },
-  { id: "af-60", name: "AF-60 Folk", years: "1998-2008", country: "China", series: "AF Series", decade: "1990s", examples: 61 },
-  { id: "ad-90", name: "AD-90 Artist", years: "2000-2010", country: "China", series: "Artist Series", decade: "2000s", examples: 73 },
-];
+import { Search, Loader2 } from "lucide-react";
 
 const decades = ["All", "1970s", "1980s", "1990s", "2000s"];
 const countries = ["All", "Japan", "Korea", "China"];
@@ -30,12 +15,10 @@ const Encyclopedia = () => {
   const [selectedDecade, setSelectedDecade] = useState("All");
   const [selectedCountry, setSelectedCountry] = useState("All");
 
-  const filteredModels = allModels.filter((model) => {
-    const matchesSearch = model.name.toLowerCase().includes(search.toLowerCase()) ||
-      model.series.toLowerCase().includes(search.toLowerCase());
-    const matchesDecade = selectedDecade === "All" || model.decade === selectedDecade;
-    const matchesCountry = selectedCountry === "All" || model.country === selectedCountry;
-    return matchesSearch && matchesDecade && matchesCountry;
+  const { data: models, isLoading, error } = useModels({
+    decade: selectedDecade,
+    country: selectedCountry,
+    search: search,
   });
 
   return (
@@ -49,7 +32,7 @@ const Encyclopedia = () => {
               Model Encyclopedia
             </h1>
             <p className="text-muted-foreground">
-              Browse our comprehensive database of Alvarez guitar models from the 1970s to present.
+              Browse our database of Alvarez guitar models from the 1970s to present.
             </p>
           </div>
 
@@ -105,54 +88,75 @@ const Encyclopedia = () => {
             </div>
           </div>
 
-          {/* Results Count */}
-          <p className="text-sm text-muted-foreground mb-6 text-center">
-            Showing {filteredModels.length} of {allModels.length} models
-          </p>
-
-          {/* Model Grid */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredModels.map((model, index) => (
-              <Link
-                key={model.id}
-                to={`/encyclopedia/${model.id}`}
-                className="group p-5 border border-border rounded-lg hover:border-foreground/20 transition-all duration-300 opacity-0 animate-fade-in"
-                style={{ animationDelay: `${index * 30}ms` }}
-              >
-                {/* Placeholder Image */}
-                <div className="aspect-square bg-secondary rounded-md mb-4 flex items-center justify-center">
-                  <span className="text-xs text-muted-foreground">Photo</span>
-                </div>
-
-                <h3 className="font-semibold mb-1 group-hover:text-accent transition-colors">
-                  {model.name}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {model.years}
-                </p>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{model.country}</span>
-                  <span>{model.examples} documented</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {filteredModels.length === 0 && (
-            <div className="text-center py-16">
-              <p className="text-muted-foreground">No models found matching your criteria</p>
-              <Button 
-                variant="ghost" 
-                className="mt-4"
-                onClick={() => {
-                  setSearch("");
-                  setSelectedDecade("All");
-                  setSelectedCountry("All");
-                }}
-              >
-                Clear Filters
-              </Button>
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Loading models...</p>
             </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-16">
+              <p className="text-destructive">Failed to load models. Please try again.</p>
+            </div>
+          )}
+
+          {/* Results */}
+          {!isLoading && !error && (
+            <>
+              {/* Results Count */}
+              <p className="text-sm text-muted-foreground mb-6 text-center">
+                Showing {models?.length || 0} models
+              </p>
+
+              {/* Model Grid */}
+              {models && models.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {models.map((model, index) => (
+                    <Link
+                      key={model.id}
+                      to={`/encyclopedia/${model.id}`}
+                      className="group p-5 border border-border rounded-lg hover:border-foreground/20 transition-all duration-300 opacity-0 animate-fade-in"
+                      style={{ animationDelay: `${index * 30}ms` }}
+                    >
+                      {/* Placeholder Image */}
+                      <div className="aspect-square bg-secondary rounded-md mb-4 flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">Photo</span>
+                      </div>
+
+                      <h3 className="font-semibold mb-1 group-hover:text-accent transition-colors">
+                        {model.model_name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {model.production_start_year && model.production_end_year
+                          ? `${model.production_start_year}-${model.production_end_year}`
+                          : model.production_start_year || "Year unknown"}
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{model.country_of_manufacture || "Unknown"}</span>
+                        <span>{model.series || ""}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <p className="text-muted-foreground mb-4">No models found matching your criteria</p>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => {
+                      setSearch("");
+                      setSelectedDecade("All");
+                      setSelectedCountry("All");
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>

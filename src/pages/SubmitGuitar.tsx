@@ -1,16 +1,19 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useGuitarSubmission } from "@/hooks/useGuitarSubmission";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, X, Check } from "lucide-react";
+import { Upload, X, Check, Loader2, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const SubmitGuitar = () => {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     serialNumber: "",
     neckBlock: "",
@@ -18,24 +21,55 @@ const SubmitGuitar = () => {
     year: "",
     purchaseLocation: "",
     notes: "",
+    email: "",
   });
+
+  const { submit, loading, error } = useGuitarSubmission();
+  const { toast } = useToast();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      // Mock image preview
-      const newImages = Array.from(files).map(() => "placeholder");
-      setImages([...images, ...newImages]);
+      const newFiles = Array.from(files);
+      setImages([...images, ...newFiles]);
+      
+      // Create previews
+      newFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
   const removeImage = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
+    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    
+    if (!formData.serialNumber.trim()) {
+      toast({
+        title: "Serial number required",
+        description: "Please enter your guitar's serial number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const result = await submit(formData, images);
+    
+    if (result.success) {
+      setSubmitted(true);
+      toast({
+        title: "Submission received!",
+        description: "Your guitar will be reviewed and added to the archive.",
+      });
+    }
   };
 
   if (submitted) {
@@ -54,7 +88,18 @@ const SubmitGuitar = () => {
               Your submission has been received and will be reviewed by our team. 
               Once verified, it will be added to the archive to help other collectors.
             </p>
-            <Button variant="outline" onClick={() => { setSubmitted(false); setStep(1); setImages([]); setFormData({ serialNumber: "", neckBlock: "", model: "", year: "", purchaseLocation: "", notes: "" }); }} className="opacity-0 animate-fade-in" style={{ animationDelay: "300ms" }}>
+            <Button 
+              variant="outline" 
+              onClick={() => { 
+                setSubmitted(false); 
+                setStep(1); 
+                setImages([]); 
+                setImagePreviews([]);
+                setFormData({ serialNumber: "", neckBlock: "", model: "", year: "", purchaseLocation: "", notes: "", email: "" }); 
+              }} 
+              className="opacity-0 animate-fade-in" 
+              style={{ animationDelay: "300ms" }}
+            >
               Submit Another Guitar
             </Button>
           </div>
@@ -95,6 +140,14 @@ const SubmitGuitar = () => {
             ))}
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             {/* Step 1: Photos */}
             {step === 1 && (
@@ -120,10 +173,11 @@ const SubmitGuitar = () => {
                   </label>
 
                   {/* Image Previews */}
-                  {images.length > 0 && (
+                  {imagePreviews.length > 0 && (
                     <div className="grid grid-cols-4 gap-3 mt-4">
-                      {images.map((_, index) => (
-                        <div key={index} className="relative aspect-square bg-secondary rounded-md">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative aspect-square bg-secondary rounded-md overflow-hidden">
+                          <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
                           <button
                             type="button"
                             onClick={() => removeImage(index)}
@@ -150,13 +204,14 @@ const SubmitGuitar = () => {
               <div className="space-y-6 opacity-0 animate-fade-in">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <Label htmlFor="serial">Serial Number</Label>
+                    <Label htmlFor="serial">Serial Number *</Label>
                     <Input
                       id="serial"
                       value={formData.serialNumber}
                       onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
-                      placeholder="e.g., 70523"
+                      placeholder="e.g., 45123"
                       className="mt-1.5"
+                      required
                     />
                   </div>
                   <div>
@@ -178,7 +233,7 @@ const SubmitGuitar = () => {
                       id="model"
                       value={formData.model}
                       onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                      placeholder="e.g., 5014"
+                      placeholder="e.g., 5021"
                       className="mt-1.5"
                     />
                   </div>
@@ -208,6 +263,18 @@ const SubmitGuitar = () => {
             {/* Step 3: Additional Info */}
             {step === 3 && (
               <div className="space-y-6 opacity-0 animate-fade-in">
+                <div>
+                  <Label htmlFor="email">Your Email (optional)</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="For updates when your submission is approved"
+                    className="mt-1.5"
+                  />
+                </div>
+
                 <div>
                   <Label htmlFor="purchase">Purchase Details</Label>
                   <Input
@@ -263,8 +330,15 @@ const SubmitGuitar = () => {
                   <Button type="button" variant="outline" onClick={() => setStep(2)}>
                     Back
                   </Button>
-                  <Button type="submit">
-                    Submit Guitar
+                  <Button type="submit" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit Guitar"
+                    )}
                   </Button>
                 </div>
               </div>

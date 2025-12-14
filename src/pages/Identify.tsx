@@ -1,72 +1,51 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useIdentifyingFeatures, useFeatureCategories } from "@/hooks/useIdentifyingFeatures";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 
-const steps = [
-  {
-    id: "tuners",
-    title: "What type of tuners does your guitar have?",
-    description: "Look at the tuning machines on the headstock",
-    options: [
-      { id: "open", label: "Open-back tuners", description: "You can see the gears from behind" },
-      { id: "closed", label: "Closed/sealed tuners", description: "Enclosed metal housings" },
-      { id: "unsure", label: "I'm not sure", description: "" },
-    ],
-  },
-  {
-    id: "trussrod",
-    title: "Where is the truss rod adjustment?",
-    description: "The truss rod allows neck adjustments",
-    options: [
-      { id: "headstock", label: "At the headstock", description: "Covered by a small plate or visible at the nut" },
-      { id: "soundhole", label: "Inside the soundhole", description: "Accessed through the guitar body" },
-      { id: "unsure", label: "I can't find it", description: "" },
-    ],
-  },
-  {
-    id: "body",
-    title: "What body shape is your guitar?",
-    description: "Select the closest match",
-    options: [
-      { id: "dreadnought", label: "Dreadnought", description: "Large, square shoulders" },
-      { id: "folk", label: "Folk/Concert", description: "Smaller, rounded shoulders" },
-      { id: "jumbo", label: "Jumbo", description: "Extra large, rounded" },
-      { id: "classical", label: "Classical", description: "Nylon strings, wide neck" },
-    ],
-  },
-  {
-    id: "label",
-    title: "What does the interior label look like?",
-    description: "Check inside the soundhole for a paper label",
-    options: [
-      { id: "gold", label: "Gold/tan label", description: "Typically seen on Japanese-made guitars" },
-      { id: "white", label: "White label", description: "Often seen on Korean production" },
-      { id: "none", label: "No label visible", description: "May have worn off or never had one" },
-      { id: "unsure", label: "I'm not sure", description: "" },
-    ],
-  },
-];
+const categoryLabels: Record<string, string> = {
+  tuner: "What type of tuners does your guitar have?",
+  truss_rod: "Where is the truss rod adjustment?",
+  body_shape: "What body shape is your guitar?",
+  label: "What does the interior label look like?",
+  bridge: "What type of bridge does your guitar have?",
+};
+
+const categoryDescriptions: Record<string, string> = {
+  tuner: "Look at the tuning machines on the headstock",
+  truss_rod: "The truss rod allows neck adjustments",
+  body_shape: "Select the closest match to your guitar's body",
+  label: "Check inside the soundhole for a paper label",
+  bridge: "Look at the bridge where the strings attach",
+};
 
 const Identify = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  const step = steps[currentStep];
-  const progress = ((currentStep + 1) / steps.length) * 100;
-  const isComplete = currentStep >= steps.length;
+  const { data: categories, isLoading: categoriesLoading } = useFeatureCategories();
+  const currentCategory = categories?.[currentStep];
+  const { data: features, isLoading: featuresLoading } = useIdentifyingFeatures(currentCategory);
 
-  const handleSelect = (optionId: string) => {
-    setAnswers({ ...answers, [step.id]: optionId });
+  const totalSteps = categories?.length || 0;
+  const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0;
+  const isComplete = currentStep >= totalSteps;
+
+  const handleSelect = (featureValue: string) => {
+    if (currentCategory) {
+      setAnswers({ ...answers, [currentCategory]: featureValue });
+    }
   };
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
+    if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      setCurrentStep(steps.length); // Mark as complete
+      setCurrentStep(totalSteps);
     }
   };
 
@@ -80,6 +59,18 @@ const Identify = () => {
     setCurrentStep(0);
     setAnswers({});
   };
+
+  if (categoriesLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -101,7 +92,7 @@ const Identify = () => {
               {/* Progress */}
               <div className="mb-8">
                 <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                  <span>Step {currentStep + 1} of {steps.length}</span>
+                  <span>Step {currentStep + 1} of {totalSteps}</span>
                   <span>{Math.round(progress)}% complete</span>
                 </div>
                 <Progress value={progress} className="h-2" />
@@ -109,38 +100,53 @@ const Identify = () => {
 
               {/* Question */}
               <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-2">{step.title}</h2>
-                <p className="text-muted-foreground">{step.description}</p>
+                <h2 className="text-xl font-semibold mb-2">
+                  {currentCategory ? categoryLabels[currentCategory] || `Select ${currentCategory}` : "Loading..."}
+                </h2>
+                <p className="text-muted-foreground">
+                  {currentCategory ? categoryDescriptions[currentCategory] || "" : ""}
+                </p>
               </div>
 
               {/* Options */}
-              <div className="space-y-3 mb-8">
-                {step.options.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => handleSelect(option.id)}
-                    className={`w-full p-4 text-left border rounded-lg transition-all ${
-                      answers[step.id] === option.id
-                        ? "border-foreground bg-secondary/50"
-                        : "border-border hover:border-foreground/30"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{option.label}</div>
-                        {option.description && (
-                          <div className="text-sm text-muted-foreground mt-0.5">
-                            {option.description}
-                          </div>
+              {featuresLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="space-y-3 mb-8">
+                  {features?.map((feature) => (
+                    <button
+                      key={feature.id}
+                      onClick={() => handleSelect(feature.feature_value || feature.id)}
+                      className={`w-full p-4 text-left border rounded-lg transition-all ${
+                        answers[currentCategory || ""] === (feature.feature_value || feature.id)
+                          ? "border-foreground bg-secondary/50"
+                          : "border-border hover:border-foreground/30"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{feature.feature_name}</div>
+                          {feature.description && (
+                            <div className="text-sm text-muted-foreground mt-0.5">
+                              {feature.description}
+                            </div>
+                          )}
+                          {(feature.era_start || feature.era_end) && (
+                            <div className="text-xs text-muted-foreground/70 mt-1">
+                              Era: {feature.era_start || "?"} - {feature.era_end || "present"}
+                            </div>
+                          )}
+                        </div>
+                        {answers[currentCategory || ""] === (feature.feature_value || feature.id) && (
+                          <Check className="h-5 w-5 flex-shrink-0" />
                         )}
                       </div>
-                      {answers[step.id] === option.id && (
-                        <Check className="h-5 w-5 flex-shrink-0" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Navigation */}
               <div className="flex justify-between">
@@ -154,9 +160,9 @@ const Identify = () => {
                 </Button>
                 <Button
                   onClick={handleNext}
-                  disabled={!answers[step.id]}
+                  disabled={!currentCategory || !answers[currentCategory]}
                 >
-                  {currentStep === steps.length - 1 ? "See Results" : "Next"}
+                  {currentStep === totalSteps - 1 ? "See Results" : "Next"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
@@ -169,37 +175,33 @@ const Identify = () => {
               </div>
               <h2 className="text-2xl font-semibold mb-4">Analysis Complete</h2>
               <p className="text-muted-foreground mb-8">
-                Based on your answers, here are the most likely matches:
+                Based on your selections, here's what we found:
               </p>
 
-              {/* Mock Results */}
-              <div className="space-y-4 text-left mb-8">
-                <div className="p-4 border border-border rounded-lg">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold">5014 Dreadnought</h3>
-                      <p className="text-sm text-muted-foreground">1974-1982 • Japan</p>
+              {/* Selected Features Summary */}
+              <div className="text-left mb-8 p-6 border border-border rounded-lg">
+                <h3 className="font-semibold mb-4">Your Guitar's Features</h3>
+                <dl className="space-y-2 text-sm">
+                  {Object.entries(answers).map(([category, value]) => (
+                    <div key={category} className="flex justify-between">
+                      <dt className="text-muted-foreground capitalize">{category.replace("_", " ")}:</dt>
+                      <dd className="font-medium">{value}</dd>
                     </div>
-                    <span className="text-sm font-medium text-confidence-high">85% match</span>
-                  </div>
-                </div>
-                <div className="p-4 border border-border rounded-lg">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold">5024 Folk</h3>
-                      <p className="text-sm text-muted-foreground">1975-1983 • Japan</p>
-                    </div>
-                    <span className="text-sm font-medium text-confidence-medium">62% match</span>
-                  </div>
-                </div>
+                  ))}
+                </dl>
               </div>
+
+              <p className="text-sm text-muted-foreground mb-6">
+                This feature is being enhanced. For now, use the Serial Lookup for more accurate results, 
+                or submit your guitar to help us build a better matching system.
+              </p>
 
               <div className="flex gap-4 justify-center">
                 <Button variant="outline" onClick={handleReset}>
                   Start Over
                 </Button>
-                <Button>
-                  View Model Details
+                <Button asChild>
+                  <Link to="/lookup">Try Serial Lookup</Link>
                 </Button>
               </div>
             </div>

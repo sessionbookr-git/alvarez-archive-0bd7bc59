@@ -1,33 +1,13 @@
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import SerialSearch from "@/components/SerialSearch";
 import ConfidenceMeter from "@/components/ConfidenceMeter";
+import { useSerialLookup } from "@/hooks/useSerialLookup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, X, HelpCircle, ArrowRight } from "lucide-react";
-
-// Mock lookup data
-const mockLookup = (serial: string) => {
-  if (!serial) return null;
-  
-  // Simulate a match for demo purposes
-  return {
-    confidence: "high" as const,
-    confidencePercent: 87,
-    yearRange: "1978-1982",
-    models: ["5014 Dreadnought", "5024 Folk"],
-    country: "Japan",
-    features: [
-      { name: "Open-back tuners", matched: true },
-      { name: "Truss rod at headstock", matched: true },
-      { name: "Three-piece back", matched: false },
-      { name: "Solid spruce top", matched: true },
-    ],
-  };
-};
+import { Check, X, HelpCircle, ArrowRight, Loader2, Search, AlertCircle } from "lucide-react";
 
 const SerialLookup = () => {
   const [searchParams] = useSearchParams();
@@ -35,11 +15,18 @@ const SerialLookup = () => {
   
   const [serial, setSerial] = useState(initialSerial);
   const [neckBlock, setNeckBlock] = useState("");
-  const [result, setResult] = useState(initialSerial ? mockLookup(initialSerial) : null);
+  
+  const { lookup, loading, error, result, reset } = useSerialLookup();
+
+  useEffect(() => {
+    if (initialSerial) {
+      lookup(initialSerial);
+    }
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setResult(mockLookup(serial));
+    lookup(serial, neckBlock);
   };
 
   return (
@@ -62,14 +49,17 @@ const SerialLookup = () => {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="serial">Serial Number</Label>
-                <Input
-                  id="serial"
-                  type="text"
-                  placeholder="e.g., 70523"
-                  value={serial}
-                  onChange={(e) => setSerial(e.target.value)}
-                  className="mt-1.5"
-                />
+                <div className="relative mt-1.5">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="serial"
+                    type="text"
+                    placeholder="e.g., 45123, 78456"
+                    value={serial}
+                    onChange={(e) => { setSerial(e.target.value); reset(); }}
+                    className="pl-10"
+                  />
+                </div>
               </div>
               <div>
                 <Label htmlFor="neckBlock">
@@ -84,11 +74,26 @@ const SerialLookup = () => {
                   className="mt-1.5"
                 />
               </div>
-              <Button type="submit" className="w-full" size="lg">
-                Look Up Guitar
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Searching Database...
+                  </>
+                ) : (
+                  "Look Up Guitar"
+                )}
               </Button>
             </div>
           </form>
+
+          {/* Error State */}
+          {error && (
+            <div className="max-w-3xl mx-auto mb-8 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
 
           {/* Results */}
           {result && (
@@ -115,44 +120,68 @@ const SerialLookup = () => {
               </div>
 
               {/* Likely Models */}
-              <div className="p-6 border border-border rounded-lg">
-                <h2 className="text-lg font-semibold mb-4">Likely Model(s)</h2>
-                <div className="space-y-3">
-                  {result.models.map((model) => (
-                    <div key={model} className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-                      <span className="font-medium">{model}</span>
-                      <Button variant="ghost" size="sm">
-                        View Details <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+              {result.models.length > 0 ? (
+                <div className="p-6 border border-border rounded-lg">
+                  <h2 className="text-lg font-semibold mb-4">Likely Model(s)</h2>
+                  <div className="space-y-3">
+                    {result.models.map((model) => (
+                      <div key={model.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+                        <div>
+                          <span className="font-medium">{model.name}</span>
+                          {model.series && (
+                            <span className="text-sm text-muted-foreground ml-2">({model.series})</span>
+                          )}
+                        </div>
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/encyclopedia/${model.id}`}>
+                            View Details <ArrowRight className="ml-2 h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-6 border border-border rounded-lg bg-secondary/30">
+                  <h2 className="text-lg font-semibold mb-2">No Model Match Found</h2>
+                  <p className="text-muted-foreground">
+                    We don't have verified data for this serial number pattern yet. 
+                    Consider submitting your guitar to help us expand the database.
+                  </p>
+                </div>
+              )}
 
-              {/* Feature Checklist */}
-              <div className="p-6 border border-border rounded-lg">
-                <h2 className="text-lg font-semibold mb-4">Identifying Features</h2>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Check these features against your guitar to confirm the match
-                </p>
-                <div className="space-y-2">
-                  {result.features.map((feature) => (
-                    <div 
-                      key={feature.name} 
-                      className="flex items-center gap-3 p-3 bg-secondary/30 rounded-md"
-                    >
-                      {feature.matched ? (
-                        <Check className="h-5 w-5 text-confidence-high flex-shrink-0" />
-                      ) : (
-                        <HelpCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      )}
-                      <span className={feature.matched ? "" : "text-muted-foreground"}>
-                        {feature.name}
-                      </span>
-                    </div>
-                  ))}
+              {/* Pattern Notes */}
+              {result.patterns.length > 0 && result.patterns[0].confidence_notes && (
+                <div className="p-6 border border-border rounded-lg">
+                  <h2 className="text-lg font-semibold mb-4">Pattern Notes</h2>
+                  <p className="text-muted-foreground">
+                    {result.patterns[0].confidence_notes}
+                  </p>
                 </div>
-              </div>
+              )}
+
+              {/* Similar Guitars */}
+              {result.similarGuitars.length > 0 && (
+                <div className="p-6 border border-border rounded-lg">
+                  <h2 className="text-lg font-semibold mb-4">Similar Guitars in Database</h2>
+                  <div className="space-y-2">
+                    {result.similarGuitars.map((guitar) => (
+                      <div key={guitar.id} className="flex items-center justify-between p-3 bg-secondary/30 rounded-md">
+                        <div>
+                          <span className="font-mono text-sm">{guitar.serial_number}</span>
+                          {guitar.model_name && (
+                            <span className="text-muted-foreground ml-3">{guitar.model_name}</span>
+                          )}
+                        </div>
+                        {guitar.estimated_year && (
+                          <span className="text-sm text-muted-foreground">{guitar.estimated_year}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Feedback */}
               <div className="p-6 bg-secondary/30 rounded-lg text-center">
@@ -172,19 +201,19 @@ const SerialLookup = () => {
 
               {/* CTA */}
               <div className="text-center p-8 border border-dashed border-border rounded-lg">
-                <h3 className="font-semibold mb-2">Can't find your guitar?</h3>
+                <h3 className="font-semibold mb-2">Help improve our database</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Help us expand our database by submitting your guitar's details
+                  Submit your guitar's details and photos to help other collectors
                 </p>
-                <Button variant="default">
-                  Submit Your Guitar
+                <Button variant="default" asChild>
+                  <Link to="/submit">Submit Your Guitar</Link>
                 </Button>
               </div>
             </div>
           )}
 
           {/* No result yet */}
-          {!result && !initialSerial && (
+          {!result && !loading && !error && (
             <div className="text-center py-16">
               <div className="max-w-md mx-auto">
                 <h3 className="text-lg font-medium mb-2">Enter a serial number above</h3>
