@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useGuitarSubmission } from "@/hooks/useGuitarSubmission";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +12,11 @@ import { Upload, X, Check, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const SubmitGuitar = () => {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { submit, loading, error } = useGuitarSubmission();
+
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [images, setImages] = useState<File[]>([]);
@@ -24,8 +31,30 @@ const SubmitGuitar = () => {
     email: "",
   });
 
-  const { submit, loading, error } = useGuitarSubmission();
-  const { toast } = useToast();
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth?redirect=/submit");
+    }
+  }, [user, authLoading, navigate]);
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (redirect will happen)
+  if (!user) {
+    return null;
+  }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

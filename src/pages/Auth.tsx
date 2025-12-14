@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,26 +9,68 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { z } from "zod";
+
+// Validation schemas
+const emailSchema = z.string().trim().email("Please enter a valid email address").max(255, "Email is too long");
+const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(128, "Password is too long");
+
+// Allowed redirect paths (whitelist for security)
+const ALLOWED_REDIRECTS = ["/submit", "/admin", "/encyclopedia", "/serial-lookup", "/identify"];
+
+const sanitizeRedirect = (redirect: string | null): string => {
+  if (!redirect) return "/";
+  // Only allow paths that start with / and are in our whitelist
+  const path = redirect.startsWith("/") ? redirect.split("?")[0] : "/";
+  return ALLOWED_REDIRECTS.includes(path) ? redirect : "/";
+};
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  const redirectTo = sanitizeRedirect(searchParams.get("redirect"));
 
   useEffect(() => {
     if (user) {
-      navigate("/");
+      navigate(redirectTo);
     }
-  }, [user, navigate]);
+  }, [user, navigate, redirectTo]);
+
+  const validateForm = (): boolean => {
+    let valid = true;
+    setEmailError("");
+    setPasswordError("");
+
+    const emailResult = emailSchema.safeParse(email);
+    if (!emailResult.success) {
+      setEmailError(emailResult.error.errors[0].message);
+      valid = false;
+    }
+
+    const passwordResult = passwordSchema.safeParse(password);
+    if (!passwordResult.success) {
+      setPasswordError(passwordResult.error.errors[0].message);
+      valid = false;
+    }
+
+    return valid;
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
+    
     setIsLoading(true);
     
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(email.trim(), password);
     
     if (error) {
       toast({
@@ -41,7 +83,7 @@ const Auth = () => {
         title: "Welcome back!",
         description: "You have signed in successfully.",
       });
-      navigate("/");
+      navigate(redirectTo);
     }
     
     setIsLoading(false);
@@ -49,9 +91,11 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
+    
     setIsLoading(true);
     
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(email.trim(), password);
     
     if (error) {
       toast({
@@ -62,7 +106,7 @@ const Auth = () => {
     } else {
       toast({
         title: "Account created!",
-        description: "Please check your email to confirm your account.",
+        description: "You can now sign in with your credentials.",
       });
     }
     
@@ -76,7 +120,11 @@ const Auth = () => {
         <Card className="w-full max-w-md mx-4">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Welcome</CardTitle>
-            <CardDescription>Sign in to access admin features</CardDescription>
+            <CardDescription>
+              {redirectTo === "/submit" 
+                ? "Sign in to submit your guitar to the archive" 
+                : "Sign in to access your account"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
@@ -94,9 +142,14 @@ const Auth = () => {
                       type="email"
                       placeholder="you@example.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setEmailError("");
+                      }}
                       required
+                      aria-invalid={!!emailError}
                     />
+                    {emailError && <p className="text-sm text-destructive">{emailError}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
@@ -104,9 +157,14 @@ const Auth = () => {
                       id="password"
                       type="password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setPasswordError("");
+                      }}
                       required
+                      aria-invalid={!!passwordError}
                     />
+                    {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Sign In"}
@@ -123,20 +181,30 @@ const Auth = () => {
                       type="email"
                       placeholder="you@example.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setEmailError("");
+                      }}
                       required
+                      aria-invalid={!!emailError}
                     />
+                    {emailError && <p className="text-sm text-destructive">{emailError}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password">Password (min. 6 characters)</Label>
                     <Input
                       id="signup-password"
                       type="password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setPasswordError("");
+                      }}
                       required
                       minLength={6}
+                      aria-invalid={!!passwordError}
                     />
+                    {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Creating account..." : "Create Account"}
