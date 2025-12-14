@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, Guitar, Layers, FileText, Settings } from "lucide-react";
+import { ClipboardList, Guitar, Layers, FileText, Settings, Upload } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -47,6 +47,7 @@ const AdminDashboard = () => {
     { title: "Model Management", href: "/admin/models", icon: Guitar, count: stats?.models },
     { title: "Serial Patterns", href: "/admin/patterns", icon: Layers, count: stats?.patterns },
     { title: "Feature Library", href: "/admin/features", icon: FileText, count: stats?.features },
+    { title: "Bulk Import", href: "/admin/import", icon: Upload, description: "Import CSV data" },
   ];
 
   return (

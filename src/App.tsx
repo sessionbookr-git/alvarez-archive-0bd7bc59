@@ -17,6 +17,7 @@ import AdminSubmissions from "./pages/admin/AdminSubmissions";
 import AdminModels from "./pages/admin/AdminModels";
 import AdminPatterns from "./pages/admin/AdminPatterns";
 import AdminFeatures from "./pages/admin/AdminFeatures";
+import AdminImport from "./pages/admin/AdminImport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/admin/models" element={<AdminRoute><AdminModels /></AdminRoute>} />
             <Route path="/admin/patterns" element={<AdminRoute><AdminPatterns /></AdminRoute>} />
             <Route path="/admin/features" element={<AdminRoute><AdminFeatures /></AdminRoute>} />
+            <Route path="/admin/import" element={<AdminRoute><AdminImport /></AdminRoute>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
