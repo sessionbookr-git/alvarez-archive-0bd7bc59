@@ -41,7 +41,7 @@ const SerialSearch = ({ variant = "compact" }: SerialSearchProps) => {
             Look Up
           </Button>
         </div>
-        <p className="text-sm text-muted-foreground mt-3 text-center">
+        <p className="text-sm text-muted-foreground mt-3 text-left lg:text-left">
           Enter your guitar's serial number to identify its year and model
         </p>
       </form>
