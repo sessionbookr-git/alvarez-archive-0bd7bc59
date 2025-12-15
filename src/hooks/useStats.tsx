@@ -33,14 +33,11 @@ export const useStats = () => {
         const startYears = models
           .map((m) => m.production_start_year)
           .filter((y): y is number => y !== null);
-        const endYears = models
-          .map((m) => m.production_end_year)
-          .filter((y): y is number => y !== null);
         
-        if (startYears.length > 0 && endYears.length > 0) {
+        if (startYears.length > 0) {
           const minYear = Math.min(...startYears);
-          const maxYear = Math.max(...endYears);
-          yearsOfHistory = maxYear - minYear + 1;
+          const currentYear = new Date().getFullYear();
+          yearsOfHistory = currentYear - minYear;
         }
       }
 
