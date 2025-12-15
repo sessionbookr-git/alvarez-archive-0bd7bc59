@@ -46,7 +46,7 @@ const Timeline = () => {
     <section className="py-20 bg-secondary/30">
       <div className="container-wide">
         <div className="text-center mb-12">
-          <h2 className="text-2xl font-semibold mb-3">55+ Years of Craftsmanship</h2>
+          <h2 className="text-2xl font-semibold mb-3">60 Years of Craftsmanship</h2>
           <p className="text-muted-foreground">
             Key moments in Alvarez guitar history
           </p>
