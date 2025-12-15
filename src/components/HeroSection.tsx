@@ -42,11 +42,11 @@ const HeroSection = () => {
       {/* Desktop Layout */}
       <div className="hidden lg:flex container-wide relative items-center justify-center min-h-[70vh] py-20">
         {/* Left: Text + search */}
-        <div className="w-[45%] pr-16 flex flex-col justify-center">
+        <div className="w-[45%] pr-16 flex flex-col justify-center items-start">
           <img 
             src={alvarezBlackLogo} 
             alt="Alvarez Guitars" 
-            className="max-w-md h-auto mb-6 opacity-0 animate-fade-in"
+            className="max-w-sm h-auto mb-6 opacity-0 animate-fade-in"
           />
           <h1 className="text-5xl font-semibold mb-6 leading-tight opacity-0 animate-fade-in" style={{ animationDelay: "50ms" }}>
             Identify Your Guitar
