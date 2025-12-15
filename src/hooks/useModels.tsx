@@ -11,6 +11,7 @@ export interface Model {
   body_shape: string | null;
   description: string | null;
   key_features: string[] | null;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
   guitar_count?: number;
