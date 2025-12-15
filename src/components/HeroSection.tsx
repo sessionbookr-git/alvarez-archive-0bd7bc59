@@ -1,6 +1,6 @@
 import SerialSearch from "@/components/SerialSearch";
 import yairiHero from "@/assets/yairi-hero.png";
-import alvarezGoldLogo from "@/assets/alvarez-gold-logo.png";
+import alvarezBlackLogo from "@/assets/alvarez-black-logo.png";
 
 const HeroSection = () => {
   return (
@@ -9,7 +9,7 @@ const HeroSection = () => {
       <div className="lg:hidden container-wide py-10 md:py-14">
         <div className="text-center">
           <img 
-            src={alvarezGoldLogo} 
+            src={alvarezBlackLogo} 
             alt="Alvarez Guitars" 
             className="w-full max-w-xs md:max-w-md mx-auto h-auto mb-4 opacity-0 animate-fade-in"
           />
@@ -44,7 +44,7 @@ const HeroSection = () => {
         {/* Left: Text + search */}
         <div className="w-[45%] pr-16 flex flex-col justify-center">
           <img 
-            src={alvarezGoldLogo} 
+            src={alvarezBlackLogo} 
             alt="Alvarez Guitars" 
             className="w-full max-w-xl h-auto mb-1 opacity-0 animate-fade-in"
           />
