@@ -69,9 +69,17 @@ const ModelDetail = () => {
           <div className="grid gap-12 lg:grid-cols-2">
             {/* Image Section */}
             <div>
-              <div className="aspect-square bg-secondary rounded-lg flex items-center justify-center">
-                <span className="text-muted-foreground">Photo Coming Soon</span>
-              </div>
+              {(model as { photo_url?: string }).photo_url ? (
+                <img 
+                  src={(model as { photo_url?: string }).photo_url!} 
+                  alt={model.model_name}
+                  className="w-full aspect-square object-cover rounded-lg"
+                />
+              ) : (
+                <div className="aspect-square bg-secondary rounded-lg flex items-center justify-center">
+                  <span className="text-muted-foreground">Photo Coming Soon</span>
+                </div>
+              )}
             </div>
 
             {/* Details Section */}
