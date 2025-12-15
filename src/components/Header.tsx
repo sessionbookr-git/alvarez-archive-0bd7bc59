@@ -15,7 +15,7 @@ const Header = () => {
           <img 
             src={alvarezLogo} 
             alt="Alvarez Guitars" 
-            className="h-12 w-auto"
+            className="h-16 w-auto"
           />
           <span className="hidden sm:inline-block text-sm font-medium text-muted-foreground">
             Legacy Archive
