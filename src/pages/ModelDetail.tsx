@@ -1,13 +1,22 @@
+import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useModel } from "@/hooks/useModels";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Globe, Music, Loader2 } from "lucide-react";
 
 const ModelDetail = () => {
   const { modelId } = useParams<{ modelId: string }>();
   const { data: model, isLoading, error } = useModel(modelId || "");
+  const { track } = useAnalytics();
+
+  useEffect(() => {
+    if (model) {
+      track('model_view', { model_id: model.id, model_name: model.model_name });
+    }
+  }, [model, track]);
 
   if (isLoading) {
     return (

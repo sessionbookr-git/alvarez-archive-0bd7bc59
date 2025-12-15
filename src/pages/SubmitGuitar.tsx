@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useGuitarSubmission } from "@/hooks/useGuitarSubmission";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubmissionRateLimit } from "@/hooks/useSubmissionRateLimit";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, X, Check, Loader2, AlertCircle } from "lucide-react";
+import { Upload, X, Check, Loader2, AlertCircle, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const SubmitGuitar = () => {
@@ -16,6 +18,8 @@ const SubmitGuitar = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { submit, loading, error } = useGuitarSubmission();
+  const { canSubmit, remainingSubmissions, maxSubmissions, isLoading: rateLimitLoading } = useSubmissionRateLimit();
+  const { track } = useAnalytics();
 
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
@@ -38,8 +42,8 @@ const SubmitGuitar = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Show loading while checking auth
-  if (authLoading) {
+  // Show loading while checking auth or rate limit
+  if (authLoading || rateLimitLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -54,6 +58,36 @@ const SubmitGuitar = () => {
   // Don't render if not authenticated (redirect will happen)
   if (!user) {
     return null;
+  }
+
+  // Rate limit exceeded
+  if (!canSubmit) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 py-12">
+          <div className="container-wide max-w-2xl text-center">
+            <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="h-10 w-10 text-amber-600" />
+            </div>
+            <h1 className="text-3xl font-semibold mb-4">Submission Limit Reached</h1>
+            <p className="text-muted-foreground mb-6">
+              You have {maxSubmissions} pending submissions awaiting review. 
+              Once some are approved or rejected, you can submit more guitars.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button variant="outline" asChild>
+                <Link to="/my-submissions">View My Submissions</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/">Return Home</Link>
+              </Button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +128,7 @@ const SubmitGuitar = () => {
     
     if (result.success) {
       setSubmitted(true);
+      track('submission_completed', { serial: formData.serialNumber });
       toast({
         title: "Submission received!",
         description: "Your guitar will be reviewed and added to the archive.",
@@ -144,13 +179,24 @@ const SubmitGuitar = () => {
       <main className="flex-1 py-12">
         <div className="container-wide max-w-2xl">
           {/* Page Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-semibold mb-4">
               Submit Your Guitar
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-4">
               Help expand our database by sharing details about your Alvarez guitar.
             </p>
+            <Button variant="link" asChild className="gap-2">
+              <Link to="/submit-guidelines">
+                <FileText className="h-4 w-4" />
+                Read submission guidelines
+              </Link>
+            </Button>
+            {remainingSubmissions < maxSubmissions && (
+              <p className="text-sm text-amber-600 mt-2">
+                {remainingSubmissions} of {maxSubmissions} submissions remaining
+              </p>
+            )}
           </div>
 
           {/* Progress Steps */}
