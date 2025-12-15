@@ -5,9 +5,9 @@ import alvarezGoldLogo from "@/assets/alvarez-gold-logo.png";
 const HeroSection = () => {
   return (
     <section className="relative overflow-hidden bg-background">
-      <div className="container-wide relative flex flex-col md:flex-row items-center min-h-[70vh] py-14 md:py-20">
+      <div className="container-wide relative flex flex-col md:flex-row items-center justify-center min-h-[70vh] py-14 md:py-20">
         {/* Left: Text + search */}
-        <div className="w-full md:w-1/2 lg:w-[45%] md:pr-10 lg:pr-16 py-6">
+        <div className="w-full md:w-1/2 lg:w-[45%] md:pr-10 lg:pr-16 flex flex-col justify-center">
           <img 
             src={alvarezGoldLogo} 
             alt="Alvarez Guitars" 
@@ -29,7 +29,7 @@ const HeroSection = () => {
           </div>
         </div>
 
-        <div className="w-full md:w-1/2 lg:w-[55%] mt-10 md:-mt-16 lg:-mt-24 relative flex justify-center md:justify-end">
+        <div className="w-full md:w-1/2 lg:w-[55%] mt-10 md:mt-0 relative flex justify-center md:justify-end items-center">
           <div className="relative w-full max-w-xl md:max-w-2xl">
             {/* Soft circle glow behind guitar */}
             <div className="absolute inset-0 rounded-full bg-warm/60 blur-3xl translate-x-10 md:translate-x-16 translate-y-6" />
