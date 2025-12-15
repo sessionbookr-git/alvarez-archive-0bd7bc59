@@ -213,6 +213,7 @@ export type Database = {
           id: string
           key_features: Json | null
           model_name: string
+          photo_url: string | null
           production_end_year: number | null
           production_start_year: number | null
           series: string | null
@@ -226,6 +227,7 @@ export type Database = {
           id?: string
           key_features?: Json | null
           model_name: string
+          photo_url?: string | null
           production_end_year?: number | null
           production_start_year?: number | null
           series?: string | null
@@ -239,6 +241,7 @@ export type Database = {
           id?: string
           key_features?: Json | null
           model_name?: string
+          photo_url?: string | null
           production_end_year?: number | null
           production_start_year?: number | null
           series?: string | null
