@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAnalytics } from "./useAnalytics";
 
 export interface SerialLookupResult {
   confidence: "high" | "medium" | "low";
@@ -31,6 +32,7 @@ export const useSerialLookup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SerialLookupResult | null>(null);
+  const { track } = useAnalytics();
 
   const lookup = async (serialNumber: string, neckBlock?: string) => {
     if (!serialNumber.trim()) {
@@ -81,6 +83,7 @@ export const useSerialLookup = () => {
 
       if (!patterns || patterns.length === 0) {
         // No patterns found - low confidence
+        track('serial_lookup_failed', { serial: serialNumber });
         setResult({
           confidence: "low",
           confidencePercent: 20,
@@ -141,6 +144,8 @@ export const useSerialLookup = () => {
         confidence = "low";
         confidencePercent = 35;
       }
+
+      track('serial_lookup', { serial: serialNumber, confidence });
 
       setResult({
         confidence,

@@ -23,6 +23,8 @@ import AdminPatterns from "./pages/admin/AdminPatterns";
 import AdminFeatures from "./pages/admin/AdminFeatures";
 import AdminImport from "./pages/admin/AdminImport";
 import AdminInviteCodes from "./pages/admin/AdminInviteCodes";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import SubmitGuidelines from "./pages/SubmitGuidelines";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +43,7 @@ const App = () => (
             <Route path="/encyclopedia/:modelId" element={<ModelDetail />} />
             <Route path="/identify" element={<Identify />} />
             <Route path="/submit" element={<SubmitGuitar />} />
+            <Route path="/submit-guidelines" element={<SubmitGuidelines />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/my-submissions" element={<MySubmissions />} />
@@ -55,6 +58,7 @@ const App = () => (
             <Route path="/admin/features" element={<AdminRoute><AdminFeatures /></AdminRoute>} />
             <Route path="/admin/import" element={<AdminRoute><AdminImport /></AdminRoute>} />
             <Route path="/admin/invite-codes" element={<AdminRoute><AdminInviteCodes /></AdminRoute>} />
+            <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

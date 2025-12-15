@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, Guitar, Layers, FileText, Settings, Upload, Ticket } from "lucide-react";
+import { ClipboardList, Guitar, Layers, FileText, Settings, Upload, Ticket, BarChart3 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { AdminExportButtons } from "@/components/AdminExportButtons";
 
 const AdminDashboard = () => {
   const { data: stats } = useQuery({
@@ -49,6 +50,7 @@ const AdminDashboard = () => {
     { title: "Feature Library", href: "/admin/features", icon: FileText, count: stats?.features },
     { title: "Bulk Import", href: "/admin/import", icon: Upload, description: "Import CSV data" },
     { title: "Invite Codes", href: "/admin/invite-codes", icon: Ticket, description: "Manage registrations" },
+    { title: "Analytics", href: "/admin/analytics", icon: BarChart3, description: "Usage insights" },
   ];
 
   return (
@@ -60,9 +62,12 @@ const AdminDashboard = () => {
             <h1 className="text-3xl font-bold">Admin Dashboard</h1>
             <p className="text-muted-foreground">Manage the Alvarez Legacy Archive</p>
           </div>
-          <Button variant="outline" asChild>
-            <Link to="/"><Settings className="mr-2 h-4 w-4" /> View Site</Link>
-          </Button>
+          <div className="flex items-center gap-4">
+            <AdminExportButtons />
+            <Button variant="outline" asChild>
+              <Link to="/"><Settings className="mr-2 h-4 w-4" /> View Site</Link>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
