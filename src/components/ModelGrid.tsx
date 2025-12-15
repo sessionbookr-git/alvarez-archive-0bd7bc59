@@ -47,8 +47,16 @@ const ModelGrid = () => {
                 className="group flex items-center gap-4 p-4 border border-border rounded-lg hover:border-foreground/20 transition-all duration-300 opacity-0 animate-fade-in"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div className="w-16 h-16 bg-secondary rounded-md flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs text-muted-foreground">Photo</span>
+                <div className="w-16 h-16 bg-secondary rounded-md flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {model.photo_url ? (
+                    <img 
+                      src={model.photo_url} 
+                      alt={model.model_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Photo</span>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium truncate group-hover:text-accent transition-colors">
