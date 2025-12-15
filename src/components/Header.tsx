@@ -3,6 +3,7 @@ import { LogOut } from "lucide-react";
 import alvarezLogo from "@/assets/alvarez-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import HelpDrawer from "@/components/HelpDrawer";
 
 const Header = () => {
   const { user, signOut } = useAuth();
@@ -46,6 +47,7 @@ const Header = () => {
           >
             Submit
           </Link>
+          <HelpDrawer />
           {user && (
             <Button 
               variant="ghost" 
