@@ -27,7 +27,7 @@ const SerialSearch = ({ variant = "compact" }: SerialSearchProps) => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Enter serial number..."
+              placeholder="e.g., E24113487 or 51708"
               value={serialNumber}
               onChange={(e) => setSerialNumber(e.target.value)}
               className="h-14 pl-12 text-lg bg-background border-border focus-visible:ring-accent"
@@ -54,7 +54,7 @@ const SerialSearch = ({ variant = "compact" }: SerialSearchProps) => {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="Serial number..."
+          placeholder="e.g., E24113487"
           value={serialNumber}
           onChange={(e) => setSerialNumber(e.target.value)}
           className="pl-9"
