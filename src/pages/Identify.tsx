@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useIdentifyingFeatures, useFeatureCategories } from "@/hooks/useIdentifyingFeatures";
+import { useAllModelFeatures } from "@/hooks/useModelFeatures";
+import { useModels } from "@/hooks/useModels";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Image } from "lucide-react";
 
 const categoryLabels: Record<string, string> = {
   tuner: "What type of tuners does your guitar have?",
@@ -23,6 +25,18 @@ const categoryDescriptions: Record<string, string> = {
   bridge: "Look at the bridge where the strings attach",
 };
 
+interface ModelMatch {
+  modelId: string;
+  modelName: string;
+  photoUrl: string | null;
+  country: string | null;
+  productionYears: string;
+  matchedFeatures: number;
+  totalFeatures: number;
+  matchPercentage: number;
+  requiredMissing: number;
+}
+
 const Identify = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -30,10 +44,93 @@ const Identify = () => {
   const { data: categories, isLoading: categoriesLoading } = useFeatureCategories();
   const currentCategory = categories?.[currentStep];
   const { data: features, isLoading: featuresLoading } = useIdentifyingFeatures(currentCategory);
+  const { data: allModelFeatures } = useAllModelFeatures();
+  const { data: models } = useModels();
 
   const totalSteps = categories?.length || 0;
   const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0;
   const isComplete = currentStep >= totalSteps;
+
+  // Calculate matching models based on selected features
+  const matchingModels = useMemo(() => {
+    if (!isComplete || !allModelFeatures || !models) return [];
+
+    // Get the feature IDs that match user's selections
+    const selectedFeatureIds = new Set<string>();
+    
+    // For each answer, find the matching feature ID
+    Object.entries(answers).forEach(([category, value]) => {
+      const feature = allModelFeatures.find(
+        (mf) => 
+          mf.identifying_features.feature_category === category &&
+          (mf.identifying_features.feature_value === value || mf.identifying_features.id === value)
+      );
+      if (feature) {
+        selectedFeatureIds.add(feature.feature_id);
+      }
+    });
+
+    // Group model_features by model
+    const modelFeaturesMap = new Map<string, typeof allModelFeatures>();
+    allModelFeatures.forEach((mf) => {
+      const existing = modelFeaturesMap.get(mf.model_id) || [];
+      existing.push(mf);
+      modelFeaturesMap.set(mf.model_id, existing);
+    });
+
+    // Calculate match scores for each model
+    const results: ModelMatch[] = [];
+
+    modelFeaturesMap.forEach((modelFeatures, modelId) => {
+      const model = models.find((m) => m.id === modelId);
+      if (!model) return;
+
+      const totalFeatures = modelFeatures.length;
+      let matchedFeatures = 0;
+      let requiredMissing = 0;
+
+      modelFeatures.forEach((mf) => {
+        const featureValue = mf.identifying_features.feature_value || mf.identifying_features.id;
+        const featureCategory = mf.identifying_features.feature_category;
+        
+        // Check if user selected this feature (by value or ID)
+        const userAnswer = answers[featureCategory];
+        if (userAnswer === featureValue || userAnswer === mf.feature_id) {
+          matchedFeatures++;
+        } else if (mf.is_required) {
+          requiredMissing++;
+        }
+      });
+
+      if (totalFeatures > 0) {
+        const matchPercentage = Math.round((matchedFeatures / totalFeatures) * 100);
+        
+        results.push({
+          modelId,
+          modelName: model.model_name,
+          photoUrl: model.photo_url || null,
+          country: model.country_of_manufacture,
+          productionYears: model.production_start_year
+            ? `${model.production_start_year}${model.production_end_year ? `-${model.production_end_year}` : "-present"}`
+            : "Unknown",
+          matchedFeatures,
+          totalFeatures,
+          matchPercentage,
+          requiredMissing,
+        });
+      }
+    });
+
+    // Sort by match percentage (descending), then by required missing (ascending)
+    return results
+      .filter((r) => r.matchedFeatures > 0)
+      .sort((a, b) => {
+        if (a.requiredMissing !== b.requiredMissing) {
+          return a.requiredMissing - b.requiredMissing;
+        }
+        return b.matchPercentage - a.matchPercentage;
+      });
+  }, [isComplete, allModelFeatures, models, answers]);
 
   const handleSelect = (featureValue: string) => {
     if (currentCategory) {
@@ -169,18 +266,85 @@ const Identify = () => {
             </>
           ) : (
             /* Results */
-            <div className="text-center py-8 opacity-0 animate-fade-in">
-              <div className="w-16 h-16 bg-confidence-high/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Check className="h-8 w-8 text-confidence-high" />
+            <div className="opacity-0 animate-fade-in">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-confidence-high/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Check className="h-8 w-8 text-confidence-high" />
+                </div>
+                <h2 className="text-2xl font-semibold mb-2">Analysis Complete</h2>
+                <p className="text-muted-foreground">
+                  {matchingModels.length > 0
+                    ? `Found ${matchingModels.length} potential match${matchingModels.length === 1 ? "" : "es"} based on your selections.`
+                    : "No matching models found based on your selections."}
+                </p>
               </div>
-              <h2 className="text-2xl font-semibold mb-4">Analysis Complete</h2>
-              <p className="text-muted-foreground mb-8">
-                Based on your selections, here's what we found:
-              </p>
+
+              {/* Matching Models */}
+              {matchingModels.length > 0 ? (
+                <div className="space-y-4 mb-8">
+                  {matchingModels.slice(0, 5).map((match) => (
+                    <Link
+                      key={match.modelId}
+                      to={`/models/${encodeURIComponent(match.modelName)}`}
+                      className="block p-4 border border-border rounded-lg hover:border-foreground/30 transition-all"
+                    >
+                      <div className="flex gap-4">
+                        {match.photoUrl ? (
+                          <img
+                            src={match.photoUrl}
+                            alt={match.modelName}
+                            className="w-20 h-20 object-cover rounded-md"
+                          />
+                        ) : (
+                          <div className="w-20 h-20 bg-secondary rounded-md flex items-center justify-center">
+                            <Image className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-semibold text-lg">{match.modelName}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {match.country} • {match.productionYears}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <div className={`text-lg font-semibold ${
+                                match.matchPercentage >= 80 ? "text-confidence-high" :
+                                match.matchPercentage >= 50 ? "text-confidence-medium" :
+                                "text-confidence-low"
+                              }`}>
+                                {match.matchPercentage}%
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {match.matchedFeatures}/{match.totalFeatures} features
+                              </div>
+                            </div>
+                          </div>
+                          {match.requiredMissing > 0 && (
+                            <p className="text-xs text-destructive mt-2">
+                              Missing {match.requiredMissing} required feature{match.requiredMissing > 1 ? "s" : ""}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 border border-border rounded-lg mb-8">
+                  <p className="text-muted-foreground mb-4">
+                    No models in our database match your selected features yet.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Try the Serial Lookup instead, or submit your guitar to help us build our database.
+                  </p>
+                </div>
+              )}
 
               {/* Selected Features Summary */}
               <div className="text-left mb-8 p-6 border border-border rounded-lg">
-                <h3 className="font-semibold mb-4">Your Guitar's Features</h3>
+                <h3 className="font-semibold mb-4">Your Selections</h3>
                 <dl className="space-y-2 text-sm">
                   {Object.entries(answers).map(([category, value]) => (
                     <div key={category} className="flex justify-between">
@@ -191,17 +355,12 @@ const Identify = () => {
                 </dl>
               </div>
 
-              <p className="text-sm text-muted-foreground mb-6">
-                This feature is being enhanced. For now, use the Serial Lookup for more accurate results, 
-                or submit your guitar to help us build a better matching system.
-              </p>
-
               <div className="flex gap-4 justify-center">
                 <Button variant="outline" onClick={handleReset}>
                   Start Over
                 </Button>
                 <Button asChild>
-                  <Link to="/lookup">Try Serial Lookup</Link>
+                  <Link to="/serial-lookup">Try Serial Lookup</Link>
                 </Button>
               </div>
             </div>

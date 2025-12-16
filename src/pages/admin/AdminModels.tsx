@@ -9,10 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ArrowLeft, Layers, Upload, Image, X, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowLeft, Layers, Upload, Image, X, Loader2, Settings2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ManageFeaturesDialog from "@/components/ManageFeaturesDialog";
 
 interface ModelForm {
   model_name: string;
@@ -42,6 +43,7 @@ const AdminModels = () => {
   const [form, setForm] = useState<ModelForm>(emptyForm);
   const [uploading, setUploading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [featuresDialogModel, setFeaturesDialogModel] = useState<{ id: string; name: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -390,6 +392,14 @@ const AdminModels = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => setFeaturesDialogModel({ id: model.id, name: model.model_name })}
+                          title="Manage Features"
+                        >
+                          <Settings2 className="h-4 w-4" />
+                        </Button>
                         <Button size="sm" variant="ghost" asChild>
                           <Link to={`/admin/patterns?model=${model.id}`}>
                             <Layers className="h-4 w-4" />
@@ -430,6 +440,16 @@ const AdminModels = () => {
         )}
       </main>
       <Footer />
+
+      {/* Manage Features Dialog */}
+      {featuresDialogModel && (
+        <ManageFeaturesDialog
+          open={!!featuresDialogModel}
+          onOpenChange={(open) => !open && setFeaturesDialogModel(null)}
+          modelId={featuresDialogModel.id}
+          modelName={featuresDialogModel.name}
+        />
+      )}
     </div>
   );
 };
