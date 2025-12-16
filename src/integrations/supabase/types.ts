@@ -204,6 +204,45 @@ export type Database = {
         }
         Relationships: []
       }
+      model_features: {
+        Row: {
+          created_at: string | null
+          feature_id: string
+          id: string
+          is_required: boolean | null
+          model_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          feature_id: string
+          id?: string
+          is_required?: boolean | null
+          model_id: string
+        }
+        Update: {
+          created_at?: string | null
+          feature_id?: string
+          id?: string
+          is_required?: boolean | null
+          model_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "identifying_features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_features_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       models: {
         Row: {
           body_shape: string | null
