@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAnalytics } from "./useAnalytics";
+import { parseSerial, parseNeckBlock, SerialFormat } from "@/lib/serialParser";
 
 export interface SerialLookupResult {
   confidence: "high" | "medium" | "low";
@@ -26,6 +27,13 @@ export interface SerialLookupResult {
     estimated_year: number | null;
     model_name: string | null;
   }>;
+  // New fields for enhanced serial parsing
+  serialFormat: SerialFormat;
+  parsedNotes: string;
+  isYairi: boolean;
+  needsEmperorCode: boolean;
+  neckBlockYear: number | null;
+  neckBlockNotes: string | null;
 }
 
 export const useSerialLookup = () => {
@@ -45,7 +53,19 @@ export const useSerialLookup = () => {
     setResult(null);
 
     try {
-      // Get the first 2 digits as prefix
+      // Parse the serial number format first
+      const parsed = parseSerial(serialNumber);
+      
+      // Parse neck block if provided
+      let neckBlockYear: number | null = null;
+      let neckBlockNotes: string | null = null;
+      if (neckBlock?.trim()) {
+        const nbResult = parseNeckBlock(neckBlock);
+        neckBlockYear = nbResult.year;
+        neckBlockNotes = nbResult.notes;
+      }
+
+      // Get the first 2 digits as prefix for database lookup
       const prefix = serialNumber.substring(0, 2);
 
       // Query serial patterns that match the prefix
@@ -81,28 +101,46 @@ export const useSerialLookup = () => {
 
       if (guitarsError) throw guitarsError;
 
-      if (!patterns || patterns.length === 0) {
-        // No patterns found - low confidence
-        track('serial_lookup_failed', { serial: serialNumber });
-        setResult({
-          confidence: "low",
-          confidencePercent: 20,
-          yearRange: "Unknown",
-          models: [],
-          country: "Unknown",
-          patterns: [],
-          similarGuitars: (similarGuitars || []).map((g) => ({
-            id: g.id,
-            serial_number: g.serial_number,
-            estimated_year: g.estimated_year,
-            model_name: g.models?.model_name || null,
-          })),
-        });
-        return;
+      // Determine year and country - combine parsed info with database patterns
+      let yearRange = parsed.yearRange;
+      let country = parsed.country;
+      let confidence = parsed.confidence;
+      let confidencePercent = confidence === "high" ? 85 : confidence === "medium" ? 60 : 30;
+
+      // If we have database patterns, use those for better accuracy
+      if (patterns && patterns.length > 0) {
+        const years = patterns.flatMap((p) => [p.year_range_start, p.year_range_end]);
+        const minYear = Math.min(...years);
+        const maxYear = Math.max(...years);
+        yearRange = minYear === maxYear ? `${minYear}` : `${minYear}-${maxYear}`;
+
+        const countries = patterns
+          .filter((p) => p.models?.country_of_manufacture)
+          .map((p) => p.models.country_of_manufacture);
+        if (countries.length > 0) {
+          country = countries[0] || country;
+        }
+
+        // Boost confidence if we have pattern matches
+        if (patterns.length >= 2) {
+          confidence = "high";
+          confidencePercent = 85;
+        } else if (patterns.length === 1) {
+          confidence = "medium";
+          confidencePercent = 65;
+        }
+      }
+
+      // If neck block provided a year, use that as authoritative
+      if (neckBlockYear) {
+        yearRange = `${neckBlockYear}`;
+        confidence = "high";
+        confidencePercent = 95;
+        country = "Japan"; // Emperor code = Japanese manufacture
       }
 
       // Calculate results from matching patterns
-      const matchedModels = patterns
+      const matchedModels = (patterns || [])
         .filter((p) => p.models)
         .map((p) => ({
           id: p.models.id,
@@ -111,41 +149,22 @@ export const useSerialLookup = () => {
           country: p.models.country_of_manufacture,
         }));
 
-      // Get year range
-      const years = patterns.flatMap((p) => [p.year_range_start, p.year_range_end]);
-      const minYear = Math.min(...years);
-      const maxYear = Math.max(...years);
-      const yearRange = minYear === maxYear ? `${minYear}` : `${minYear}-${maxYear}`;
-
-      // Get country (most common)
-      const countries = patterns
-        .filter((p) => p.models?.country_of_manufacture)
-        .map((p) => p.models.country_of_manufacture);
-      const country = countries[0] || "Unknown";
-
-      // Calculate confidence
+      // Check for exact serial matches in similar guitars
       const exactMatches = similarGuitars?.filter(
         (g) => g.serial_number === serialNumber
       ).length || 0;
       
-      let confidence: "high" | "medium" | "low";
-      let confidencePercent: number;
-
       if (exactMatches > 0) {
         confidence = "high";
         confidencePercent = 95;
-      } else if (patterns.length >= 2) {
-        confidence = "high";
-        confidencePercent = 85;
-      } else if (patterns.length === 1) {
-        confidence = "medium";
-        confidencePercent = 65;
-      } else {
-        confidence = "low";
-        confidencePercent = 35;
       }
 
-      track('serial_lookup', { serial: serialNumber, confidence });
+      track('serial_lookup', { 
+        serial: serialNumber, 
+        confidence,
+        format: parsed.format,
+        hasNeckBlock: !!neckBlock 
+      });
 
       setResult({
         confidence,
@@ -153,7 +172,7 @@ export const useSerialLookup = () => {
         yearRange,
         models: matchedModels,
         country,
-        patterns: patterns.map((p) => ({
+        patterns: (patterns || []).map((p) => ({
           id: p.id,
           serial_prefix: p.serial_prefix,
           year_range_start: p.year_range_start,
@@ -166,6 +185,12 @@ export const useSerialLookup = () => {
           estimated_year: g.estimated_year,
           model_name: g.models?.model_name || null,
         })),
+        serialFormat: parsed.format,
+        parsedNotes: parsed.notes,
+        isYairi: parsed.isYairi,
+        needsEmperorCode: parsed.needsEmperorCode,
+        neckBlockYear,
+        neckBlockNotes,
       });
     } catch (err) {
       console.error("Serial lookup error:", err);
