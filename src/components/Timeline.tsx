@@ -1,4 +1,4 @@
-import { Guitar, Award, Globe, Sparkles, Music, Star, Wrench, Mic2 } from "lucide-react";
+import { Guitar, Award, Globe, Sparkles, Music, Star, Wrench, Mic2, Layers, Diamond } from "lucide-react";
 
 const timelineEvents = [
   {
@@ -45,10 +45,23 @@ const timelineEvents = [
     icon: Mic2,
   },
   {
+    year: "2010s",
+    title: "Bracing Revolution",
+    description: "Major advancements in bracing technology transform Alvarez's sound. The Forward Shifted Top (FST) bracing patterns bring enhanced resonance and projection to the lineup.",
+    icon: Layers,
+  },
+  {
     year: "2024",
-    title: "Laureate Series Debuts",
-    description: "The all-new Laureate series launches, representing 60 years of acoustic guitar expertise with cutting-edge design and exceptional playability.",
+    title: "Laureate & FST6",
+    description: "The all-new Laureate series launches alongside FST6 bracing technology, representing the pinnacle of 60 years of acoustic guitar innovation and design expertise.",
     icon: Sparkles,
+    highlight: true,
+  },
+  {
+    year: "2025",
+    title: "60th Anniversary",
+    description: "Alvarez celebrates six decades with special Diamond editions including the MF70 Diamond Black and Diamond Shadowburst—stunning tributes to a legacy of craftsmanship.",
+    icon: Diamond,
     highlight: true,
   },
 ];
