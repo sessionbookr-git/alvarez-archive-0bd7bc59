@@ -2,6 +2,3 @@ project_id = "hfgcyhgjklycpcnwdbty"
 
 [functions.scrape-alvarez-models]
 verify_jwt = false
-
-[functions.generate-model-descriptions]
-verify_jwt = false
