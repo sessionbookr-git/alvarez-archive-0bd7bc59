@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ArrowLeft, Layers, Upload, Image, X, Loader2, Settings2 } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowLeft, Layers, Upload, Image, X, Loader2, Settings2, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -44,6 +44,7 @@ const AdminModels = () => {
   const [uploading, setUploading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [featuresDialogModel, setFeaturesDialogModel] = useState<{ id: string; name: string } | null>(null);
+  const [isScraping, setIsScraping] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -157,6 +158,35 @@ const AdminModels = () => {
     },
   });
 
+  const handleScrapeAlvarez = async () => {
+    setIsScraping(true);
+    toast({ title: "Scraping started", description: "This may take several minutes..." });
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('scrape-alvarez-models', {
+        body: {},
+      });
+      
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ["admin-models"] });
+      
+      toast({ 
+        title: "Scraping complete", 
+        description: `Updated ${data.success} of ${data.total} models` 
+      });
+    } catch (error) {
+      console.error('Scrape error:', error);
+      toast({ 
+        title: "Scraping failed", 
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: "destructive" 
+      });
+    } finally {
+      setIsScraping(false);
+    }
+  };
+
   const handleClose = () => {
     setIsOpen(false);
     setEditingId(null);
@@ -200,6 +230,17 @@ const AdminModels = () => {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleScrapeAlvarez}
+              disabled={isScraping}
+            >
+              {isScraping ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scraping...</>
+              ) : (
+                <><Globe className="h-4 w-4 mr-2" /> Scrape Alvarez.com</>
+              )}
+            </Button>
             <Button variant="outline" asChild>
               <Link to="/admin/import?type=models">
                 <Upload className="h-4 w-4 mr-2" /> Bulk Import

@@ -1,1 +1,4 @@
 project_id = "hfgcyhgjklycpcnwdbty"
+
+[functions.scrape-alvarez-models]
+verify_jwt = false
