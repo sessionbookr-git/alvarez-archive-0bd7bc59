@@ -24,6 +24,7 @@ interface ModelForm {
   production_end_year: string;
   description: string;
   photo_url: string;
+  key_features: string;
 }
 
 const emptyForm: ModelForm = {
@@ -35,6 +36,7 @@ const emptyForm: ModelForm = {
   production_end_year: "",
   description: "",
   photo_url: "",
+  key_features: "",
 };
 
 const AdminModels = () => {
@@ -117,6 +119,12 @@ const AdminModels = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (data: ModelForm) => {
+      // Parse key_features from comma-separated string to JSON array
+      let keyFeaturesArray: string[] = [];
+      if (data.key_features.trim()) {
+        keyFeaturesArray = data.key_features.split('\n').map(f => f.trim()).filter(f => f.length > 0);
+      }
+
       const payload = {
         model_name: data.model_name,
         series: data.series || null,
@@ -126,6 +134,7 @@ const AdminModels = () => {
         production_end_year: data.production_end_year ? parseInt(data.production_end_year) : null,
         description: data.description || null,
         photo_url: data.photo_url || null,
+        key_features: keyFeaturesArray,
       };
 
       if (editingId) {
@@ -198,6 +207,10 @@ const AdminModels = () => {
 
   const handleEdit = (model: NonNullable<typeof models>[number]) => {
     setEditingId(model.id);
+    // Parse key_features from JSON array to newline-separated string
+    const keyFeaturesStr = Array.isArray((model as any).key_features) 
+      ? (model as any).key_features.join('\n') 
+      : "";
     setForm({
       model_name: model.model_name,
       series: model.series || "",
@@ -207,6 +220,7 @@ const AdminModels = () => {
       production_end_year: model.production_end_year?.toString() || "",
       description: model.description || "",
       photo_url: (model as { photo_url?: string }).photo_url || "",
+      key_features: keyFeaturesStr,
     });
     setPhotoPreview((model as { photo_url?: string }).photo_url || null);
     setIsOpen(true);
@@ -386,6 +400,17 @@ const AdminModels = () => {
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                     rows={3}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="key_features">Key Features / Specs (one per line)</Label>
+                  <Textarea
+                    id="key_features"
+                    value={form.key_features}
+                    onChange={(e) => setForm({ ...form, key_features: e.target.value })}
+                    rows={5}
+                    placeholder="Solid Sitka Spruce Top&#10;Mahogany Back & Sides&#10;Ebony Fingerboard&#10;Fishman Electronics&#10;Gloss Finish"
+                  />
+                  <p className="text-xs text-muted-foreground">Enter each feature on a new line. Examples: wood types, electronics, binding, bracing pattern, etc.</p>
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
