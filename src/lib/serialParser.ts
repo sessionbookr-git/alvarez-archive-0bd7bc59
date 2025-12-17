@@ -2,14 +2,16 @@
 // Based on official Alvarez customer service documentation
 
 export type SerialFormat = 
-  | "modern"      // Letter + 8-9 digits (e.g., E24113487)
+  | "modern"      // Letter prefix + digits (e.g., E24113487, CS12071753, CD05069348)
   | "yairi"       // 4-5 digit number (e.g., 51708) - Emperor code applies
   | "legacy"      // Low numbers <100000 (1960s-70s)
+  | "nine_digit"  // 9-digit format (e.g., 081201626)
   | "unknown";
 
 export interface SerialParseResult {
   format: SerialFormat;
   estimatedYear: number | null;
+  estimatedMonth: number | null;
   yearRange: string;
   confidence: "high" | "medium" | "low";
   country: string;
@@ -20,13 +22,15 @@ export interface SerialParseResult {
 }
 
 // Emperor Year Chart (Japanese calendar system)
+// Showa era: 45-63 = 1970-1988
+// Heisei era: 1-12 = 1989-2000
 const EMPEROR_CODE: Record<number, number> = {
-  // Showa Era
+  // Showa Era (1970-1988)
   45: 1970, 46: 1971, 47: 1972, 48: 1973, 49: 1974,
   50: 1975, 51: 1976, 52: 1977, 53: 1978, 54: 1979,
   55: 1980, 56: 1981, 57: 1982, 58: 1983, 59: 1984,
   60: 1985, 61: 1986, 62: 1987, 63: 1988,
-  // Heisei Era
+  // Heisei Era (1989-2000)
   1: 1989, 2: 1990, 3: 1991, 4: 1992, 5: 1993,
   6: 1994, 7: 1995, 8: 1996, 9: 1997, 10: 1998,
   11: 1999, 12: 2000,
@@ -36,92 +40,268 @@ export function getEmperorYear(code: number): number | null {
   return EMPEROR_CODE[code] || null;
 }
 
+// Get month name from number
+function getMonthName(month: number): string {
+  const months = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+  return months[month - 1] || 'Unknown';
+}
+
 export function parseSerial(serial: string): SerialParseResult {
   const cleaned = serial.trim().toUpperCase();
   
-  // Modern format: Letter + 8-9 digits (e.g., E24113487, CS12071753)
-  const modernMatch = cleaned.match(/^([A-Z]{1,2})(\d{2})(\d{6,8})$/);
-  if (modernMatch) {
-    const [, prefix, yearDigits] = modernMatch;
-    const yearNum = parseInt(yearDigits, 10);
+  // Modern format with month: E24113487 = E (China) + 24 (2024) + 11 (November) + 3487 (unit)
+  // Patterns: E, S, F, CS, CD prefixes
+  
+  // E-prefix: China-made, E + 2-digit year + 2-digit month + sequence
+  // Example: E24113487 = 2024, November
+  const eMatch = cleaned.match(/^E(\d{2})(\d{2})(\d+)$/);
+  if (eMatch) {
+    const [, yearDigits, monthDigits] = eMatch;
+    const year = 2000 + parseInt(yearDigits, 10);
+    const month = parseInt(monthDigits, 10);
+    const validMonth = month >= 1 && month <= 12 ? month : null;
     
-    // Parse year from prefix
+    return {
+      format: "modern",
+      estimatedYear: year,
+      estimatedMonth: validMonth,
+      yearRange: `${year}`,
+      confidence: "high",
+      country: "China",
+      notes: validMonth 
+        ? `E-prefix serial: Made in China, ${getMonthName(validMonth)} ${year}`
+        : `E-prefix serial: Made in China, ${year}`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "E",
+    };
+  }
+  
+  // CS-prefix: 2010s, CS + 2-digit year + 2-digit month + sequence
+  // Example: CS12071753 = 2012, July
+  const csMatch = cleaned.match(/^CS(\d{2})(\d{2})(\d+)$/);
+  if (csMatch) {
+    const [, yearDigits, monthDigits] = csMatch;
+    const year = 2000 + parseInt(yearDigits, 10);
+    const month = parseInt(monthDigits, 10);
+    const validMonth = month >= 1 && month <= 12 ? month : null;
+    
+    return {
+      format: "modern",
+      estimatedYear: year,
+      estimatedMonth: validMonth,
+      yearRange: `${year}`,
+      confidence: "high",
+      country: "China",
+      notes: validMonth 
+        ? `CS-prefix serial: Made in China, ${getMonthName(validMonth)} ${year}`
+        : `CS-prefix serial: Made in China, ${year}`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "CS",
+    };
+  }
+  
+  // CD-prefix: Mid-2000s, CD + 2-digit year + sequence
+  // Example: CD05069348 = ~2005
+  const cdMatch = cleaned.match(/^CD(\d{2})(\d+)$/);
+  if (cdMatch) {
+    const [, yearDigits] = cdMatch;
+    const year = 2000 + parseInt(yearDigits, 10);
+    
+    return {
+      format: "modern",
+      estimatedYear: year,
+      estimatedMonth: null,
+      yearRange: `${year}`,
+      confidence: "medium",
+      country: "China",
+      notes: `CD-prefix serial: Likely around ${year}`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "CD",
+    };
+  }
+  
+  // F-prefix: 2000s era, F + 1-3 digit year indicator + sequence
+  // Examples: F204, F305120169
+  const fMatch = cleaned.match(/^F(\d{1,3})(\d*)$/);
+  if (fMatch) {
+    const [, yearIndicator] = fMatch;
     let estimatedYear: number | null = null;
-    let confidence: "high" | "medium" | "low" = "medium";
-    let country = "China";
+    let yearRange = "Early-mid 2000s";
     
-    // E-prefix = Recent China-made (E24 = 2024)
-    if (prefix === "E") {
-      estimatedYear = 2000 + yearNum;
-      confidence = "high";
-    }
-    // CS-prefix = 2010s (CS12 = 2012)
-    else if (prefix === "CS") {
-      estimatedYear = 2000 + yearNum;
-      confidence = "high";
-    }
-    // F-prefix = 2000s era (F20 = early 2000s)
-    else if (prefix === "F") {
-      if (yearNum >= 0 && yearNum <= 30) {
-        estimatedYear = 2000 + yearNum;
-        confidence = "medium";
-      }
-    }
-    // S-prefix = 1990s (S98 = 1998)
-    else if (prefix === "S") {
-      if (yearNum >= 90 && yearNum <= 99) {
-        estimatedYear = 1900 + yearNum;
-        confidence = "medium";
-      }
+    // F2xx or F3xx patterns seem to indicate early-mid 2000s
+    const firstDigit = parseInt(yearIndicator[0], 10);
+    if (firstDigit === 2 || firstDigit === 3) {
+      estimatedYear = 2000 + firstDigit;
+      yearRange = `${2002}-${2008}`;
     }
     
     return {
       format: "modern",
       estimatedYear,
-      yearRange: estimatedYear ? `${estimatedYear}` : "Unknown",
-      confidence,
-      country,
-      notes: `Modern Alvarez serial format. ${prefix}-prefix guitars are typically made in China.`,
+      estimatedMonth: null,
+      yearRange,
+      confidence: "medium",
+      country: "China/Korea",
+      notes: "F-prefix serial: Early-mid 2000s production",
       isYairi: false,
       needsEmperorCode: false,
-      prefix,
+      prefix: "F",
+    };
+  }
+  
+  // S-prefix: 1990s, S + 2-digit year + sequence
+  // Examples: S98, S99050225 = 1998, 1999
+  const sMatch = cleaned.match(/^S(\d{2})(\d*)$/);
+  if (sMatch) {
+    const [, yearDigits] = sMatch;
+    const yearNum = parseInt(yearDigits, 10);
+    let estimatedYear: number | null = null;
+    
+    if (yearNum >= 90 && yearNum <= 99) {
+      estimatedYear = 1900 + yearNum;
+    } else if (yearNum >= 0 && yearNum <= 10) {
+      // Could be early 2000s
+      estimatedYear = 2000 + yearNum;
+    }
+    
+    return {
+      format: "modern",
+      estimatedYear,
+      estimatedMonth: null,
+      yearRange: estimatedYear ? `${estimatedYear}` : "1990s",
+      confidence: "medium",
+      country: "Korea/China",
+      notes: estimatedYear 
+        ? `S-prefix serial: Likely ${estimatedYear}` 
+        : "S-prefix serial: Likely 1990s production",
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "S",
+    };
+  }
+  
+  // A-prefix: Vintage models
+  // Example: A82246 (5054)
+  const aMatch = cleaned.match(/^A(\d+)$/);
+  if (aMatch) {
+    return {
+      format: "legacy",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: "1970s-1980s",
+      confidence: "low",
+      country: "Japan",
+      notes: "A-prefix serial: Vintage Japanese-made. Check heelblock for Emperor code to determine exact year.",
+      isYairi: false,
+      needsEmperorCode: true,
+      prefix: "A",
+    };
+  }
+  
+  // Nine-digit format: YYMMXXXXX
+  // Example: 081201626 = 08 (2008), 12 (December), 01626 (unit)
+  const nineDigitMatch = cleaned.match(/^(\d{2})(\d{2})(\d{5})$/);
+  if (nineDigitMatch) {
+    const [, yearDigits, monthDigits] = nineDigitMatch;
+    const yearNum = parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    
+    let estimatedYear: number | null = null;
+    if (yearNum >= 0 && yearNum <= 25) {
+      estimatedYear = 2000 + yearNum;
+    } else if (yearNum >= 80 && yearNum <= 99) {
+      estimatedYear = 1900 + yearNum;
+    }
+    
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    return {
+      format: "nine_digit",
+      estimatedYear,
+      estimatedMonth: validMonth,
+      yearRange: estimatedYear ? `${estimatedYear}` : "Unknown",
+      confidence: "medium",
+      country: "Unknown",
+      notes: estimatedYear && validMonth
+        ? `9-digit serial: Possibly ${getMonthName(validMonth)} ${estimatedYear}`
+        : "9-digit serial format: Dating pattern uncertain",
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: null,
     };
   }
   
   // Yairi format: 4-5 digit number (e.g., 51708, 73508)
+  // These are sequential numbers; year determined by neck block Emperor code
   const yairiMatch = cleaned.match(/^(\d{4,5})$/);
   if (yairiMatch) {
     const num = parseInt(cleaned, 10);
     
-    // Very low numbers (<100000) are likely 1960s-70s legacy
-    if (num < 100000) {
+    // Recent Yairi (70000+) are modern production
+    if (num >= 70000) {
       return {
-        format: num < 10000 ? "yairi" : "legacy",
+        format: "yairi",
         estimatedYear: null,
-        yearRange: "1965-1990 (estimated)",
+        estimatedMonth: null,
+        yearRange: "2000s-present",
         confidence: "low",
         country: "Japan",
-        notes: num < 10000 
-          ? "This appears to be an Alvarez-Yairi serial number. Check the neck block inside the guitar for the Emperor date code."
-          : "Low serial numbers indicate early production. Check the neck block inside the guitar for the Emperor date code to determine exact year.",
-        isYairi: num < 70000,
+        notes: "Alvarez-Yairi serial number. Recent production (serial 70000+). Check neck block inside guitar for date code.",
+        isYairi: true,
         needsEmperorCode: true,
         prefix: null,
       };
     }
+    
+    // Vintage Yairi (<70000)
+    return {
+      format: "yairi",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: "1970s-1990s",
+      confidence: "low",
+      country: "Japan",
+      notes: "Alvarez-Yairi serial number. Check the neck block (heelblock) inside the guitar for the Emperor date code to determine exact year.",
+      isYairi: true,
+      needsEmperorCode: true,
+      prefix: null,
+    };
   }
   
-  // Legacy format: Various older formats
-  const legacyMatch = cleaned.match(/^\d+$/);
-  if (legacyMatch) {
+  // Legacy format: 6-digit numbers (1980s-1990s)
+  const sixDigitMatch = cleaned.match(/^(\d{6})$/);
+  if (sixDigitMatch) {
     const num = parseInt(cleaned, 10);
     return {
       format: "legacy",
       estimatedYear: null,
-      yearRange: num < 500000 ? "1960s-1980s" : "Unknown",
+      estimatedMonth: null,
+      yearRange: num < 500000 ? "1980s" : "1980s-1990s",
       confidence: "low",
       country: "Japan",
-      notes: "This appears to be a vintage Alvarez. Older guitars from the 1970s-80s were made in several Japanese factories. Check the neck block inside the guitar for the Emperor date code.",
+      notes: "Vintage Alvarez serial number. Guitars from this era were made in several Japanese factories. Check neck block for Emperor date code if applicable.",
+      isYairi: false,
+      needsEmperorCode: true,
+      prefix: null,
+    };
+  }
+  
+  // Other numeric formats
+  const numericMatch = cleaned.match(/^\d+$/);
+  if (numericMatch) {
+    const num = parseInt(cleaned, 10);
+    return {
+      format: "legacy",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: num < 100000 ? "1960s-1980s" : "Unknown",
+      confidence: "low",
+      country: "Japan",
+      notes: "This appears to be a vintage Alvarez. Many factory records from the 1970s-1990s were lost. Check neck block inside guitar for Emperor date code.",
       isYairi: false,
       needsEmperorCode: true,
       prefix: null,
@@ -132,6 +312,7 @@ export function parseSerial(serial: string): SerialParseResult {
   return {
     format: "unknown",
     estimatedYear: null,
+    estimatedMonth: null,
     yearRange: "Unknown",
     confidence: "low",
     country: "Unknown",
@@ -151,17 +332,19 @@ export function parseNeckBlock(neckBlock: string): { year: number | null; notes:
     return { year: null, notes: "Invalid neck block number format." };
   }
   
-  // Check Emperor code chart
+  // Check Emperor code chart first (Showa 45-63, Heisei 1-12)
   const emperorYear = getEmperorYear(num);
   if (emperorYear) {
+    const era = num >= 45 ? "Showa" : "Heisei";
     return { 
       year: emperorYear, 
-      notes: `Emperor code ${num} = ${emperorYear}` 
+      notes: `Emperor code ${num} (${era} era) = ${emperorYear}` 
     };
   }
   
-  // After 2000: last two digits of year
-  if (num >= 0 && num <= 25) {
+  // After 2000: last two digits of year (e.g., 09 = 2009)
+  // Note: Post-2000 format ended Emperor coding system
+  if (num >= 13 && num <= 25) {
     const year = 2000 + num;
     return { 
       year, 
@@ -169,15 +352,25 @@ export function parseNeckBlock(neckBlock: string): { year: number | null; notes:
     };
   }
   
-  // Could be ambiguous (e.g., 09 = 1997 or 2009)
+  // Ambiguous codes (1-12 could be Heisei era OR post-2000)
+  // Document notes: "Around 1999, '09' could mean 1997 (9th year Heisei) OR 2009"
   if (num >= 1 && num <= 12) {
     const heiseiYear = EMPEROR_CODE[num];
     const modernYear = 2000 + num;
     return { 
       year: null, 
-      notes: `Ambiguous: Could be ${heiseiYear} (Emperor code) or ${modernYear} (post-2000 format). Check model details to determine era.` 
+      notes: `Ambiguous: Could be ${heiseiYear} (Heisei era Emperor code) or ${modernYear} (post-2000 format). Check model production dates to determine which era.` 
     };
   }
   
-  return { year: null, notes: "Neck block number not found in Emperor code chart." };
+  // Six-digit neck block stamps (e.g., 230130 from AC40SC)
+  // May indicate manufacturing date but format varies
+  if (cleaned.length === 6) {
+    return { 
+      year: null, 
+      notes: `6-digit neck block stamp. May contain date information but format varies by factory.` 
+    };
+  }
+  
+  return { year: null, notes: "Neck block number not found in Emperor code chart. May be from a factory that used different numbering." };
 }
