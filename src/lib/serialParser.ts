@@ -246,41 +246,155 @@ export function parseSerial(serial: string): SerialParseResult {
     };
   }
   
-  // Yairi format: 4-5 digit number (e.g., 51708, 73508)
-  // These are sequential numbers; year determined by neck block Emperor code
-  const yairiMatch = cleaned.match(/^(\d{4,5})$/);
+  // Yairi format: 4-5+ digit number (e.g., 51708, 0908123)
+  // Format: YYMM + sequence (first 2 = year code, next 2 = month)
+  // Pre-2000s: Emperor code (e.g., 51 = Showa 51 = 1976)
+  // Post-2000s: Last 2 digits of year (e.g., 09 = 2009)
+  const yairiMatch = cleaned.match(/^(\d{2})(\d{2})(\d+)$/);
   if (yairiMatch) {
-    const num = parseInt(cleaned, 10);
+    const [, yearCode, monthCode, sequence] = yairiMatch;
+    const yearNum = parseInt(yearCode, 10);
+    const monthNum = parseInt(monthCode, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
     
-    // Recent Yairi (70000+) are modern production
-    if (num >= 70000) {
+    // Check if it's an Emperor code year (Showa 45-63 = 1970-1988)
+    const emperorYear = EMPEROR_CODE[yearNum];
+    
+    if (emperorYear && yearNum >= 45) {
+      // Definite Showa era Emperor code (45-63)
       return {
         format: "yairi",
-        estimatedYear: null,
-        estimatedMonth: null,
-        yearRange: "2000s-present",
-        confidence: "low",
+        estimatedYear: emperorYear,
+        estimatedMonth: validMonth,
+        yearRange: `${emperorYear}`,
+        confidence: "high",
         country: "Japan",
-        notes: "Alvarez-Yairi serial number. Recent production (serial 70000+). Check neck block inside guitar for date code.",
+        notes: validMonth 
+          ? `Alvarez-Yairi: Showa ${yearNum} (${emperorYear}), ${getMonthName(validMonth)}, unit #${sequence}`
+          : `Alvarez-Yairi: Showa ${yearNum} (${emperorYear}), unit #${monthCode}${sequence}`,
         isYairi: true,
-        needsEmperorCode: true,
+        needsEmperorCode: false,
         prefix: null,
       };
     }
     
-    // Vintage Yairi (<70000)
+    // Ambiguous range: 1-12 could be Heisei era (1989-2000) OR post-2000 (2001-2012)
+    if (yearNum >= 1 && yearNum <= 12) {
+      const heiseiYear = EMPEROR_CODE[yearNum]; // 1989-2000
+      const modernYear = 2000 + yearNum; // 2001-2012
+      
+      return {
+        format: "yairi",
+        estimatedYear: null,
+        estimatedMonth: validMonth,
+        yearRange: `${heiseiYear} or ${modernYear}`,
+        confidence: "low",
+        country: "Japan",
+        notes: validMonth
+          ? `Alvarez-Yairi: Ambiguous year code ${yearCode}. Could be Heisei ${yearNum} (${heiseiYear}) or ${modernYear}. Month: ${getMonthName(validMonth)}, unit #${sequence}. Check model production dates to determine era.`
+          : `Alvarez-Yairi: Ambiguous year code ${yearCode}. Could be Heisei ${yearNum} (${heiseiYear}) or ${modernYear}. Unit #${monthCode}${sequence}. Check model production dates.`,
+        isYairi: true,
+        needsEmperorCode: false,
+        prefix: null,
+      };
+    }
+    
+    // Post-2000 clear years (13-25+ = 2013-2025+)
+    if (yearNum >= 13 && yearNum <= 30) {
+      const modernYear = 2000 + yearNum;
+      return {
+        format: "yairi",
+        estimatedYear: modernYear,
+        estimatedMonth: validMonth,
+        yearRange: `${modernYear}`,
+        confidence: "high",
+        country: "Japan",
+        notes: validMonth
+          ? `Alvarez-Yairi: ${modernYear}, ${getMonthName(validMonth)}, unit #${sequence}`
+          : `Alvarez-Yairi: ${modernYear}, unit #${monthCode}${sequence}`,
+        isYairi: true,
+        needsEmperorCode: false,
+        prefix: null,
+      };
+    }
+    
+    // Other 2-digit year codes (could be late Showa 64 doesn't exist, or unknown)
     return {
       format: "yairi",
       estimatedYear: null,
-      estimatedMonth: null,
-      yearRange: "1970s-1990s",
+      estimatedMonth: validMonth,
+      yearRange: "Unknown",
       confidence: "low",
       country: "Japan",
-      notes: "Alvarez-Yairi serial number. Check the neck block (heelblock) inside the guitar for the Emperor date code to determine exact year.",
+      notes: `Alvarez-Yairi serial: Year code ${yearCode} not recognized. May need additional context or neck block inspection.`,
       isYairi: true,
       needsEmperorCode: true,
       prefix: null,
     };
+  }
+  
+  // Short Yairi format (4 digits only, like 5108)
+  const shortYairiMatch = cleaned.match(/^(\d{4})$/);
+  if (shortYairiMatch) {
+    const yearCode = cleaned.substring(0, 2);
+    const monthCode = cleaned.substring(2, 4);
+    const yearNum = parseInt(yearCode, 10);
+    const monthNum = parseInt(monthCode, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    const emperorYear = EMPEROR_CODE[yearNum];
+    
+    if (emperorYear && yearNum >= 45) {
+      return {
+        format: "yairi",
+        estimatedYear: emperorYear,
+        estimatedMonth: validMonth,
+        yearRange: `${emperorYear}`,
+        confidence: "high",
+        country: "Japan",
+        notes: validMonth 
+          ? `Alvarez-Yairi: Showa ${yearNum} (${emperorYear}), ${getMonthName(validMonth)}`
+          : `Alvarez-Yairi: Showa ${yearNum} (${emperorYear})`,
+        isYairi: true,
+        needsEmperorCode: false,
+        prefix: null,
+      };
+    }
+    
+    if (yearNum >= 1 && yearNum <= 12) {
+      const heiseiYear = EMPEROR_CODE[yearNum];
+      const modernYear = 2000 + yearNum;
+      return {
+        format: "yairi",
+        estimatedYear: null,
+        estimatedMonth: validMonth,
+        yearRange: `${heiseiYear} or ${modernYear}`,
+        confidence: "low",
+        country: "Japan",
+        notes: `Alvarez-Yairi: Ambiguous year code. Could be Heisei ${yearNum} (${heiseiYear}) or ${modernYear}. Check model production dates.`,
+        isYairi: true,
+        needsEmperorCode: false,
+        prefix: null,
+      };
+    }
+    
+    if (yearNum >= 13 && yearNum <= 30) {
+      const modernYear = 2000 + yearNum;
+      return {
+        format: "yairi",
+        estimatedYear: modernYear,
+        estimatedMonth: validMonth,
+        yearRange: `${modernYear}`,
+        confidence: "high",
+        country: "Japan",
+        notes: validMonth
+          ? `Alvarez-Yairi: ${modernYear}, ${getMonthName(validMonth)}`
+          : `Alvarez-Yairi: ${modernYear}`,
+        isYairi: true,
+        needsEmperorCode: false,
+        prefix: null,
+      };
+    }
   }
   
   // Legacy format: 6-digit numbers (1980s-1990s)
