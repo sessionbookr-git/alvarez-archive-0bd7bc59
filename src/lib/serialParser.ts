@@ -53,50 +53,42 @@ export function parseSerial(serial: string): SerialParseResult {
   // Modern format with month: E24113487 = E (China) + 24 (2024) + 11 (November) + 3487 (unit)
   // Patterns: E, S, F, CS, CD prefixes
   
-  // E-prefix: China-made, E + 2-digit year + 2-digit month + sequence
-  // Example: E24113487 = 2024, November
-  const eMatch = cleaned.match(/^E(\d{2})(\d{2})(\d+)$/);
+  // E-prefix: China-made, E + 2-digit year + batch/factory code + sequence
+  // Example: E25061056 = 2025, batch 06, unit 1056
+  const eMatch = cleaned.match(/^E(\d{2})(\d+)$/);
   if (eMatch) {
-    const [, yearDigits, monthDigits] = eMatch;
+    const [, yearDigits] = eMatch;
     const year = 2000 + parseInt(yearDigits, 10);
-    const month = parseInt(monthDigits, 10);
-    const validMonth = month >= 1 && month <= 12 ? month : null;
     
     return {
       format: "modern",
       estimatedYear: year,
-      estimatedMonth: validMonth,
+      estimatedMonth: null,
       yearRange: `${year}`,
       confidence: "high",
       country: "China",
-      notes: validMonth 
-        ? `E-prefix serial: Made in China, ${getMonthName(validMonth)} ${year}`
-        : `E-prefix serial: Made in China, ${year}`,
+      notes: `E-prefix serial: Made in China, ${year}. Remaining digits indicate batch/production sequence.`,
       isYairi: false,
       needsEmperorCode: false,
       prefix: "E",
     };
   }
   
-  // CS-prefix: 2010s, CS + 2-digit year + 2-digit month + sequence
-  // Example: CS12071753 = 2012, July
-  const csMatch = cleaned.match(/^CS(\d{2})(\d{2})(\d+)$/);
+  // CS-prefix: 2010s China, CS + 2-digit year + batch/sequence
+  // Example: CS12071753 = 2012
+  const csMatch = cleaned.match(/^CS(\d{2})(\d+)$/);
   if (csMatch) {
-    const [, yearDigits, monthDigits] = csMatch;
+    const [, yearDigits] = csMatch;
     const year = 2000 + parseInt(yearDigits, 10);
-    const month = parseInt(monthDigits, 10);
-    const validMonth = month >= 1 && month <= 12 ? month : null;
     
     return {
       format: "modern",
       estimatedYear: year,
-      estimatedMonth: validMonth,
+      estimatedMonth: null,
       yearRange: `${year}`,
       confidence: "high",
       country: "China",
-      notes: validMonth 
-        ? `CS-prefix serial: Made in China, ${getMonthName(validMonth)} ${year}`
-        : `CS-prefix serial: Made in China, ${year}`,
+      notes: `CS-prefix serial: Made in China, ${year}`,
       isYairi: false,
       needsEmperorCode: false,
       prefix: "CS",
