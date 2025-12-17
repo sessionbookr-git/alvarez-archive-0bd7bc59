@@ -248,19 +248,20 @@ export function parseSerial(serial: string): SerialParseResult {
   
   // Yairi format: 4-6 digit numeric serials (e.g., 5152, 75466, 510812)
   // IMPORTANT: Yairi serial numbers are SEQUENCE NUMBERS ONLY - they do NOT encode the year
-  // The year must be determined from the NECK BLOCK stamp (2-digit code on heel block or label)
+  // Vintage Yairis (pre-2000s): Check NECK BLOCK stamp for 2-digit Emperor code
+  // Modern Yairis (2000s+): NO neck block stamp - year cannot be determined from serial alone
   const yairiMatch = cleaned.match(/^(\d{4,6})$/);
   if (yairiMatch) {
     return {
       format: "yairi",
       estimatedYear: null,
       estimatedMonth: null,
-      yearRange: "Check neck block",
-      confidence: "medium",
+      yearRange: "See notes",
+      confidence: "low",
       country: "Japan",
-      notes: `Alvarez-Yairi serial #${cleaned}. To determine the production year, check the 2-digit neck block stamp (inside body at neck joint or on label). Neck block codes: Showa era (45-63 = 1970-1988), Heisei era (1-12 = 1989-2000), or post-2000 (13+ = 2013+). Codes 1-12 are ambiguous and could mean either Heisei era or 2001-2012.`,
+      notes: `Alvarez-Yairi serial #${cleaned} is a sequence number only and does not encode the production year. For vintage Yairis (pre-2000s), check the 2-digit neck block stamp inside the body. Neck block codes: Showa era (45-63 = 1970-1988), Heisei era (1-12 = 1989-2000), post-2000 (13+ = 2013+). Note: Modern Yairis do not have neck block stamps - the production year cannot be determined from the serial number alone.`,
       isYairi: true,
-      needsEmperorCode: true,
+      needsEmperorCode: false, // Changed since modern Yairis don't have stamps
       prefix: null,
     };
   }
