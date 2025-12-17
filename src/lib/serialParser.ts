@@ -448,43 +448,46 @@ export function parseSerial(serial: string): SerialParseResult {
   };
 }
 
-// Parse neck block Emperor code
-export function parseNeckBlock(neckBlock: string): { year: number | null; notes: string } {
+// Parse neck block Emperor code (for Yairi guitars)
+// Showa era: 45-63 = 1970-1988
+// Heisei era: 1-12 = 1989-2000
+// Post-2000: 01-99 = 2001-2099 (last 2 digits of year)
+export function parseNeckBlock(neckBlock: string): { year: number | null; possibleYears?: number[]; notes: string } {
   const cleaned = neckBlock.trim();
+  
+  // Handle 2-digit codes with leading zeros (e.g., "07" vs "7")
   const num = parseInt(cleaned, 10);
   
   if (isNaN(num)) {
     return { year: null, notes: "Invalid neck block number format." };
   }
   
-  // Check Emperor code chart first (Showa 45-63, Heisei 1-12)
-  const emperorYear = getEmperorYear(num);
-  if (emperorYear) {
-    const era = num >= 45 ? "Showa" : "Heisei";
+  // Check Showa era first (45-63 = 1970-1988) - unambiguous
+  if (num >= 45 && num <= 63) {
+    const emperorYear = EMPEROR_CODE[num];
     return { 
       year: emperorYear, 
-      notes: `Emperor code ${num} (${era} era) = ${emperorYear}` 
+      notes: `Showa era code ${num} = ${emperorYear}` 
     };
   }
   
-  // After 2000: last two digits of year (e.g., 09 = 2009)
-  // Note: Post-2000 format ended Emperor coding system
-  if (num >= 13 && num <= 25) {
+  // Ambiguous range: 1-12 could be Heisei (1989-2000) OR post-2000 (2001-2012)
+  if (num >= 1 && num <= 12) {
+    const heiseiYear = EMPEROR_CODE[num]; // 1989-2000
+    const modernYear = 2000 + num; // 2001-2012
+    return { 
+      year: null,
+      possibleYears: [heiseiYear, modernYear],
+      notes: `Ambiguous code ${num}: Could be ${heiseiYear} (Heisei era) or ${modernYear} (post-2000). Check model production dates and guitar features to determine era.` 
+    };
+  }
+  
+  // Clear post-2000 codes (13-99 = 2013-2099)
+  if (num >= 13 && num <= 99) {
     const year = 2000 + num;
     return { 
       year, 
       notes: `Post-2000 format: ${year}` 
-    };
-  }
-  
-  // Ambiguous codes (1-12 could be Heisei era OR post-2000)
-  // Document notes: "Around 1999, '09' could mean 1997 (9th year Heisei) OR 2009"
-  if (num >= 1 && num <= 12) {
-    const heiseiYear = EMPEROR_CODE[num];
-    const modernYear = 2000 + num;
-    return { 
-      year: null, 
-      notes: `Ambiguous: Could be ${heiseiYear} (Heisei era Emperor code) or ${modernYear} (post-2000 format). Check model production dates to determine which era.` 
     };
   }
   
@@ -497,5 +500,5 @@ export function parseNeckBlock(neckBlock: string): { year: number | null; notes:
     };
   }
   
-  return { year: null, notes: "Neck block number not found in Emperor code chart. May be from a factory that used different numbering." };
+  return { year: null, notes: "Neck block number not found in chart. May be from a factory that used different numbering." };
 }
