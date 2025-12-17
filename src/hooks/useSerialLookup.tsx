@@ -7,6 +7,7 @@ export interface SerialLookupResult {
   confidence: "high" | "medium" | "low";
   confidencePercent: number;
   yearRange: string;
+  estimatedMonth: number | null;
   models: Array<{
     id: string;
     name: string;
@@ -34,6 +35,7 @@ export interface SerialLookupResult {
   needsEmperorCode: boolean;
   neckBlockYear: number | null;
   neckBlockNotes: string | null;
+  prefix: string | null;
 }
 
 export const useSerialLookup = () => {
@@ -170,6 +172,7 @@ export const useSerialLookup = () => {
         confidence,
         confidencePercent,
         yearRange,
+        estimatedMonth: parsed.estimatedMonth,
         models: matchedModels,
         country,
         patterns: (patterns || []).map((p) => ({
@@ -191,6 +194,7 @@ export const useSerialLookup = () => {
         needsEmperorCode: parsed.needsEmperorCode,
         neckBlockYear,
         neckBlockNotes,
+        prefix: parsed.prefix,
       });
     } catch (err) {
       console.error("Serial lookup error:", err);
