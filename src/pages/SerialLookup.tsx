@@ -59,7 +59,10 @@ const SerialLookup = () => {
             </h3>
             <ul className="text-sm text-muted-foreground space-y-1">
               <li><strong>Yairi Series:</strong> 4-5 digit number (e.g., 51708)</li>
-              <li><strong>Modern Alvarez:</strong> Letter + 8-9 digits (e.g., E24113487)</li>
+              <li><strong>Modern (E-prefix):</strong> E + year + month + sequence (e.g., E24113487 = Nov 2024)</li>
+              <li><strong>2010s (CS-prefix):</strong> CS + year + month + sequence (e.g., CS12071753 = Jul 2012)</li>
+              <li><strong>2000s (F/CD-prefix):</strong> F or CD + year digits + sequence</li>
+              <li><strong>1990s (S-prefix):</strong> S + year digits + sequence (e.g., S99 = 1999)</li>
               <li><strong>Vintage (1970s-80s):</strong> May require neck block number for dating</li>
             </ul>
           </div>
@@ -170,9 +173,10 @@ const SerialLookup = () => {
                   <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
                     <h3 className="font-medium">
-                      {result.serialFormat === "modern" && "Modern Alvarez Serial"}
+                      {result.serialFormat === "modern" && `Modern Alvarez Serial${result.prefix ? ` (${result.prefix}-prefix)` : ''}`}
                       {result.serialFormat === "yairi" && "Alvarez-Yairi Serial"}
                       {result.serialFormat === "legacy" && "Vintage Alvarez Serial"}
+                      {result.serialFormat === "nine_digit" && "9-Digit Format Serial"}
                       {result.serialFormat === "unknown" && "Unknown Format"}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">{result.parsedNotes}</p>
@@ -217,11 +221,19 @@ const SerialLookup = () => {
               </div>
 
               {/* Details */}
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <div className="p-6 border border-border rounded-lg">
                   <h3 className="text-sm text-muted-foreground mb-2">Estimated Year</h3>
                   <p className="text-2xl font-semibold">{result.yearRange}</p>
                 </div>
+                {result.estimatedMonth && (
+                  <div className="p-6 border border-border rounded-lg">
+                    <h3 className="text-sm text-muted-foreground mb-2">Estimated Month</h3>
+                    <p className="text-2xl font-semibold">
+                      {new Date(2000, result.estimatedMonth - 1).toLocaleString('default', { month: 'long' })}
+                    </p>
+                  </div>
+                )}
                 <div className="p-6 border border-border rounded-lg">
                   <h3 className="text-sm text-muted-foreground mb-2">Country of Manufacture</h3>
                   <p className="text-2xl font-semibold">{result.country}</p>
