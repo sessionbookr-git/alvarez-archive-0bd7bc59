@@ -106,7 +106,7 @@ const Timeline = () => {
                       }`}
                     >
                       <div className={`flex items-center gap-3 mb-3 ${index % 2 === 0 ? "md:justify-end" : ""}`}>
-                        <span className={`inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                        <span className={`inline-flex items-center gap-2 text-xs font-bold tracking-wider ${
                           event.highlight ? "text-primary" : "text-muted-foreground"
                         }`}>
                           {event.year}
