@@ -1,16 +1,20 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useModel } from "@/hooks/useModels";
+import { useAuth } from "@/hooks/useAuth";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Globe, Music, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, Globe, Music, Loader2, Edit } from "lucide-react";
+import EditModelDialog from "@/components/EditModelDialog";
 
 const ModelDetail = () => {
   const { modelId } = useParams<{ modelId: string }>();
   const { data: model, isLoading, error } = useModel(modelId || "");
+  const { isAdmin } = useAuth();
   const { track } = useAnalytics();
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (model) {
@@ -58,13 +62,21 @@ const ModelDetail = () => {
       <main className="flex-1 py-12">
         <div className="container-wide">
           {/* Back Link */}
-          <Link 
-            to="/encyclopedia" 
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-8"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Encyclopedia
-          </Link>
+          <div className="flex items-center justify-between mb-8">
+            <Link 
+              to="/encyclopedia" 
+              className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Encyclopedia
+            </Link>
+            {isAdmin && (
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Model
+              </Button>
+            )}
+          </div>
 
           <div className="grid gap-12 lg:grid-cols-2">
             {/* Image Section */}
@@ -98,7 +110,9 @@ const ModelDetail = () => {
                   <p className="text-sm font-medium">
                     {model.production_start_year && model.production_end_year
                       ? `${model.production_start_year}-${model.production_end_year}`
-                      : model.production_start_year || "Unknown"}
+                      : model.production_start_year 
+                        ? `${model.production_start_year}-present`
+                        : "Unknown"}
                   </p>
                   <p className="text-xs text-muted-foreground">Production</p>
                 </div>
@@ -152,6 +166,26 @@ const ModelDetail = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Edit Dialog */}
+      {model && (
+        <EditModelDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          model={{
+            id: model.id,
+            model_name: model.model_name,
+            series: model.series,
+            body_shape: model.body_shape,
+            country_of_manufacture: model.country_of_manufacture,
+            production_start_year: model.production_start_year,
+            production_end_year: model.production_end_year,
+            description: model.description,
+            photo_url: (model as any).photo_url,
+            key_features: model.key_features as string[] | null,
+          }}
+        />
+      )}
     </div>
   );
 };

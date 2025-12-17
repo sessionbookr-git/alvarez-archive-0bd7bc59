@@ -3,17 +3,21 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useModels } from "@/hooks/useModels";
+import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Edit } from "lucide-react";
+import EditModelDialog from "@/components/EditModelDialog";
 
-const decades = ["All", "1970s", "1980s", "1990s", "2000s"];
+const decades = ["All", "1970s", "1980s", "1990s", "2000s", "2010s", "2020s"];
 const countries = ["All", "Japan", "Korea", "China"];
 
 const Encyclopedia = () => {
   const [search, setSearch] = useState("");
   const [selectedDecade, setSelectedDecade] = useState("All");
   const [selectedCountry, setSelectedCountry] = useState("All");
+  const [editingModel, setEditingModel] = useState<any>(null);
+  const { isAdmin } = useAuth();
 
   const { data: models, isLoading, error } = useModels({
     decade: selectedDecade,
@@ -34,6 +38,9 @@ const Encyclopedia = () => {
             <p className="text-muted-foreground">
               Browse our database of Alvarez guitar models from the 1970s to present.
             </p>
+            {isAdmin && (
+              <p className="text-xs text-accent mt-2">Admin mode: Click edit icon on any model to modify</p>
+            )}
           </div>
 
           {/* Filters */}
@@ -54,7 +61,7 @@ const Encyclopedia = () => {
             <div className="flex flex-wrap items-center justify-center gap-6">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Decade:</span>
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-wrap">
                   {decades.map((decade) => (
                     <Button
                       key={decade}
@@ -115,30 +122,56 @@ const Encyclopedia = () => {
               {models && models.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {models.map((model, index) => (
-                    <Link
+                    <div
                       key={model.id}
-                      to={`/encyclopedia/${model.id}`}
-                      className="group p-5 border border-border rounded-lg hover:border-foreground/20 transition-all duration-300 opacity-0 animate-fade-in"
+                      className="group relative p-5 border border-border rounded-lg hover:border-foreground/20 transition-all duration-300 opacity-0 animate-fade-in"
                       style={{ animationDelay: `${index * 30}ms` }}
                     >
-                      {/* Placeholder Image */}
-                      <div className="aspect-square bg-secondary rounded-md mb-4 flex items-center justify-center">
-                        <span className="text-xs text-muted-foreground">Photo</span>
-                      </div>
+                      {/* Admin Edit Button */}
+                      {isAdmin && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setEditingModel(model);
+                          }}
+                          className="absolute top-2 right-2 z-10 p-2 bg-background/90 border border-border rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent"
+                          title="Edit model"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                      )}
+                      
+                      <Link to={`/encyclopedia/${model.id}`}>
+                        {/* Image */}
+                        <div className="aspect-square bg-secondary rounded-md mb-4 flex items-center justify-center overflow-hidden">
+                          {(model as any).photo_url ? (
+                            <img 
+                              src={(model as any).photo_url} 
+                              alt={model.model_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No Photo</span>
+                          )}
+                        </div>
 
-                      <h3 className="font-semibold mb-1 group-hover:text-accent transition-colors">
-                        {model.model_name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {model.production_start_year && model.production_end_year
-                          ? `${model.production_start_year}-${model.production_end_year}`
-                          : model.production_start_year || "Year unknown"}
-                      </p>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{model.country_of_manufacture || "Unknown"}</span>
-                        <span>{model.series || ""}</span>
-                      </div>
-                    </Link>
+                        <h3 className="font-semibold mb-1 group-hover:text-accent transition-colors">
+                          {model.model_name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {model.production_start_year && model.production_end_year
+                            ? `${model.production_start_year}-${model.production_end_year}`
+                            : model.production_start_year 
+                              ? `${model.production_start_year}-present`
+                              : "Year unknown"}
+                        </p>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{model.country_of_manufacture || "Unknown"}</span>
+                          <span>{model.series || ""}</span>
+                        </div>
+                      </Link>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -161,6 +194,15 @@ const Encyclopedia = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Edit Dialog */}
+      {editingModel && (
+        <EditModelDialog
+          open={!!editingModel}
+          onOpenChange={(open) => !open && setEditingModel(null)}
+          model={editingModel}
+        />
+      )}
     </div>
   );
 };
