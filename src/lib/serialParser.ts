@@ -50,66 +50,85 @@ function getMonthName(month: number): string {
 export function parseSerial(serial: string): SerialParseResult {
   const cleaned = serial.trim().toUpperCase();
   
-  // Modern format with month: E24113487 = E (China) + 24 (2024) + 11 (November) + 3487 (unit)
+  // Modern format: PREFIX + YY (year) + MM (month) + sequence
+  // E25115614 = E (China) + 25 (2025) + 11 (November) + 5614 (unit #5614)
   // Patterns: E, S, F, CS, CD prefixes
   
-  // E-prefix: China-made, E + 2-digit year + batch/factory code + sequence
-  // Example: E25061056 = 2025, batch 06, unit 1056
-  const eMatch = cleaned.match(/^E(\d{2})(\d+)$/);
+  // E-prefix: China-made, E + 2-digit year + 2-digit month + sequence
+  // Example: E25115614 = 2025, November, unit 5614
+  const eMatch = cleaned.match(/^E(\d{2})(\d{2})(\d+)$/);
   if (eMatch) {
-    const [, yearDigits] = eMatch;
+    const [, yearDigits, monthDigits, sequence] = eMatch;
     const year = 2000 + parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    const monthNote = validMonth 
+      ? `${getMonthName(validMonth)} ${year}, unit #${sequence}`
+      : `${year}, unit #${monthDigits}${sequence}`;
     
     return {
       format: "modern",
       estimatedYear: year,
-      estimatedMonth: null,
+      estimatedMonth: validMonth,
       yearRange: `${year}`,
       confidence: "high",
       country: "China",
-      notes: `E-prefix serial: Made in China, ${year}. Remaining digits indicate batch/production sequence.`,
+      notes: `E-prefix serial: Made in China, ${monthNote}.`,
       isYairi: false,
       needsEmperorCode: false,
       prefix: "E",
     };
   }
   
-  // CS-prefix: 2010s China, CS + 2-digit year + batch/sequence
-  // Example: CS12071753 = 2012
-  const csMatch = cleaned.match(/^CS(\d{2})(\d+)$/);
+  // CS-prefix: 2010s China, CS + 2-digit year + 2-digit month + sequence
+  // Example: CS12071753 = 2012, July, unit 1753
+  const csMatch = cleaned.match(/^CS(\d{2})(\d{2})(\d+)$/);
   if (csMatch) {
-    const [, yearDigits] = csMatch;
+    const [, yearDigits, monthDigits, sequence] = csMatch;
     const year = 2000 + parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    const monthNote = validMonth 
+      ? `${getMonthName(validMonth)} ${year}, unit #${sequence}`
+      : `${year}, unit #${monthDigits}${sequence}`;
     
     return {
       format: "modern",
       estimatedYear: year,
-      estimatedMonth: null,
+      estimatedMonth: validMonth,
       yearRange: `${year}`,
       confidence: "high",
       country: "China",
-      notes: `CS-prefix serial: Made in China, ${year}`,
+      notes: `CS-prefix serial: Made in China, ${monthNote}.`,
       isYairi: false,
       needsEmperorCode: false,
       prefix: "CS",
     };
   }
   
-  // CD-prefix: Mid-2000s, CD + 2-digit year + sequence
-  // Example: CD05069348 = ~2005
-  const cdMatch = cleaned.match(/^CD(\d{2})(\d+)$/);
+  // CD-prefix: Mid-2000s, CD + 2-digit year + 2-digit month + sequence
+  // Example: CD05069348 = 2005, June, unit 9348
+  const cdMatch = cleaned.match(/^CD(\d{2})(\d{2})(\d+)$/);
   if (cdMatch) {
-    const [, yearDigits] = cdMatch;
+    const [, yearDigits, monthDigits, sequence] = cdMatch;
     const year = 2000 + parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    const monthNote = validMonth 
+      ? `${getMonthName(validMonth)} ${year}, unit #${sequence}`
+      : `${year}, unit #${monthDigits}${sequence}`;
     
     return {
       format: "modern",
       estimatedYear: year,
-      estimatedMonth: null,
+      estimatedMonth: validMonth,
       yearRange: `${year}`,
       confidence: "medium",
       country: "China",
-      notes: `CD-prefix serial: Likely around ${year}`,
+      notes: `CD-prefix serial: Likely ${monthNote}`,
       isYairi: false,
       needsEmperorCode: false,
       prefix: "CD",
