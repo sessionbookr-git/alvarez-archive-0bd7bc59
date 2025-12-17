@@ -188,44 +188,56 @@ const SerialLookup = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Emperor Code Prompt (if needed and no neck block provided) */}
-              {result.needsEmperorCode && !result.neckBlockYear && (
-                <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                  <h3 className="font-medium text-amber-700 dark:text-amber-400 mb-2">
-                    📅 Check Your Neck Block Number
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    For accurate dating of vintage Japanese guitars, look inside the soundhole near the neck joint for a stamped number. Enter it above to get the exact year.
+              {/* Confidence - show differently for Yairi without neck block */}
+              {result.isYairi && !result.neckBlockYear ? (
+                <div className="p-6 border border-amber-500/30 bg-amber-500/5 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-3">Dating Information Required</h2>
+                  <p className="text-muted-foreground mb-4">
+                    Yairi serial numbers are production sequence numbers only - they don't encode the year. 
+                    To determine your guitar's production date:
                   </p>
+                  <ul className="text-sm text-muted-foreground space-y-2 mb-4">
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-600 font-medium">1.</span>
+                      <span><strong>Vintage Yairis (pre-2000s):</strong> Check the neck block stamp inside the soundhole - this is an Emperor date code</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-600 font-medium">2.</span>
+                      <span><strong>Modern Yairis (2000s+):</strong> No neck block stamps - contact Alvarez customer service with your serial number</span>
+                    </li>
+                  </ul>
                   <button 
                     onClick={() => setShowEmperorChart(true)}
-                    className="text-sm text-primary hover:underline"
+                    className="text-sm text-primary hover:underline font-medium"
                   >
                     View Emperor Code Chart →
                   </button>
                 </div>
+              ) : (
+                <div className="p-6 border border-border rounded-lg">
+                  <h2 className="text-lg font-semibold mb-4">Match Confidence</h2>
+                  <ConfidenceMeter level={result.confidence} percentage={result.confidencePercent} />
+                  <p className="text-sm text-muted-foreground mt-3">
+                    {result.neckBlockYear 
+                      ? "Based on Emperor date code from neck block" 
+                      : result.serialFormat === "modern"
+                      ? "Based on modern serial number format"
+                      : "Based on serial number patterns and database entries"}
+                  </p>
+                </div>
               )}
-
-              {/* Confidence */}
-              <div className="p-6 border border-border rounded-lg">
-                <h2 className="text-lg font-semibold mb-4">Match Confidence</h2>
-                <ConfidenceMeter level={result.confidence} percentage={result.confidencePercent} />
-                <p className="text-sm text-muted-foreground mt-3">
-                  {result.neckBlockYear 
-                    ? "Based on Emperor date code from neck block" 
-                    : result.serialFormat === "modern"
-                    ? "Based on modern serial number format"
-                    : "Based on serial number patterns and database entries"}
-                </p>
-              </div>
 
               {/* Details */}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <div className="p-6 border border-border rounded-lg">
-                  <h3 className="text-sm text-muted-foreground mb-2">Estimated Year</h3>
-                  <p className="text-2xl font-semibold">{result.yearRange}</p>
-                </div>
+                {/* Year - hide for Yairi unless we have neck block date */}
+                {(!result.isYairi || result.neckBlockYear) && (
+                  <div className="p-6 border border-border rounded-lg">
+                    <h3 className="text-sm text-muted-foreground mb-2">
+                      {result.neckBlockYear ? "Production Year" : "Estimated Year"}
+                    </h3>
+                    <p className="text-2xl font-semibold">{result.yearRange}</p>
+                  </div>
+                )}
                 {result.estimatedMonth && (
                   <div className="p-6 border border-border rounded-lg">
                     <h3 className="text-sm text-muted-foreground mb-2">Estimated Month</h3>
@@ -265,7 +277,7 @@ const SerialLookup = () => {
                     ))}
                   </div>
                 </div>
-              ) : (
+              ) : !result.isYairi ? (
                 <div className="p-6 border border-border rounded-lg bg-secondary/30">
                   <h2 className="text-lg font-semibold mb-2">No Model Match Found</h2>
                   <p className="text-muted-foreground">
@@ -273,7 +285,7 @@ const SerialLookup = () => {
                     Consider submitting your guitar to help us expand the database.
                   </p>
                 </div>
-              )}
+              ) : null}
 
               {/* Pattern Notes */}
               {result.patterns.length > 0 && result.patterns[0].confidence_notes && (
