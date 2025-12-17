@@ -6,6 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ArchiveModel {
+  name: string;
+  url: string;
+  thumbnail?: string;
+  description?: string;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -26,87 +33,115 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const modelFilter = body.model_name;
 
-    // Fetch models from database
+    console.log('Step 1: Scraping archive page for model list...');
+
+    // Scrape the archive page to get all models
+    const archiveResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: 'https://alvarezguitars.com/guitar-archive/',
+        formats: ['html', 'links'],
+        onlyMainContent: false,
+      }),
+    });
+
+    if (!archiveResponse.ok) {
+      const errorText = await archiveResponse.text();
+      throw new Error(`Failed to scrape archive: ${archiveResponse.status} - ${errorText}`);
+    }
+
+    const archiveData = await archiveResponse.json();
+    const archiveHtml = archiveData.data?.html || '';
+    const archiveLinks = archiveData.data?.links || [];
+
+    console.log(`Archive page scraped. Found ${archiveLinks.length} total links`);
+
+    // Extract guitar product URLs from archive
+    const guitarUrls = archiveLinks.filter((link: string) => 
+      link.includes('/guitar/') && 
+      !link.includes('/guitar-archive') &&
+      !link.includes('?')
+    );
+
+    console.log(`Found ${guitarUrls.length} guitar product URLs`);
+
+    // Build a map of model names to URLs from the archive
+    const archiveModels: ArchiveModel[] = [];
+    for (const url of guitarUrls) {
+      // Extract model name from URL: /guitar/artist-ab60ce/ -> artist-ab60ce
+      const match = url.match(/\/guitar\/([^\/]+)\/?$/);
+      if (match) {
+        const slug = match[1];
+        // Convert slug to model name variants for matching
+        const normalizedName = slug.replace(/-/g, ' ').toUpperCase();
+        archiveModels.push({
+          name: slug,
+          url: url,
+        });
+      }
+    }
+
+    console.log(`Parsed ${archiveModels.length} models from archive`);
+
+    // Fetch our database models
     let query = supabase.from('models').select('id, model_name, photo_url, description');
     if (modelFilter) {
       query = query.eq('model_name', modelFilter);
     }
     
-    const { data: models, error: modelsError } = await query;
+    const { data: dbModels, error: modelsError } = await query;
     
     if (modelsError) {
       throw new Error(`Failed to fetch models: ${modelsError.message}`);
     }
 
-    console.log(`Found ${models?.length || 0} models to process`);
+    console.log(`Found ${dbModels?.length || 0} models in database to match`);
 
     const results: Array<{
       model_name: string;
       status: string;
+      matched_url?: string;
       photo_url?: string;
       description?: string;
       error?: string;
     }> = [];
 
-    // Process each model
-    for (const model of models || []) {
-      console.log(`Processing model: ${model.model_name}`);
+    // Match and process each database model
+    for (const dbModel of dbModels || []) {
+      console.log(`Processing: ${dbModel.model_name}`);
+
+      // Normalize model name for matching
+      const modelNameNormalized = dbModel.model_name.toLowerCase().replace(/[\s-]/g, '');
       
-      try {
-        // Search for the model on alvarez website
-        const searchUrl = `https://alvarezguitars.com/?s=${encodeURIComponent(model.model_name)}`;
-        
-        console.log(`Searching: ${searchUrl}`);
-        
-        // First, search for the model
-        const searchResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: searchUrl,
-            formats: ['markdown', 'links'],
-            onlyMainContent: true,
-          }),
+      // Find matching archive model
+      const matchedArchiveModel = archiveModels.find(am => {
+        const archiveSlugNormalized = am.name.replace(/-/g, '');
+        // Try exact match first
+        if (archiveSlugNormalized === modelNameNormalized) return true;
+        // Try partial match (archive contains our model name)
+        if (archiveSlugNormalized.includes(modelNameNormalized)) return true;
+        // Try reverse partial match
+        if (modelNameNormalized.includes(archiveSlugNormalized)) return true;
+        return false;
+      });
+
+      if (!matchedArchiveModel) {
+        console.log(`No archive match for: ${dbModel.model_name}`);
+        results.push({
+          model_name: dbModel.model_name,
+          status: 'no_archive_match',
+          error: 'Model not found in Alvarez archive',
         });
+        continue;
+      }
 
-        if (!searchResponse.ok) {
-          const errorText = await searchResponse.text();
-          console.error(`Search failed for ${model.model_name}: ${errorText}`);
-          results.push({
-            model_name: model.model_name,
-            status: 'search_failed',
-            error: `Search failed: ${searchResponse.status}`,
-          });
-          continue;
-        }
+      console.log(`Matched to: ${matchedArchiveModel.url}`);
 
-        const searchData = await searchResponse.json();
-        const links = searchData.data?.links || [];
-        
-        // Find product page link that matches the model
-        const productLink = links.find((link: string) => 
-          link.includes('/product/') && 
-          link.toLowerCase().includes(model.model_name.toLowerCase().replace(/\s+/g, '-'))
-        ) || links.find((link: string) => 
-          link.includes('/product/') && 
-          link.toLowerCase().includes(model.model_name.toLowerCase())
-        );
-
-        if (!productLink) {
-          console.log(`No product page found for ${model.model_name}`);
-          results.push({
-            model_name: model.model_name,
-            status: 'no_product_page',
-            error: 'Could not find product page',
-          });
-          continue;
-        }
-
-        console.log(`Found product page: ${productLink}`);
-
+      try {
         // Scrape the product page
         const productResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
           method: 'POST',
@@ -115,19 +150,22 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            url: productLink,
+            url: matchedArchiveModel.url,
             formats: ['markdown', 'html'],
             onlyMainContent: true,
           }),
         });
 
         if (!productResponse.ok) {
-          console.error(`Product scrape failed for ${model.model_name}`);
+          console.error(`Scrape failed for ${dbModel.model_name}`);
           results.push({
-            model_name: model.model_name,
+            model_name: dbModel.model_name,
             status: 'scrape_failed',
-            error: 'Failed to scrape product page',
+            matched_url: matchedArchiveModel.url,
+            error: `HTTP ${productResponse.status}`,
           });
+          // Rate limit
+          await new Promise(resolve => setTimeout(resolve, 500));
           continue;
         }
 
@@ -135,23 +173,30 @@ serve(async (req) => {
         const html = productData.data?.html || '';
         const markdown = productData.data?.markdown || '';
 
-        // Extract product image from HTML
+        // Extract product image from HTML - try multiple patterns
         let photoUrl = null;
-        const imgMatch = html.match(/<img[^>]+class="[^"]*wp-post-image[^"]*"[^>]+src="([^"]+)"/i) ||
-                         html.match(/<img[^>]+src="([^"]+)"[^>]+class="[^"]*wp-post-image[^"]*"/i) ||
-                         html.match(/data-large_image="([^"]+)"/i) ||
-                         html.match(/<img[^>]+src="(https:\/\/alvarezguitars\.com\/wp-content\/uploads[^"]+)"/i);
+        const imgPatterns = [
+          /<img[^>]+class="[^"]*wp-post-image[^"]*"[^>]+src="([^"]+)"/i,
+          /<img[^>]+src="([^"]+)"[^>]+class="[^"]*wp-post-image[^"]*"/i,
+          /data-large_image="([^"]+)"/i,
+          /<img[^>]+src="(https:\/\/alvarezguitars\.com\/wp-content\/uploads\/[^"]+\.(?:jpg|png|webp)[^"]*)"/i,
+          /src="(https:\/\/alvarezguitars\.com\/wp-content\/uploads\/[^"]+\.(?:jpg|png|webp)[^"]*)"/i,
+        ];
         
-        if (imgMatch) {
-          photoUrl = imgMatch[1];
+        for (const pattern of imgPatterns) {
+          const match = html.match(pattern);
+          if (match && match[1]) {
+            photoUrl = match[1];
+            break;
+          }
         }
 
-        // Extract description from markdown - look for product description section
+        // Extract description from markdown
         let description = null;
         const descriptionPatterns = [
           /## Description\s*\n+([\s\S]*?)(?=\n##|\n\*\*|$)/i,
           /Product Description[:\s]*\n+([\s\S]*?)(?=\n##|\n\*\*|$)/i,
-          /^(The [A-Z][^\n]+(?:\n[^\n#*]+)*)/m,
+          /^((?:The |This |Featuring |With |Built |Crafted )[^\n]+(?:\n[^\n#*]+)*)/m,
         ];
 
         for (const pattern of descriptionPatterns) {
@@ -160,7 +205,7 @@ serve(async (req) => {
             description = match[1].trim()
               .replace(/\n+/g, ' ')
               .replace(/\s+/g, ' ')
-              .substring(0, 1000); // Limit length
+              .substring(0, 1000);
             break;
           }
         }
@@ -171,19 +216,21 @@ serve(async (req) => {
             p.length > 50 && 
             !p.startsWith('#') && 
             !p.startsWith('*') &&
-            !p.includes('Add to cart')
+            !p.startsWith('[') &&
+            !p.includes('Add to cart') &&
+            !p.includes('SKU:')
           );
           if (paragraphs.length > 0) {
             description = paragraphs[0].trim().substring(0, 1000);
           }
         }
 
-        // Update the model in database
+        // Update the model in database (only if we have new data)
         const updates: { photo_url?: string; description?: string } = {};
-        if (photoUrl && !model.photo_url) {
+        if (photoUrl && !dbModel.photo_url) {
           updates.photo_url = photoUrl;
         }
-        if (description && !model.description) {
+        if (description && !dbModel.description) {
           updates.description = description;
         }
 
@@ -191,13 +238,14 @@ serve(async (req) => {
           const { error: updateError } = await supabase
             .from('models')
             .update(updates)
-            .eq('id', model.id);
+            .eq('id', dbModel.id);
 
           if (updateError) {
-            console.error(`Failed to update ${model.model_name}: ${updateError.message}`);
+            console.error(`Update failed for ${dbModel.model_name}: ${updateError.message}`);
             results.push({
-              model_name: model.model_name,
+              model_name: dbModel.model_name,
               status: 'update_failed',
+              matched_url: matchedArchiveModel.url,
               error: updateError.message,
             });
             continue;
@@ -205,22 +253,24 @@ serve(async (req) => {
         }
 
         results.push({
-          model_name: model.model_name,
+          model_name: dbModel.model_name,
           status: 'success',
+          matched_url: matchedArchiveModel.url,
           photo_url: photoUrl || undefined,
           description: description ? description.substring(0, 100) + '...' : undefined,
         });
 
-        console.log(`Successfully processed ${model.model_name}`);
+        console.log(`Success: ${dbModel.model_name} - photo: ${!!photoUrl}, desc: ${!!description}`);
 
-        // Rate limiting - wait between requests
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
 
       } catch (err) {
-        console.error(`Error processing ${model.model_name}:`, err);
+        console.error(`Error processing ${dbModel.model_name}:`, err);
         results.push({
-          model_name: model.model_name,
+          model_name: dbModel.model_name,
           status: 'error',
+          matched_url: matchedArchiveModel.url,
           error: err instanceof Error ? err.message : 'Unknown error',
         });
       }
@@ -229,11 +279,13 @@ serve(async (req) => {
     const summary = {
       total: results.length,
       success: results.filter(r => r.status === 'success').length,
-      failed: results.filter(r => r.status !== 'success').length,
+      no_match: results.filter(r => r.status === 'no_archive_match').length,
+      failed: results.filter(r => !['success', 'no_archive_match'].includes(r.status)).length,
+      archive_models_found: archiveModels.length,
       results,
     };
 
-    console.log('Scraping complete:', summary);
+    console.log('Scraping complete:', JSON.stringify(summary, null, 2));
 
     return new Response(JSON.stringify(summary), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
