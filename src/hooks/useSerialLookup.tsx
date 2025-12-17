@@ -67,41 +67,50 @@ export const useSerialLookup = () => {
         neckBlockNotes = nbResult.notes;
       }
 
-      // Get the first 2 digits as prefix for database lookup
-      const prefix = serialNumber.substring(0, 2);
+      // Get the first 2 characters as prefix for database lookup (for non-Yairi serials)
+      const prefix = parsed.prefix || serialNumber.substring(0, 2);
 
-      // Query serial patterns that match the prefix
-      const { data: patterns, error: patternsError } = await supabase
-        .from("serial_patterns")
-        .select(`
-          *,
-          models (
+      // For Yairi serials, skip pattern matching - the serial is just a sequence number
+      // Only do pattern lookup for non-Yairi formats
+      let patterns: any[] = [];
+      let similarGuitars: any[] = [];
+      
+      if (!parsed.isYairi) {
+        // Query serial patterns that match the prefix
+        const { data: patternsData, error: patternsError } = await supabase
+          .from("serial_patterns")
+          .select(`
+            *,
+            models (
+              id,
+              model_name,
+              series,
+              country_of_manufacture,
+              production_start_year,
+              production_end_year
+            )
+          `)
+          .eq("serial_prefix", prefix);
+
+        if (patternsError) throw patternsError;
+        patterns = patternsData || [];
+
+        // Query similar approved guitars
+        const { data: guitarsData, error: guitarsError } = await supabase
+          .from("guitars")
+          .select(`
             id,
-            model_name,
-            series,
-            country_of_manufacture,
-            production_start_year,
-            production_end_year
-          )
-        `)
-        .eq("serial_prefix", prefix);
+            serial_number,
+            estimated_year,
+            models (model_name)
+          `)
+          .eq("status", "approved")
+          .ilike("serial_number", `${prefix}%`)
+          .limit(5);
 
-      if (patternsError) throw patternsError;
-
-      // Query similar approved guitars
-      const { data: similarGuitars, error: guitarsError } = await supabase
-        .from("guitars")
-        .select(`
-          id,
-          serial_number,
-          estimated_year,
-          models (model_name)
-        `)
-        .eq("status", "approved")
-        .ilike("serial_number", `${prefix}%`)
-        .limit(5);
-
-      if (guitarsError) throw guitarsError;
+        if (guitarsError) throw guitarsError;
+        similarGuitars = guitarsData || [];
+      }
 
       // Determine year and country - combine parsed info with database patterns
       let yearRange = parsed.yearRange;
@@ -109,16 +118,16 @@ export const useSerialLookup = () => {
       let confidence = parsed.confidence;
       let confidencePercent = confidence === "high" ? 85 : confidence === "medium" ? 60 : 30;
 
-      // If we have database patterns, use those for better accuracy
-      if (patterns && patterns.length > 0) {
-        const years = patterns.flatMap((p) => [p.year_range_start, p.year_range_end]);
+      // If we have database patterns (non-Yairi), use those for better accuracy
+      if (!parsed.isYairi && patterns && patterns.length > 0) {
+        const years = patterns.flatMap((p: any) => [p.year_range_start, p.year_range_end]);
         const minYear = Math.min(...years);
         const maxYear = Math.max(...years);
         yearRange = minYear === maxYear ? `${minYear}` : `${minYear}-${maxYear}`;
 
         const countries = patterns
-          .filter((p) => p.models?.country_of_manufacture)
-          .map((p) => p.models.country_of_manufacture);
+          .filter((p: any) => p.models?.country_of_manufacture)
+          .map((p: any) => p.models.country_of_manufacture);
         if (countries.length > 0) {
           country = countries[0] || country;
         }
@@ -141,24 +150,26 @@ export const useSerialLookup = () => {
         country = "Japan"; // Emperor code = Japanese manufacture
       }
 
-      // Calculate results from matching patterns
-      const matchedModels = (patterns || [])
-        .filter((p) => p.models)
-        .map((p) => ({
+      // Calculate results from matching patterns (skip for Yairi)
+      const matchedModels = parsed.isYairi ? [] : (patterns || [])
+        .filter((p: any) => p.models)
+        .map((p: any) => ({
           id: p.models.id,
           name: p.models.model_name,
           series: p.models.series,
           country: p.models.country_of_manufacture,
         }));
 
-      // Check for exact serial matches in similar guitars
-      const exactMatches = similarGuitars?.filter(
-        (g) => g.serial_number === serialNumber
-      ).length || 0;
-      
-      if (exactMatches > 0) {
-        confidence = "high";
-        confidencePercent = 95;
+      // Check for exact serial matches in similar guitars (skip for Yairi)
+      if (!parsed.isYairi) {
+        const exactMatches = similarGuitars?.filter(
+          (g: any) => g.serial_number === serialNumber
+        ).length || 0;
+        
+        if (exactMatches > 0) {
+          confidence = "high";
+          confidencePercent = 95;
+        }
       }
 
       track('serial_lookup', { 
@@ -175,14 +186,14 @@ export const useSerialLookup = () => {
         estimatedMonth: parsed.estimatedMonth,
         models: matchedModels,
         country,
-        patterns: (patterns || []).map((p) => ({
+        patterns: (patterns || []).map((p: any) => ({
           id: p.id,
           serial_prefix: p.serial_prefix,
           year_range_start: p.year_range_start,
           year_range_end: p.year_range_end,
           confidence_notes: p.confidence_notes,
         })),
-        similarGuitars: (similarGuitars || []).map((g) => ({
+        similarGuitars: (similarGuitars || []).map((g: any) => ({
           id: g.id,
           serial_number: g.serial_number,
           estimated_year: g.estimated_year,
