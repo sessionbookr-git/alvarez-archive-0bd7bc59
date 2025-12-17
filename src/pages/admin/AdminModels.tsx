@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ArrowLeft, Layers, Upload, Image, X, Loader2, Settings2, Globe, Sparkles } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowLeft, Layers, Upload, Image, X, Loader2, Settings2, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -45,7 +45,7 @@ const AdminModels = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [featuresDialogModel, setFeaturesDialogModel] = useState<{ id: string; name: string } | null>(null);
   const [isScraping, setIsScraping] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -188,34 +188,6 @@ const AdminModels = () => {
     }
   };
 
-  const handleGenerateDescriptions = async () => {
-    setIsGenerating(true);
-    toast({ title: "Generating descriptions", description: "Using AI to write descriptions..." });
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-model-descriptions', {
-        body: { overwrite: false }, // Only generate for models without descriptions
-      });
-      
-      if (error) throw error;
-      
-      queryClient.invalidateQueries({ queryKey: ["admin-models"] });
-      
-      toast({ 
-        title: "Generation complete", 
-        description: `Generated ${data.success} of ${data.total} descriptions` 
-      });
-    } catch (error) {
-      console.error('Generation error:', error);
-      toast({ 
-        title: "Generation failed", 
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: "destructive" 
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleClose = () => {
     setIsOpen(false);
@@ -260,17 +232,6 @@ const AdminModels = () => {
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button 
-              variant="outline" 
-              onClick={handleGenerateDescriptions}
-              disabled={isGenerating}
-            >
-              {isGenerating ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
-              ) : (
-                <><Sparkles className="h-4 w-4 mr-2" /> AI Descriptions</>
-              )}
-            </Button>
             <Button 
               variant="outline" 
               onClick={handleScrapeAlvarez}
