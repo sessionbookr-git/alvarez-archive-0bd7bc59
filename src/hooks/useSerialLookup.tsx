@@ -121,11 +121,15 @@ export const useSerialLookup = () => {
       let confidencePercent = confidence === "high" ? 85 : confidence === "medium" ? 60 : 30;
 
       // If we have database patterns (non-Yairi), use those for better accuracy
+      // BUT: don't overwrite specific parsed dates with generic ranges
       if (!parsed.isYairi && patterns && patterns.length > 0) {
-        const years = patterns.flatMap((p: any) => [p.year_range_start, p.year_range_end]);
-        const minYear = Math.min(...years);
-        const maxYear = Math.max(...years);
-        yearRange = minYear === maxYear ? `${minYear}` : `${minYear}-${maxYear}`;
+        // Only use pattern year range if we don't already have a specific year from parsing
+        if (!parsed.estimatedYear) {
+          const years = patterns.flatMap((p: any) => [p.year_range_start, p.year_range_end]);
+          const minYear = Math.min(...years);
+          const maxYear = Math.max(...years);
+          yearRange = minYear === maxYear ? `${minYear}` : `${minYear}-${maxYear}`;
+        }
 
         const countries = patterns
           .filter((p: any) => p.models?.country_of_manufacture)
