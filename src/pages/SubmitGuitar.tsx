@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useGuitarSubmission } from "@/hooks/useGuitarSubmission";
@@ -13,13 +13,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Upload, X, Check, Loader2, AlertCircle, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+// Helper to format features from Identify page into notes
+const formatFeaturesAsNotes = (features: Record<string, string>): string => {
+  if (!features || Object.keys(features).length === 0) return "";
+  
+  const lines = Object.entries(features).map(([category, value]) => {
+    const label = category.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    return `${label}: ${value}`;
+  });
+  
+  return `Identified features:\n${lines.join("\n")}`;
+};
+
 const SubmitGuitar = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { submit, loading, error } = useGuitarSubmission();
   const { canSubmit, remainingSubmissions, maxSubmissions, isLoading: rateLimitLoading } = useSubmissionRateLimit();
   const { track } = useAnalytics();
+
+  // Check if we came from Identify page with pre-filled features
+  const locationState = location.state as { fromIdentify?: boolean; features?: Record<string, string> } | null;
+  const prefilledFeatures = locationState?.fromIdentify ? locationState.features : null;
 
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
@@ -31,7 +48,7 @@ const SubmitGuitar = () => {
     model: "",
     year: "",
     purchaseLocation: "",
-    notes: "",
+    notes: prefilledFeatures ? formatFeaturesAsNotes(prefilledFeatures) : "",
     email: "",
   });
 
@@ -196,6 +213,13 @@ const SubmitGuitar = () => {
               <p className="text-sm text-amber-600 mt-2">
                 {remainingSubmissions} of {maxSubmissions} submissions remaining
               </p>
+            )}
+            {prefilledFeatures && (
+              <div className="mt-4 p-3 bg-confidence-high/10 border border-confidence-high/20 rounded-lg inline-block">
+                <p className="text-sm text-confidence-high">
+                  ✓ Features from identification quiz pre-filled in notes
+                </p>
+              </div>
             )}
           </div>
 
