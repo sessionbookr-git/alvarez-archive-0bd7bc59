@@ -84,16 +84,26 @@
 
 ---
 
-## Feature Categories Quick Reference
+## All 12 Feature Categories
 
-When demonstrating, walk through categories in this order for natural flow:
+The tool walks through these categories (order may vary):
 
-1. **Body Shape** - Most obvious visual identifier
-2. **Label** - Inside the soundhole, tells the era immediately
-3. **Bridge** - Rosewood vs Ebony is a quality indicator
-4. **Fingerboard** - Another quality/era indicator
-5. **Construction** - All Solid vs Laminate
-6. **Electronics** - Modern vs vintage differentiation
+| # | Category | What to Look For |
+|---|----------|------------------|
+| 1 | **Body Shape** | Dreadnought, Folk/OM, Jumbo, etc. |
+| 2 | **Label** | Inside soundhole - color indicates era |
+| 3 | **Bridge** | Rosewood vs Ebony - quality indicator |
+| 4 | **Fingerboard** | Rosewood vs Ebony |
+| 5 | **Construction** | All Solid vs Laminate |
+| 6 | **Electronics** | Pickup system or acoustic-only |
+| 7 | **Finish** | Gloss, satin, natural, etc. |
+| 8 | **Neck Profile** | C-shape, V-shape, etc. |
+| 9 | **Truss Rod** | Location and type |
+| 10 | **Tuner** | Style and material |
+| 11 | **Top Wood** | Spruce, cedar, etc. |
+| 12 | **Back/Sides Wood** | Rosewood, mahogany, etc. |
+
+**Note:** Not all categories may have options populated yet - focus demos on categories with linked features (body shape, label, bridge, fingerboard, construction, electronics).
 
 ---
 
