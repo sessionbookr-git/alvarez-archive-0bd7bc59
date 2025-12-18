@@ -131,14 +131,8 @@ function parseModernYairiSerial(serialNum: number): ModernYairiResult {
     verifiedNote = 'Near verified serial 77525 (FYM66HD, 2024). ';
   }
   
-  // Build notes - avoid specific production numbers
-  let notes = `${verifiedNote}Estimated based on Alvarez official serial checker data and verified customer examples. `;
-  notes += `For exact manufacturing date, check neck block stamp inside guitar.`;
-  
-  // Special note for Honduran mahogany guitars
-  if (serialNum < 77750 && estimatedYear <= 2024) {
-    notes += ` NOTE: Guitars with serials below ~77750 (pre-September 2025) may contain vintage Honduran mahogany from Mr. Yairi's original stock.`;
-  }
+  // Build notes - keep simple for modern Yairis
+  let notes = `${verifiedNote}Estimated based on Alvarez official serial checker data and verified customer examples.`;
   
   return {
     year: estimatedYear,
