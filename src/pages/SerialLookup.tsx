@@ -188,22 +188,22 @@ const SerialLookup = () => {
                   </div>
                 </div>
               </div>
-              {/* Confidence - show differently for Yairi without neck block */}
-              {result.isYairi && !result.neckBlockYear ? (
+              {/* Confidence - show Dating Required only for vintage Yairi without year info */}
+              {result.isYairi && !result.neckBlockYear && !result.estimatedYear ? (
                 <div className="p-6 border border-amber-500/30 bg-amber-500/5 rounded-lg">
                   <h2 className="text-lg font-semibold mb-3">Dating Information Required</h2>
                   <p className="text-muted-foreground mb-4">
-                    Yairi serial numbers are production sequence numbers only - they don't encode the year. 
-                    To determine your guitar's production date:
+                    This appears to be a vintage Yairi (serial below 72000). The serial number is a sequence number only. 
+                    To determine the production date:
                   </p>
                   <ul className="text-sm text-muted-foreground space-y-2 mb-4">
                     <li className="flex items-start gap-2">
                       <span className="text-amber-600 font-medium">1.</span>
-                      <span><strong>Vintage Yairis (pre-2000s):</strong> Check the neck block stamp inside the soundhole - this is an Emperor date code</span>
+                      <span>Check the neck block stamp inside the soundhole - this is an Emperor date code</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-amber-600 font-medium">2.</span>
-                      <span><strong>Modern Yairis (2000s+):</strong> No neck block stamps - contact Alvarez customer service with your serial number</span>
+                      <span>Enter the 2-digit code in the "Neck Block Number" field above and search again</span>
                     </li>
                   </ul>
                   <button 
@@ -220,6 +220,8 @@ const SerialLookup = () => {
                   <p className="text-sm text-muted-foreground mt-3">
                     {result.neckBlockYear 
                       ? "Based on Emperor date code from neck block" 
+                      : result.isYairi && result.estimatedYear
+                      ? "Based on verified Alvarez serial checker data and customer examples"
                       : result.serialFormat === "modern"
                       ? "Based on modern serial number format"
                       : "Based on serial number patterns and database entries"}
@@ -229,8 +231,8 @@ const SerialLookup = () => {
 
               {/* Details */}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {/* Year - hide for Yairi unless we have neck block date */}
-                {(!result.isYairi || result.neckBlockYear) && (
+                {/* Year - show for all cases except vintage Yairi without year */}
+                {(result.estimatedYear || result.neckBlockYear) && (
                   <div className="p-6 border border-border rounded-lg">
                     <h3 className="text-sm text-muted-foreground mb-2">
                       {result.neckBlockYear ? "Production Year" : "Estimated Year"}

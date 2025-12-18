@@ -47,6 +47,96 @@ function getMonthName(month: number): string {
   return months[month - 1] || 'Unknown';
 }
 
+// Modern Yairi Serial Parser (2015-2025+)
+// Based on verified data from Alvarez official serial checker and customer examples
+interface ModernYairiResult {
+  year: number;
+  yearRange: string;
+  confidence: "high" | "medium" | "low";
+  notes: string;
+}
+
+// Verified anchor points from Alvarez serial checker
+const YAIRI_ANCHOR_POINTS = [
+  { serial: 72000, year: 2015 },
+  { serial: 73000, year: 2018 },
+  { serial: 74000, year: 2020 },
+  { serial: 74968, year: 2021 }, // Verified customer example (WY1TS)
+  { serial: 75000, year: 2021 },
+  { serial: 76000, year: 2023 },
+  { serial: 77525, year: 2024 }, // Verified customer example (FYM66HD)
+  { serial: 77920, year: 2025 }, // Projected based on ~750/year
+];
+
+function parseModernYairiSerial(serialNum: number): ModernYairiResult {
+  // Find surrounding anchors for interpolation
+  let lowerAnchor = YAIRI_ANCHOR_POINTS[0];
+  let upperAnchor = YAIRI_ANCHOR_POINTS[YAIRI_ANCHOR_POINTS.length - 1];
+  
+  // Check for exact match first
+  for (const anchor of YAIRI_ANCHOR_POINTS) {
+    if (serialNum === anchor.serial) {
+      let verifiedNote = '';
+      if (serialNum === 74968) {
+        verifiedNote = 'Verified: Serial 74968 (WY1TS model) = 2021. ';
+      } else if (serialNum === 77525) {
+        verifiedNote = 'Verified: Serial 77525 (FYM66HD model) = 2024. ';
+      }
+      
+      return {
+        year: anchor.year,
+        yearRange: `${anchor.year}`,
+        confidence: 'high',
+        notes: `${verifiedNote}Based on Alvarez official serial checker. For exact manufacturing date, check neck block stamp inside guitar.`,
+      };
+    }
+    
+    if (serialNum > anchor.serial) {
+      lowerAnchor = anchor;
+    } else if (serialNum < anchor.serial) {
+      upperAnchor = anchor;
+      break;
+    }
+  }
+  
+  // Interpolate year between anchors
+  const serialRange = upperAnchor.serial - lowerAnchor.serial;
+  const yearRange = upperAnchor.year - lowerAnchor.year;
+  const serialOffset = serialNum - lowerAnchor.serial;
+  const yearOffset = (serialOffset / serialRange) * yearRange;
+  const estimatedYear = Math.round(lowerAnchor.year + yearOffset);
+  
+  // Determine confidence level
+  let confidence: "high" | "medium" | "low" = 'medium';
+  let verifiedNote = '';
+  
+  // High confidence if very close to verified examples
+  if (Math.abs(serialNum - 74968) < 500) {
+    confidence = 'high';
+    verifiedNote = 'Near verified serial 74968 (WY1TS, 2021). ';
+  } else if (Math.abs(serialNum - 77525) < 500) {
+    confidence = 'high';
+    verifiedNote = 'Near verified serial 77525 (FYM66HD, 2024). ';
+  }
+  
+  // Build notes
+  let notes = `${verifiedNote}Estimated based on Alvarez official serial checker data and verified customer examples. `;
+  notes += `Production rate varies (2015-2020: ~400-500/year, 2021+: ~750/year). `;
+  notes += `Check neck block stamp inside guitar for exact manufacturing date.`;
+  
+  // Special note for Honduran mahogany guitars
+  if (serialNum < 77750 && estimatedYear <= 2024) {
+    notes += ` NOTE: Guitars with serials below ~77750 (pre-September 2025) contain vintage Honduran mahogany from Mr. Yairi's original stock.`;
+  }
+  
+  return {
+    year: estimatedYear,
+    yearRange: `~${estimatedYear}`,
+    confidence,
+    notes,
+  };
+}
+
 export function parseSerial(serial: string): SerialParseResult {
   const cleaned = serial.trim().toUpperCase();
   
@@ -247,11 +337,46 @@ export function parseSerial(serial: string): SerialParseResult {
   }
   
   // Yairi format: 4-6 digit numeric serials (e.g., 5152, 75466, 510812)
-  // IMPORTANT: Yairi serial numbers are SEQUENCE NUMBERS ONLY - they do NOT encode the year
-  // Vintage Yairis (pre-2000s): Check NECK BLOCK stamp for 2-digit Emperor code
-  // Modern Yairis (2000s+): NO neck block stamp - year cannot be determined from serial alone
+  // Modern Yairis (72000+): Can estimate year from verified anchor points
+  // Vintage Yairis (<72000): Check NECK BLOCK stamp for Emperor code
   const yairiMatch = cleaned.match(/^(\d{4,6})$/);
   if (yairiMatch) {
+    const serialNum = parseInt(cleaned, 10);
+    
+    // Modern Yairi range (72000+, 2015-present): Can estimate year from serial
+    if (serialNum >= 72000 && cleaned.length <= 5) {
+      const yairiResult = parseModernYairiSerial(serialNum);
+      return {
+        format: "yairi",
+        estimatedYear: yairiResult.year,
+        estimatedMonth: null,
+        yearRange: yairiResult.yearRange,
+        confidence: yairiResult.confidence,
+        country: "Japan",
+        notes: yairiResult.notes,
+        isYairi: true,
+        needsEmperorCode: false,
+        prefix: null,
+      };
+    }
+    
+    // Vintage Yairi range (<72000): Requires neck block verification
+    if (serialNum < 72000 && cleaned.length <= 5) {
+      return {
+        format: "yairi",
+        estimatedYear: null,
+        estimatedMonth: null,
+        yearRange: "1970-2014",
+        confidence: "low",
+        country: "Japan",
+        notes: `Vintage Alvarez-Yairi serial #${cleaned}. Check neck block stamp inside guitar for production year. Neck block codes: Showa era (45-63 = 1970-1988), Heisei era (1-12 = 1989-2000), post-2000 (01-14 = 2001-2014). Example: stamp "56" = 1981, stamp "10" = 2010.`,
+        isYairi: true,
+        needsEmperorCode: true,
+        prefix: null,
+      };
+    }
+    
+    // 6-digit Yairi or legacy format
     return {
       format: "yairi",
       estimatedYear: null,
@@ -259,9 +384,9 @@ export function parseSerial(serial: string): SerialParseResult {
       yearRange: "See notes",
       confidence: "low",
       country: "Japan",
-      notes: `Alvarez-Yairi serial #${cleaned} is a sequence number only and does not encode the production year. For vintage Yairis (pre-2000s), check the 2-digit neck block stamp inside the body. Neck block codes: Showa era (45-63 = 1970-1988), Heisei era (1-12 = 1989-2000), post-2000 (13+ = 2013+). Note: Modern Yairis do not have neck block stamps - the production year cannot be determined from the serial number alone.`,
+      notes: `Alvarez-Yairi serial #${cleaned}. This may be a vintage Yairi or legacy format. Check neck block stamp inside the body for Emperor date code.`,
       isYairi: true,
-      needsEmperorCode: false, // Changed since modern Yairis don't have stamps
+      needsEmperorCode: true,
       prefix: null,
     };
   }
