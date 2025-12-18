@@ -1,45 +1,28 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useIdentifyingFeatures, useFeatureCategories } from "@/hooks/useIdentifyingFeatures";
+import { useAllModelFeatures } from "@/hooks/useModelFeatures";
 import { useModels } from "@/hooks/useModels";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, Check, Loader2, Image, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Image } from "lucide-react";
 
-// Define the quiz flow order - matches actual database categories
-const CATEGORY_ORDER = [
-  'body_shape',      // Biggest eliminator - dread vs concert vs jumbo
-  'construction',    // All solid vs laminate - major identifier
-  'bridge',          // Ebony vs Rosewood - key Yairi indicator
-  'fingerboard',     // Matches bridge usually
-  'electronics',     // Has pickup or not
-  'tuner',           // Open-back vs enclosed
-  'label',           // Final confirmation - orange/gold vs blue/silver
-];
-
-// Human-readable category labels and descriptions
-const CATEGORY_LABELS: Record<string, string> = {
-  body_shape: "What body shape is your guitar?",
-  construction: "What is the construction type?",
-  bridge: "What material is the bridge?",
-  fingerboard: "What material is the fingerboard?",
-  electronics: "Does your guitar have electronics?",
+const categoryLabels: Record<string, string> = {
   tuner: "What type of tuners does your guitar have?",
+  truss_rod: "Where is the truss rod adjustment?",
+  body_shape: "What body shape is your guitar?",
   label: "What does the interior label look like?",
+  bridge: "What type of bridge does your guitar have?",
 };
 
-const CATEGORY_DESCRIPTIONS: Record<string, string> = {
-  body_shape: "Select the closest match to your guitar's body",
-  construction: "All solid wood vs laminate construction",
-  bridge: "Look at the bridge where the strings attach",
-  fingerboard: "The fretboard material on the neck",
-  electronics: "Check if there's a pickup or preamp system",
+const categoryDescriptions: Record<string, string> = {
   tuner: "Look at the tuning machines on the headstock",
+  truss_rod: "The truss rod allows neck adjustments",
+  body_shape: "Select the closest match to your guitar's body",
   label: "Check inside the soundhole for a paper label",
+  bridge: "Look at the bridge where the strings attach",
 };
 
 interface ModelMatch {
@@ -49,8 +32,6 @@ interface ModelMatch {
   country: string | null;
   productionYears: string;
   matchedFeatures: number;
-  matchedRequired: number;
-  totalRequired: number;
   totalFeatures: number;
   matchPercentage: number;
   requiredMissing: number;
@@ -60,114 +41,69 @@ const Identify = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
+  const { data: categories, isLoading: categoriesLoading } = useFeatureCategories();
+  const currentCategory = categories?.[currentStep];
+  const { data: features, isLoading: featuresLoading } = useIdentifyingFeatures(currentCategory);
+  const { data: allModelFeatures } = useAllModelFeatures();
   const { data: models } = useModels();
 
-  // Fetch all model features with their identifying features
-  const { data: allModelFeatures, isLoading: featuresLoading } = useQuery({
-    queryKey: ["model-features-with-details"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("model_features")
-        .select(`
-          *,
-          identifying_features (*)
-        `);
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Get unique categories from features, ordered by our defined flow
-  const orderedCategories = useMemo(() => {
-    if (!allModelFeatures) return [];
-    
-    const categoriesInData = new Set(
-      allModelFeatures.map((mf: any) => mf.identifying_features.feature_category)
-    );
-    
-    // Return categories in our defined order, only including ones that exist in data
-    return CATEGORY_ORDER.filter(cat => categoriesInData.has(cat));
-  }, [allModelFeatures]);
-
-  // Get features for current category
-  const currentCategoryFeatures = useMemo(() => {
-    if (!allModelFeatures || currentStep >= orderedCategories.length) return [];
-    
-    const currentCategory = orderedCategories[currentStep];
-    const features = allModelFeatures
-      .filter((mf: any) => mf.identifying_features.feature_category === currentCategory)
-      .map((mf: any) => mf.identifying_features)
-      // Remove duplicates by ID
-      .filter((feature: any, index: number, self: any[]) => 
-        index === self.findIndex((f) => f.id === feature.id)
-      );
-    
-    return features;
-  }, [allModelFeatures, currentStep, orderedCategories]);
-
-  const totalSteps = orderedCategories.length;
+  const totalSteps = categories?.length || 0;
   const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0;
   const isComplete = currentStep >= totalSteps;
-  const currentCategory = orderedCategories[currentStep];
-  const currentAnswer = currentCategory ? answers[currentCategory] : undefined;
 
-  // THE FIXED MATCHING LOGIC
+  // Calculate matching models based on selected features
   const matchingModels = useMemo(() => {
     if (!isComplete || !allModelFeatures || !models) return [];
 
-    // 1. Build set of selected feature IDs (now ONLY using IDs)
+    // Get the feature IDs that match user's selections
     const selectedFeatureIds = new Set<string>();
     
-    Object.entries(answers).forEach(([category, answerId]) => {
-      // answerId is now ALWAYS the feature.id
-      selectedFeatureIds.add(answerId);
+    // For each answer, find the matching feature ID
+    Object.entries(answers).forEach(([category, value]) => {
+      const feature = allModelFeatures.find(
+        (mf) => 
+          mf.identifying_features.feature_category === category &&
+          (mf.identifying_features.feature_value === value || mf.identifying_features.id === value)
+      );
+      if (feature) {
+        selectedFeatureIds.add(feature.feature_id);
+      }
     });
 
-    // 2. Group model_features by model
-    const modelFeaturesMap = new Map<string, any[]>();
-    allModelFeatures.forEach((mf: any) => {
+    // Group model_features by model
+    const modelFeaturesMap = new Map<string, typeof allModelFeatures>();
+    allModelFeatures.forEach((mf) => {
       const existing = modelFeaturesMap.get(mf.model_id) || [];
       existing.push(mf);
       modelFeaturesMap.set(mf.model_id, existing);
     });
 
-    // 3. Calculate match scores for each model
+    // Calculate match scores for each model
     const results: ModelMatch[] = [];
 
     modelFeaturesMap.forEach((modelFeatures, modelId) => {
       const model = models.find((m) => m.id === modelId);
       if (!model) return;
 
-      // Separate required vs optional features
-      const requiredFeatures = modelFeatures.filter((mf: any) => mf.is_required);
-      const optionalFeatures = modelFeatures.filter((mf: any) => !mf.is_required);
-      
-      let matchedRequired = 0;
-      let matchedOptional = 0;
+      const totalFeatures = modelFeatures.length;
+      let matchedFeatures = 0;
       let requiredMissing = 0;
 
-      // Check required features
-      requiredFeatures.forEach((mf: any) => {
-        if (selectedFeatureIds.has(mf.feature_id)) {
-          matchedRequired++;
-        } else {
+      modelFeatures.forEach((mf) => {
+        const featureValue = mf.identifying_features.feature_value || mf.identifying_features.id;
+        const featureCategory = mf.identifying_features.feature_category;
+        
+        // Check if user selected this feature (by value or ID)
+        const userAnswer = answers[featureCategory];
+        if (userAnswer === featureValue || userAnswer === mf.feature_id) {
+          matchedFeatures++;
+        } else if (mf.is_required) {
           requiredMissing++;
         }
       });
 
-      // Check optional features
-      optionalFeatures.forEach((mf: any) => {
-        if (selectedFeatureIds.has(mf.feature_id)) {
-          matchedOptional++;
-        }
-      });
-
-      const totalMatched = matchedRequired + matchedOptional;
-      const totalFeatures = modelFeatures.length;
-
-      // Only include models with at least one matching feature
-      if (totalMatched > 0) {
-        const matchPercentage = Math.round((totalMatched / totalFeatures) * 100);
+      if (totalFeatures > 0) {
+        const matchPercentage = Math.round((matchedFeatures / totalFeatures) * 100);
         
         results.push({
           modelId,
@@ -177,9 +113,7 @@ const Identify = () => {
           productionYears: model.production_start_year
             ? `${model.production_start_year}${model.production_end_year ? `-${model.production_end_year}` : "-present"}`
             : "Unknown",
-          matchedFeatures: totalMatched,
-          matchedRequired,
-          totalRequired: requiredFeatures.length,
+          matchedFeatures,
           totalFeatures,
           matchPercentage,
           requiredMissing,
@@ -187,29 +121,20 @@ const Identify = () => {
       }
     });
 
-    // 4. PROPER SORTING: Required features first, then total matches
-    return results.sort((a, b) => {
-      // Perfect required matches first (0 missing required)
-      if (a.requiredMissing !== b.requiredMissing) {
-        return a.requiredMissing - b.requiredMissing;
-      }
-      // Then by number of matched required features (higher is better)
-      if (a.matchedRequired !== b.matchedRequired) {
-        return b.matchedRequired - a.matchedRequired;
-      }
-      // Then by total number of matches (higher is better)
-      if (a.matchedFeatures !== b.matchedFeatures) {
-        return b.matchedFeatures - a.matchedFeatures;
-      }
-      // Finally by percentage (higher is better)
-      return b.matchPercentage - a.matchPercentage;
-    });
+    // Sort by match percentage (descending), then by required missing (ascending)
+    return results
+      .filter((r) => r.matchedFeatures > 0)
+      .sort((a, b) => {
+        if (a.requiredMissing !== b.requiredMissing) {
+          return a.requiredMissing - b.requiredMissing;
+        }
+        return b.matchPercentage - a.matchPercentage;
+      });
   }, [isComplete, allModelFeatures, models, answers]);
 
-  // CRITICAL: Always store the feature.id, never the feature_value
-  const handleSelect = (featureId: string) => {
+  const handleSelect = (featureValue: string) => {
     if (currentCategory) {
-      setAnswers({ ...answers, [currentCategory]: featureId });
+      setAnswers({ ...answers, [currentCategory]: featureValue });
     }
   };
 
@@ -232,7 +157,7 @@ const Identify = () => {
     setAnswers({});
   };
 
-  if (featuresLoading) {
+  if (categoriesLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -273,46 +198,52 @@ const Identify = () => {
               {/* Question */}
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-2">
-                  {currentCategory ? CATEGORY_LABELS[currentCategory] || `Select ${currentCategory}` : "Loading..."}
+                  {currentCategory ? categoryLabels[currentCategory] || `Select ${currentCategory}` : "Loading..."}
                 </h2>
                 <p className="text-muted-foreground">
-                  {currentCategory ? CATEGORY_DESCRIPTIONS[currentCategory] || "" : ""}
+                  {currentCategory ? categoryDescriptions[currentCategory] || "" : ""}
                 </p>
               </div>
 
               {/* Options */}
-              <div className="space-y-3 mb-8">
-                {currentCategoryFeatures.map((feature: any) => (
-                  <button
-                    key={feature.id}
-                    onClick={() => handleSelect(feature.id)}
-                    className={`w-full p-4 text-left border rounded-lg transition-all ${
-                      currentAnswer === feature.id
-                        ? "border-foreground bg-secondary/50"
-                        : "border-border hover:border-foreground/30"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{feature.feature_name}</div>
-                        {feature.description && (
-                          <div className="text-sm text-muted-foreground mt-0.5">
-                            {feature.description}
-                          </div>
-                        )}
-                        {(feature.era_start || feature.era_end) && (
-                          <div className="text-xs text-muted-foreground/70 mt-1">
-                            Era: {feature.era_start || "?"} - {feature.era_end || "present"}
-                          </div>
+              {featuresLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="space-y-3 mb-8">
+                  {features?.map((feature) => (
+                    <button
+                      key={feature.id}
+                      onClick={() => handleSelect(feature.feature_value || feature.id)}
+                      className={`w-full p-4 text-left border rounded-lg transition-all ${
+                        answers[currentCategory || ""] === (feature.feature_value || feature.id)
+                          ? "border-foreground bg-secondary/50"
+                          : "border-border hover:border-foreground/30"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium">{feature.feature_name}</div>
+                          {feature.description && (
+                            <div className="text-sm text-muted-foreground mt-0.5">
+                              {feature.description}
+                            </div>
+                          )}
+                          {(feature.era_start || feature.era_end) && (
+                            <div className="text-xs text-muted-foreground/70 mt-1">
+                              Era: {feature.era_start || "?"} - {feature.era_end || "present"}
+                            </div>
+                          )}
+                        </div>
+                        {answers[currentCategory || ""] === (feature.feature_value || feature.id) && (
+                          <Check className="h-5 w-5 flex-shrink-0" />
                         )}
                       </div>
-                      {currentAnswer === feature.id && (
-                        <Check className="h-5 w-5 flex-shrink-0" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Navigation */}
               <div className="flex justify-between">
@@ -326,7 +257,7 @@ const Identify = () => {
                 </Button>
                 <Button
                   onClick={handleNext}
-                  disabled={!currentAnswer}
+                  disabled={!currentCategory || !answers[currentCategory]}
                 >
                   {currentStep === totalSteps - 1 ? "See Results" : "Next"}
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -351,13 +282,11 @@ const Identify = () => {
               {/* Matching Models */}
               {matchingModels.length > 0 ? (
                 <div className="space-y-4 mb-8">
-                  {matchingModels.slice(0, 5).map((match, index) => (
+                  {matchingModels.slice(0, 5).map((match) => (
                     <Link
                       key={match.modelId}
                       to={`/encyclopedia/${match.modelId}`}
-                      className={`block p-4 border rounded-lg hover:border-foreground/30 transition-all ${
-                        index === 0 && match.requiredMissing === 0 ? "border-confidence-high border-2" : "border-border"
-                      }`}
+                      className="block p-4 border border-border rounded-lg hover:border-foreground/30 transition-all"
                     >
                       <div className="flex gap-4">
                         {match.photoUrl ? (
@@ -378,31 +307,24 @@ const Identify = () => {
                               <p className="text-sm text-muted-foreground">
                                 {match.country} • {match.productionYears}
                               </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {match.matchedRequired}/{match.totalRequired} required • {match.matchedFeatures} total matches
-                              </p>
                             </div>
-                            <div className="flex flex-col items-end gap-1">
-                              {match.requiredMissing === 0 ? (
-                                <Badge className="bg-confidence-high text-white">
-                                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                                  High Confidence
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary">
-                                  Possible Match
-                                </Badge>
-                              )}
-                              <Badge variant="outline">
+                            <div className="text-right">
+                              <div className={`text-lg font-semibold ${
+                                match.matchPercentage >= 80 ? "text-confidence-high" :
+                                match.matchPercentage >= 50 ? "text-confidence-medium" :
+                                "text-confidence-low"
+                              }`}>
                                 {match.matchPercentage}%
-                              </Badge>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {match.matchedFeatures}/{match.totalFeatures} features
+                              </div>
                             </div>
                           </div>
                           {match.requiredMissing > 0 && (
-                            <div className="flex items-center gap-1 text-xs text-destructive mt-2">
-                              <AlertCircle className="h-3 w-3" />
+                            <p className="text-xs text-destructive mt-2">
                               Missing {match.requiredMissing} required feature{match.requiredMissing > 1 ? "s" : ""}
-                            </div>
+                            </p>
                           )}
                         </div>
                       </div>
@@ -424,19 +346,12 @@ const Identify = () => {
               <div className="text-left mb-8 p-6 border border-border rounded-lg">
                 <h3 className="font-semibold mb-4">Your Selections</h3>
                 <dl className="space-y-2 text-sm">
-                  {orderedCategories.map((category) => {
-                    const featureId = answers[category];
-                    const feature = allModelFeatures?.find(
-                      (mf: any) => mf.feature_id === featureId
-                    )?.identifying_features;
-                    
-                    return (
-                      <div key={category} className="flex justify-between">
-                        <dt className="text-muted-foreground">{CATEGORY_LABELS[category]?.replace("?", "") || category}:</dt>
-                        <dd className="font-medium">{feature?.feature_name || "Not answered"}</dd>
-                      </div>
-                    );
-                  })}
+                  {Object.entries(answers).map(([category, value]) => (
+                    <div key={category} className="flex justify-between">
+                      <dt className="text-muted-foreground capitalize">{category.replace("_", " ")}:</dt>
+                      <dd className="font-medium">{value}</dd>
+                    </div>
+                  ))}
                 </dl>
               </div>
 
