@@ -7,6 +7,7 @@ export interface SerialLookupResult {
   confidence: "high" | "medium" | "low";
   confidencePercent: number;
   yearRange: string;
+  estimatedYear: number | null;
   estimatedMonth: number | null;
   models: Array<{
     id: string;
@@ -114,6 +115,7 @@ export const useSerialLookup = () => {
 
       // Determine year and country - combine parsed info with database patterns
       let yearRange = parsed.yearRange;
+      let estimatedYear = parsed.estimatedYear;
       let country = parsed.country;
       let confidence = parsed.confidence;
       let confidencePercent = confidence === "high" ? 85 : confidence === "medium" ? 60 : 30;
@@ -145,6 +147,7 @@ export const useSerialLookup = () => {
       // If neck block provided a year, use that as authoritative
       if (neckBlockYear) {
         yearRange = `${neckBlockYear}`;
+        estimatedYear = neckBlockYear;
         confidence = "high";
         confidencePercent = 95;
         country = "Japan"; // Emperor code = Japanese manufacture
@@ -183,6 +186,7 @@ export const useSerialLookup = () => {
         confidence,
         confidencePercent,
         yearRange,
+        estimatedYear,
         estimatedMonth: parsed.estimatedMonth,
         models: matchedModels,
         country,
