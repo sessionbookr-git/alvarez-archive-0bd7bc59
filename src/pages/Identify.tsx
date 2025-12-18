@@ -355,12 +355,23 @@ const Identify = () => {
                 </dl>
               </div>
 
-              <div className="flex gap-4 justify-center">
+              <div className="flex flex-wrap gap-4 justify-center">
                 <Button variant="outline" onClick={handleReset}>
                   Start Over
                 </Button>
-                <Button asChild>
+                <Button variant="outline" asChild>
                   <Link to="/serial-lookup">Try Serial Lookup</Link>
+                </Button>
+                <Button asChild>
+                  <Link 
+                    to="/submit" 
+                    state={{ 
+                      fromIdentify: true, 
+                      features: answers 
+                    }}
+                  >
+                    Submit This Guitar
+                  </Link>
                 </Button>
               </div>
             </div>
