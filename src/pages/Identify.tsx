@@ -285,7 +285,7 @@ const Identify = () => {
                   {matchingModels.slice(0, 5).map((match) => (
                     <Link
                       key={match.modelId}
-                      to={`/encyclopedia/${encodeURIComponent(match.modelName)}`}
+                      to={`/encyclopedia/${match.modelId}`}
                       className="block p-4 border border-border rounded-lg hover:border-foreground/30 transition-all"
                     >
                       <div className="flex gap-4">
