@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { Plus, ArrowLeft, ArrowRight, Check, Loader2, Image } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useIdentifyingFeatures, useFeatureCategories } from "@/hooks/useIdentifyingFeatures";
@@ -7,23 +8,43 @@ import { useAllModelFeatures } from "@/hooks/useModelFeatures";
 import { useModels } from "@/hooks/useModels";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Check, Loader2, Image } from "lucide-react";
 
 const categoryLabels: Record<string, string> = {
-  tuner: "What type of tuners does your guitar have?",
-  truss_rod: "Where is the truss rod adjustment?",
   body_shape: "What body shape is your guitar?",
+  construction: "What type of construction is your guitar?",
+  bridge_material: "What material is the bridge made of?",
+  fingerboard: "What is the fingerboard material?",
+  electronics: "Does your guitar have electronics?",
+  tuner: "What type of tuners does your guitar have?",
   label: "What does the interior label look like?",
+  truss_rod: "Where is the truss rod adjustment?",
   bridge: "What type of bridge does your guitar have?",
 };
 
 const categoryDescriptions: Record<string, string> = {
-  tuner: "Look at the tuning machines on the headstock",
-  truss_rod: "The truss rod allows neck adjustments",
   body_shape: "Select the closest match to your guitar's body",
+  construction: "Is it all solid wood, laminate, or a combination?",
+  bridge_material: "Look at the bridge where the strings attach",
+  fingerboard: "The fingerboard is where you press the strings",
+  electronics: "Check if your guitar has a pickup or preamp",
+  tuner: "Look at the tuning machines on the headstock",
   label: "Check inside the soundhole for a paper label",
+  truss_rod: "The truss rod allows neck adjustments",
   bridge: "Look at the bridge where the strings attach",
 };
+
+// Define optimal quiz flow order
+const CATEGORY_ORDER = [
+  'body_shape',
+  'construction',
+  'bridge_material',
+  'fingerboard',
+  'electronics',
+  'tuner',
+  'label',
+  'truss_rod',
+  'bridge',
+];
 
 interface ModelMatch {
   modelId: string;
@@ -35,13 +56,22 @@ interface ModelMatch {
   totalFeatures: number;
   matchPercentage: number;
   requiredMissing: number;
+  matchedRequired: number;
+  totalRequired: number;
 }
 
 const Identify = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  const { data: categories, isLoading: categoriesLoading } = useFeatureCategories();
+  const { data: allCategories, isLoading: categoriesLoading } = useFeatureCategories();
+  
+  // Order categories according to CATEGORY_ORDER
+  const categories = useMemo(() => {
+    if (!allCategories) return [];
+    return CATEGORY_ORDER.filter(cat => allCategories.includes(cat));
+  }, [allCategories]);
+
   const currentCategory = categories?.[currentStep];
   const { data: features, isLoading: featuresLoading } = useIdentifyingFeatures(currentCategory);
   const { data: allModelFeatures } = useAllModelFeatures();
@@ -55,22 +85,10 @@ const Identify = () => {
   const matchingModels = useMemo(() => {
     if (!isComplete || !allModelFeatures || !models) return [];
 
-    // Get the feature IDs that match user's selections
-    const selectedFeatureIds = new Set<string>();
-    
-    // For each answer, find the matching feature ID
-    Object.entries(answers).forEach(([category, value]) => {
-      const feature = allModelFeatures.find(
-        (mf) => 
-          mf.identifying_features.feature_category === category &&
-          (mf.identifying_features.feature_value === value || mf.identifying_features.id === value)
-      );
-      if (feature) {
-        selectedFeatureIds.add(feature.feature_id);
-      }
-    });
+    // 1. Build set of selected feature IDs (answers now store IDs only)
+    const selectedFeatureIds = new Set<string>(Object.values(answers));
 
-    // Group model_features by model
+    // 2. Group model_features by model
     const modelFeaturesMap = new Map<string, typeof allModelFeatures>();
     allModelFeatures.forEach((mf) => {
       const existing = modelFeaturesMap.get(mf.model_id) || [];
@@ -78,63 +96,79 @@ const Identify = () => {
       modelFeaturesMap.set(mf.model_id, existing);
     });
 
-    // Calculate match scores for each model
+    // 3. Calculate match scores
     const results: ModelMatch[] = [];
 
     modelFeaturesMap.forEach((modelFeatures, modelId) => {
       const model = models.find((m) => m.id === modelId);
       if (!model) return;
 
-      const totalFeatures = modelFeatures.length;
-      let matchedFeatures = 0;
+      const requiredFeatures = modelFeatures.filter(mf => mf.is_required);
+      const optionalFeatures = modelFeatures.filter(mf => !mf.is_required);
+      
+      let matchedRequired = 0;
       let requiredMissing = 0;
+      let matchedOptional = 0;
 
-      modelFeatures.forEach((mf) => {
-        const featureValue = mf.identifying_features.feature_value || mf.identifying_features.id;
-        const featureCategory = mf.identifying_features.feature_category;
-        
-        // Check if user selected this feature (by value or ID)
-        const userAnswer = answers[featureCategory];
-        if (userAnswer === featureValue || userAnswer === mf.feature_id) {
-          matchedFeatures++;
-        } else if (mf.is_required) {
+      // Check required features
+      requiredFeatures.forEach((mf) => {
+        if (selectedFeatureIds.has(mf.feature_id)) {
+          matchedRequired++;
+        } else {
           requiredMissing++;
         }
       });
 
-      if (totalFeatures > 0) {
-        const matchPercentage = Math.round((matchedFeatures / totalFeatures) * 100);
-        
-        results.push({
-          modelId,
-          modelName: model.model_name,
-          photoUrl: model.photo_url || null,
-          country: model.country_of_manufacture,
-          productionYears: model.production_start_year
-            ? `${model.production_start_year}${model.production_end_year ? `-${model.production_end_year}` : "-present"}`
-            : "Unknown",
-          matchedFeatures,
-          totalFeatures,
-          matchPercentage,
-          requiredMissing,
-        });
-      }
+      // Only consider models where ALL required features match
+      if (requiredMissing > 0) return;
+
+      // Check optional features for tiebreaking
+      optionalFeatures.forEach((mf) => {
+        if (selectedFeatureIds.has(mf.feature_id)) {
+          matchedOptional++;
+        }
+      });
+
+      const totalMatched = matchedRequired + matchedOptional;
+      const totalFeatures = modelFeatures.length;
+      const matchPercentage = Math.round((totalMatched / totalFeatures) * 100);
+      
+      results.push({
+        modelId,
+        modelName: model.model_name,
+        photoUrl: model.photo_url || null,
+        country: model.country_of_manufacture,
+        productionYears: model.production_start_year
+          ? `${model.production_start_year}${model.production_end_year ? `-${model.production_end_year}` : "-present"}`
+          : "Unknown",
+        matchedFeatures: totalMatched,
+        totalFeatures,
+        matchPercentage,
+        requiredMissing: 0, // Always 0 since we filtered above
+        matchedRequired,
+        totalRequired: requiredFeatures.length,
+      });
     });
 
-    // Sort by match percentage (descending), then by required missing (ascending)
-    return results
-      .filter((r) => r.matchedFeatures > 0)
-      .sort((a, b) => {
-        if (a.requiredMissing !== b.requiredMissing) {
-          return a.requiredMissing - b.requiredMissing;
-        }
-        return b.matchPercentage - a.matchPercentage;
-      });
+    // 4. Sort by confidence
+    return results.sort((a, b) => {
+      // More required features matched = higher confidence
+      if (a.matchedRequired !== b.matchedRequired) {
+        return b.matchedRequired - a.matchedRequired;
+      }
+      // Then by total matches (includes optionals)
+      if (a.matchedFeatures !== b.matchedFeatures) {
+        return b.matchedFeatures - a.matchedFeatures;
+      }
+      // Finally by percentage
+      return b.matchPercentage - a.matchPercentage;
+    });
   }, [isComplete, allModelFeatures, models, answers]);
 
-  const handleSelect = (featureValue: string) => {
+  // Fix 1: Always use feature.id for answer storage
+  const handleSelect = (featureId: string) => {
     if (currentCategory) {
-      setAnswers({ ...answers, [currentCategory]: featureValue });
+      setAnswers({ ...answers, [currentCategory]: featureId });
     }
   };
 
@@ -215,9 +249,9 @@ const Identify = () => {
                   {features?.map((feature) => (
                     <button
                       key={feature.id}
-                      onClick={() => handleSelect(feature.feature_value || feature.id)}
+                      onClick={() => handleSelect(feature.id)}
                       className={`w-full p-4 text-left border rounded-lg transition-all ${
-                        answers[currentCategory || ""] === (feature.feature_value || feature.id)
+                        answers[currentCategory || ""] === feature.id
                           ? "border-foreground bg-secondary/50"
                           : "border-border hover:border-foreground/30"
                       }`}
@@ -236,7 +270,7 @@ const Identify = () => {
                             </div>
                           )}
                         </div>
-                        {answers[currentCategory || ""] === (feature.feature_value || feature.id) && (
+                        {answers[currentCategory || ""] === feature.id && (
                           <Check className="h-5 w-5 flex-shrink-0" />
                         )}
                       </div>
@@ -275,7 +309,7 @@ const Identify = () => {
                 <p className="text-muted-foreground">
                   {matchingModels.length > 0
                     ? `Found ${matchingModels.length} potential match${matchingModels.length === 1 ? "" : "es"} based on your selections.`
-                    : "No matching models found based on your selections."}
+                    : "Your guitar isn't in our archive yet!"}
                 </p>
               </div>
 
@@ -307,6 +341,12 @@ const Identify = () => {
                               <p className="text-sm text-muted-foreground">
                                 {match.country} • {match.productionYears}
                               </p>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                <span>{match.matchedRequired}/{match.totalRequired} required features</span>
+                                {match.matchedFeatures > match.matchedRequired && (
+                                  <span>• +{match.matchedFeatures - match.matchedRequired} optional</span>
+                                )}
+                              </div>
                             </div>
                             <div className="text-right">
                               <div className={`text-lg font-semibold ${
@@ -321,11 +361,6 @@ const Identify = () => {
                               </div>
                             </div>
                           </div>
-                          {match.requiredMissing > 0 && (
-                            <p className="text-xs text-destructive mt-2">
-                              Missing {match.requiredMissing} required feature{match.requiredMissing > 1 ? "s" : ""}
-                            </p>
-                          )}
                         </div>
                       </div>
                     </Link>
@@ -334,10 +369,10 @@ const Identify = () => {
               ) : (
                 <div className="text-center py-8 border border-border rounded-lg mb-8">
                   <p className="text-muted-foreground mb-4">
-                    No models in our database match your selected features yet.
+                    Help us build the most comprehensive Alvarez database by being the first to add this model.
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Try the Serial Lookup instead, or submit your guitar to help us build our database.
+                    Try the Serial Lookup instead, or submit your guitar to contribute.
                   </p>
                 </div>
               )}
@@ -346,12 +381,17 @@ const Identify = () => {
               <div className="text-left mb-8 p-6 border border-border rounded-lg">
                 <h3 className="font-semibold mb-4">Your Selections</h3>
                 <dl className="space-y-2 text-sm">
-                  {Object.entries(answers).map(([category, value]) => (
-                    <div key={category} className="flex justify-between">
-                      <dt className="text-muted-foreground capitalize">{category.replace("_", " ")}:</dt>
-                      <dd className="font-medium">{value}</dd>
-                    </div>
-                  ))}
+                  {Object.entries(answers).map(([category, featureId]) => {
+                    // Look up the feature name from the ID
+                    const feature = allModelFeatures?.find(mf => mf.feature_id === featureId)?.identifying_features;
+                    const displayValue = feature?.feature_name || featureId;
+                    return (
+                      <div key={category} className="flex justify-between">
+                        <dt className="text-muted-foreground capitalize">{category.replace("_", " ")}:</dt>
+                        <dd className="font-medium">{displayValue}</dd>
+                      </div>
+                    );
+                  })}
                 </dl>
               </div>
 
@@ -362,17 +402,32 @@ const Identify = () => {
                 <Button variant="outline" asChild>
                   <Link to="/serial-lookup">Try Serial Lookup</Link>
                 </Button>
-                <Button asChild>
-                  <Link 
-                    to="/submit" 
-                    state={{ 
-                      fromIdentify: true, 
-                      features: answers 
-                    }}
-                  >
-                    Submit This Guitar
-                  </Link>
-                </Button>
+                {matchingModels.length === 0 ? (
+                  <Button asChild>
+                    <Link 
+                      to="/submit" 
+                      state={{ 
+                        fromIdentify: true, 
+                        features: answers 
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Be the First to Add This Model
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button asChild>
+                    <Link 
+                      to="/submit" 
+                      state={{ 
+                        fromIdentify: true, 
+                        features: answers 
+                      }}
+                    >
+                      Submit This Guitar
+                    </Link>
+                  </Button>
+                )}
               </div>
             </div>
           )}
