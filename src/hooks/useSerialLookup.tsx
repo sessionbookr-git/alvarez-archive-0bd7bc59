@@ -141,13 +141,15 @@ export const useSerialLookup = () => {
           country = countries[0] || country;
         }
 
-        // Boost confidence if we have pattern matches
-        if (patterns.length >= 2) {
-          confidence = "high";
-          confidencePercent = 85;
-        } else if (patterns.length === 1) {
-          confidence = "medium";
-          confidencePercent = 65;
+        // Only adjust confidence based on patterns if we DON'T already have definitive parsed data
+        if (!parsed.estimatedYear || !parsed.estimatedMonth) {
+          if (patterns.length >= 2) {
+            confidence = "high";
+            confidencePercent = 85;
+          } else if (patterns.length === 1) {
+            confidence = "medium";
+            confidencePercent = 65;
+          }
         }
       }
 
