@@ -106,27 +106,38 @@ function parseModernYairiSerial(serialNum: number): ModernYairiResult {
   const yearOffset = (serialOffset / serialRange) * yearRange;
   const estimatedYear = Math.round(lowerAnchor.year + yearOffset);
   
-  // Determine confidence level
+  // Determine confidence level based on proximity to any anchor point
   let confidence: "high" | "medium" | "low" = 'medium';
   let verifiedNote = '';
   
-  // High confidence if very close to verified examples
-  if (Math.abs(serialNum - 74968) < 500) {
+  // Find distance to nearest anchor point
+  let minDistance = Infinity;
+  for (const anchor of YAIRI_ANCHOR_POINTS) {
+    const distance = Math.abs(serialNum - anchor.serial);
+    if (distance < minDistance) {
+      minDistance = distance;
+    }
+  }
+  
+  // High confidence if close to any anchor point
+  if (minDistance < 200) {
     confidence = 'high';
+  }
+  
+  // Add specific notes for verified customer examples
+  if (Math.abs(serialNum - 74968) < 200) {
     verifiedNote = 'Near verified serial 74968 (WY1TS, 2021). ';
-  } else if (Math.abs(serialNum - 77525) < 500) {
-    confidence = 'high';
+  } else if (Math.abs(serialNum - 77525) < 200) {
     verifiedNote = 'Near verified serial 77525 (FYM66HD, 2024). ';
   }
   
-  // Build notes
+  // Build notes - avoid specific production numbers
   let notes = `${verifiedNote}Estimated based on Alvarez official serial checker data and verified customer examples. `;
-  notes += `Production rate varies (2015-2020: ~400-500/year, 2021+: ~750/year). `;
-  notes += `Check neck block stamp inside guitar for exact manufacturing date.`;
+  notes += `For exact manufacturing date, check neck block stamp inside guitar.`;
   
   // Special note for Honduran mahogany guitars
   if (serialNum < 77750 && estimatedYear <= 2024) {
-    notes += ` NOTE: Guitars with serials below ~77750 (pre-September 2025) contain vintage Honduran mahogany from Mr. Yairi's original stock.`;
+    notes += ` NOTE: Guitars with serials below ~77750 (pre-September 2025) may contain vintage Honduran mahogany from Mr. Yairi's original stock.`;
   }
   
   return {
