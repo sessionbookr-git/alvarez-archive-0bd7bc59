@@ -10,22 +10,22 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, Check, Loader2, Image, AlertCircle, CheckCircle2 } from "lucide-react";
 
-// Define the quiz flow order - this is critical for UX
+// Define the quiz flow order - matches actual database categories
 const CATEGORY_ORDER = [
   'body_shape',      // Biggest eliminator - dread vs concert vs jumbo
   'construction',    // All solid vs laminate - major identifier
-  'bridge_material', // Ebony vs Rosewood - key Yairi indicator
+  'bridge',          // Ebony vs Rosewood - key Yairi indicator
   'fingerboard',     // Matches bridge usually
   'electronics',     // Has pickup or not
-  'tuner',          // Open-back vs enclosed
-  'label',          // Final confirmation - orange/gold vs blue/silver
+  'tuner',           // Open-back vs enclosed
+  'label',           // Final confirmation - orange/gold vs blue/silver
 ];
 
 // Human-readable category labels and descriptions
 const CATEGORY_LABELS: Record<string, string> = {
   body_shape: "What body shape is your guitar?",
   construction: "What is the construction type?",
-  bridge_material: "What material is the bridge?",
+  bridge: "What material is the bridge?",
   fingerboard: "What material is the fingerboard?",
   electronics: "Does your guitar have electronics?",
   tuner: "What type of tuners does your guitar have?",
@@ -35,7 +35,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   body_shape: "Select the closest match to your guitar's body",
   construction: "All solid wood vs laminate construction",
-  bridge_material: "Look at the bridge where the strings attach",
+  bridge: "Look at the bridge where the strings attach",
   fingerboard: "The fretboard material on the neck",
   electronics: "Check if there's a pickup or preamp system",
   tuner: "Look at the tuning machines on the headstock",
