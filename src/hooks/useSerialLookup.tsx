@@ -118,7 +118,10 @@ export const useSerialLookup = () => {
       let estimatedYear = parsed.estimatedYear;
       let country = parsed.country;
       let confidence = parsed.confidence;
-      let confidencePercent = confidence === "high" ? 85 : confidence === "medium" ? 60 : 30;
+      // If we have a definitive parsed year AND month, this is essentially certain
+      let confidencePercent = confidence === "high" 
+        ? (parsed.estimatedYear && parsed.estimatedMonth ? 95 : 85) 
+        : confidence === "medium" ? 60 : 30;
 
       // If we have database patterns (non-Yairi), use those for better accuracy
       // BUT: don't overwrite specific parsed dates with generic ranges
