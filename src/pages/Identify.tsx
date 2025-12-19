@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Plus, ArrowLeft, ArrowRight, Check, Loader2, Image } from "lucide-react";
 import Header from "@/components/Header";
@@ -63,6 +63,7 @@ interface ModelMatch {
 const Identify = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const navigationRef = useRef<HTMLDivElement>(null);
 
   const { data: allCategories, isLoading: categoriesLoading } = useFeatureCategories();
   
@@ -169,6 +170,10 @@ const Identify = () => {
   const handleSelect = (featureId: string) => {
     if (currentCategory) {
       setAnswers({ ...answers, [currentCategory]: featureId });
+      // Scroll to navigation after selection
+      setTimeout(() => {
+        navigationRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
     }
   };
 
@@ -280,7 +285,7 @@ const Identify = () => {
               )}
 
               {/* Navigation */}
-              <div className="flex justify-between">
+              <div ref={navigationRef} className="flex justify-between">
                 <Button
                   variant="outline"
                   onClick={handleBack}
