@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Plus, ArrowLeft, ArrowRight, Check, Loader2, Image } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { useIdentifyingFeatures, useFeatureCategories } from "@/hooks/useIdentifyingFeatures";
+import { useIdentifyingFeatures, useFeatureCategories, useAllIdentifyingFeatures } from "@/hooks/useIdentifyingFeatures";
 import { useAllModelFeatures } from "@/hooks/useModelFeatures";
 import { useModels } from "@/hooks/useModels";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,7 @@ const Identify = () => {
 
   const currentCategory = categories?.[currentStep];
   const { data: features, isLoading: featuresLoading } = useIdentifyingFeatures(currentCategory);
+  const { data: allIdentifyingFeatures } = useAllIdentifyingFeatures();
   const { data: allModelFeatures } = useAllModelFeatures();
   const { data: models } = useModels();
 
@@ -387,8 +388,8 @@ const Identify = () => {
                 <h3 className="font-semibold mb-4">Your Selections</h3>
                 <dl className="space-y-2 text-sm">
                   {Object.entries(answers).map(([category, featureId]) => {
-                    // Look up the feature name from the ID
-                    const feature = allModelFeatures?.find(mf => mf.feature_id === featureId)?.identifying_features;
+                    // Look up the feature name from the identifying_features table
+                    const feature = allIdentifyingFeatures?.find(f => f.id === featureId);
                     const displayValue = feature?.feature_name || featureId;
                     return (
                       <div key={category} className="flex justify-between">
