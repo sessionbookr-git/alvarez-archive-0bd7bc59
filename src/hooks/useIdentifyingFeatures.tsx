@@ -32,6 +32,21 @@ export const useIdentifyingFeatures = (category?: string) => {
   });
 };
 
+export const useAllIdentifyingFeatures = () => {
+  return useQuery({
+    queryKey: ["identifying-features-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("identifying_features")
+        .select("*")
+        .order("feature_name");
+
+      if (error) throw error;
+      return data as IdentifyingFeature[];
+    },
+  });
+};
+
 export const useFeatureCategories = () => {
   return useQuery({
     queryKey: ["feature-categories"],
