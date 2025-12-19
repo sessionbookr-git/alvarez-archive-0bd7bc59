@@ -37,7 +37,7 @@ const FeatureCards = () => {
     <section className="py-20">
       <div className="container-wide">
         <div className="text-center mb-12">
-          <h2 className="text-2xl font-semibold mb-3">How Can We Help?</h2>
+          <h2 className="text-2xl font-semibold mb-3">Explore the Archive</h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
             Multiple ways to identify and learn about your vintage Alvarez guitar
           </p>
