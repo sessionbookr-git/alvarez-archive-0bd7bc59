@@ -243,6 +243,41 @@ export type Database = {
           },
         ]
       }
+      model_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          model_id: string
+          photo_order: number
+          photo_url: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          model_id: string
+          photo_order?: number
+          photo_url: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          model_id?: string
+          photo_order?: number
+          photo_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_photos_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       models: {
         Row: {
           body_shape: string | null

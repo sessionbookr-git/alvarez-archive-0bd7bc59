@@ -3,15 +3,18 @@ import { useParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useModel } from "@/hooks/useModels";
+import { useModelPhotos } from "@/hooks/useModelPhotos";
 import { useAuth } from "@/hooks/useAuth";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Globe, Music, Loader2, Edit } from "lucide-react";
 import EditModelDialog from "@/components/EditModelDialog";
+import ModelPhotoGallery from "@/components/ModelPhotoGallery";
 
 const ModelDetail = () => {
   const { modelId } = useParams<{ modelId: string }>();
   const { data: model, isLoading, error } = useModel(modelId || "");
+  const { data: modelPhotos = [] } = useModelPhotos(modelId || "");
   const { isAdmin } = useAuth();
   const { track } = useAnalytics();
   const [editOpen, setEditOpen] = useState(false);
@@ -80,19 +83,11 @@ const ModelDetail = () => {
 
           <div className="grid gap-12 lg:grid-cols-2">
             {/* Image Section */}
-            <div>
-              {(model as { photo_url?: string }).photo_url ? (
-                <img 
-                  src={(model as { photo_url?: string }).photo_url!} 
-                  alt={model.model_name}
-                  className="w-full aspect-square object-cover rounded-lg"
-                />
-              ) : (
-                <div className="aspect-square bg-secondary rounded-lg flex items-center justify-center">
-                  <span className="text-muted-foreground">Photo Coming Soon</span>
-                </div>
-              )}
-            </div>
+            <ModelPhotoGallery
+              photos={modelPhotos}
+              fallbackUrl={(model as { photo_url?: string }).photo_url}
+              modelName={model.model_name}
+            />
 
             {/* Details Section */}
             <div>
