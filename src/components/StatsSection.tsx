@@ -7,13 +7,13 @@ const StatsSection = () => {
   const statsConfig = [
     {
       icon: Guitar,
-      value: stats?.guitarCount || 0,
-      label: "Guitars Documented",
+      value: stats?.modelCount || 0,
+      label: "Models in Archive",
     },
     {
       icon: Users,
-      value: stats?.modelCount || 0,
-      label: "Models Catalogued",
+      value: stats?.guitarCount || 0,
+      label: "User Submissions",
     },
     {
       icon: Calendar,
@@ -22,7 +22,7 @@ const StatsSection = () => {
     },
     {
       icon: Globe,
-      value: stats?.countriesCount || 3,
+      value: stats?.countriesCount || 2,
       label: "Manufacturing Countries",
     },
   ];
