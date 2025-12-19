@@ -190,28 +190,50 @@ const SerialLookup = () => {
               </div>
               {/* Confidence - show Dating Required only for vintage Yairi without year info */}
               {result.isYairi && !result.neckBlockYear && !result.estimatedYear ? (
-                <div className="p-6 border border-amber-500/30 bg-amber-500/5 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-3">Dating Information Required</h2>
-                  <p className="text-muted-foreground mb-4">
-                    This appears to be a vintage Yairi (serial below 72000). The serial number is a sequence number only. 
-                    To determine the production date:
-                  </p>
-                  <ul className="text-sm text-muted-foreground space-y-2 mb-4">
-                    <li className="flex items-start gap-2">
-                      <span className="text-amber-600 font-medium">1.</span>
-                      <span>Check the neck block stamp inside the soundhole - this is an Emperor date code</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-amber-600 font-medium">2.</span>
-                      <span>Enter the 2-digit code in the "Neck Block Number" field above and search again</span>
-                    </li>
-                  </ul>
-                  <button 
+                <div className="p-6 border-2 border-amber-500/50 bg-amber-500/10 rounded-lg">
+                  <div className="flex items-start gap-4 mb-5">
+                    <div className="p-3 bg-amber-500/20 rounded-full flex-shrink-0">
+                      <AlertCircle className="h-6 w-6 text-amber-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold text-amber-700 dark:text-amber-400">Neck Block Stamp Required</h2>
+                      <p className="text-muted-foreground mt-1">
+                        Vintage Yairi guitars use a different dating system. The serial number alone cannot determine the year.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-background/60 rounded-lg p-5 mb-5">
+                    <h3 className="font-semibold mb-3">How to find your guitar's year:</h3>
+                    <ol className="space-y-3">
+                      <li className="flex items-start gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-500 text-white text-sm font-bold flex items-center justify-center">1</span>
+                        <span>Look inside the soundhole near where the neck joins the body</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-500 text-white text-sm font-bold flex items-center justify-center">2</span>
+                        <span>Find the 2-digit number stamped on the neck block (e.g., "56" or "10")</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-500 text-white text-sm font-bold flex items-center justify-center">3</span>
+                        <span>Enter this code in the <strong>"Neck Block Number"</strong> field above and search again</span>
+                      </li>
+                    </ol>
+                  </div>
+                  
+                  <Button 
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-amber-500/50 hover:bg-amber-500/10"
                     onClick={() => setShowEmperorChart(true)}
-                    className="text-sm text-primary hover:underline font-medium"
                   >
-                    View Emperor Code Chart →
-                  </button>
+                    <Calendar className="mr-2 h-5 w-5" />
+                    View Emperor Date Code Chart
+                  </Button>
+                  
+                  <p className="text-xs text-muted-foreground mt-3 text-center">
+                    Japanese guitars use the Emperor calendar system. The chart explains how to decode the stamp.
+                  </p>
                 </div>
               ) : (
                 <div className="p-6 border border-border rounded-lg">
