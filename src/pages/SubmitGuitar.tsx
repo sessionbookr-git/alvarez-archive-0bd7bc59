@@ -48,6 +48,12 @@ const SubmitGuitar = () => {
     neckBlock: "",
     model: "",
     year: "",
+    bodyStyle: "",
+    electronics: "",
+    topWood: "",
+    backSidesWood: "",
+    finishType: "",
+    countryOfOrigin: "",
     purchaseLocation: "",
     notes: prefilledFeatures ? formatFeaturesAsNotes(prefilledFeatures) : "",
     email: "",
@@ -180,7 +186,7 @@ const SubmitGuitar = () => {
                 setStep(1); 
                 setImages([]); 
                 setImagePreviews([]);
-                setFormData({ serialNumber: "", neckBlock: "", model: "", year: "", purchaseLocation: "", notes: "", email: "", story: "", displayName: "", isStoryPublic: false }); 
+                setFormData({ serialNumber: "", neckBlock: "", model: "", year: "", bodyStyle: "", electronics: "", topWood: "", backSidesWood: "", finishType: "", countryOfOrigin: "", purchaseLocation: "", notes: "", email: "", story: "", displayName: "", isStoryPublic: false }); 
               }} 
               className="opacity-0 animate-fade-in" 
               style={{ animationDelay: "300ms" }}
@@ -305,50 +311,135 @@ const SubmitGuitar = () => {
             {/* Step 2: Details */}
             {step === 2 && (
               <div className="space-y-6 opacity-0 animate-fade-in">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label htmlFor="serial">Serial Number *</Label>
-                    <Input
-                      id="serial"
-                      value={formData.serialNumber}
-                      onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
-                      placeholder="e.g., 45123"
-                      className="mt-1.5"
-                      required
-                    />
+                {/* Identification */}
+                <div>
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-foreground text-background text-xs flex items-center justify-center">1</span>
+                    Identification
+                  </h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="serial">Serial Number *</Label>
+                      <Input
+                        id="serial"
+                        value={formData.serialNumber}
+                        onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
+                        placeholder="e.g., 45123"
+                        className="mt-1.5"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="neckBlock">Neck Block Number</Label>
+                      <Input
+                        id="neckBlock"
+                        value={formData.neckBlock}
+                        onChange={(e) => setFormData({ ...formData, neckBlock: e.target.value })}
+                        placeholder="Optional"
+                        className="mt-1.5"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="neckBlock">Neck Block Number</Label>
-                    <Input
-                      id="neckBlock"
-                      value={formData.neckBlock}
-                      onChange={(e) => setFormData({ ...formData, neckBlock: e.target.value })}
-                      placeholder="Optional"
-                      className="mt-1.5"
-                    />
+                  <div className="grid gap-4 sm:grid-cols-2 mt-4">
+                    <div>
+                      <Label htmlFor="model">Model Name/Number</Label>
+                      <Input
+                        id="model"
+                        value={formData.model}
+                        onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                        placeholder="e.g., 5054, DY77, Artist Series"
+                        className="mt-1.5"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Check the label or headstock</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="year">Production Year</Label>
+                      <Input
+                        id="year"
+                        value={formData.year}
+                        onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                        placeholder="e.g., 1978"
+                        className="mt-1.5"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label htmlFor="model">Model (if known)</Label>
-                    <Input
-                      id="model"
-                      value={formData.model}
-                      onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                      placeholder="e.g., 5021"
-                      className="mt-1.5"
-                    />
+                {/* Specifications */}
+                <div>
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-foreground text-background text-xs flex items-center justify-center">2</span>
+                    Specifications
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">Share what you know about your guitar's specs—any details help!</p>
+                  
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="bodyStyle">Body Style</Label>
+                      <Input
+                        id="bodyStyle"
+                        value={formData.bodyStyle}
+                        onChange={(e) => setFormData({ ...formData, bodyStyle: e.target.value })}
+                        placeholder="e.g., Dreadnought, Concert, Jumbo"
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="electronics">Electronics</Label>
+                      <Input
+                        id="electronics"
+                        value={formData.electronics}
+                        onChange={(e) => setFormData({ ...formData, electronics: e.target.value })}
+                        placeholder="e.g., Acoustic-Electric, None"
+                        className="mt-1.5"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="year">Production Year (if known)</Label>
-                    <Input
-                      id="year"
-                      value={formData.year}
-                      onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                      placeholder="e.g., 1978"
-                      className="mt-1.5"
-                    />
+                  
+                  <div className="grid gap-4 sm:grid-cols-2 mt-4">
+                    <div>
+                      <Label htmlFor="topWood">Top Wood</Label>
+                      <Input
+                        id="topWood"
+                        value={formData.topWood}
+                        onChange={(e) => setFormData({ ...formData, topWood: e.target.value })}
+                        placeholder="e.g., Solid Spruce, Cedar"
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="backSidesWood">Back & Sides Wood</Label>
+                      <Input
+                        id="backSidesWood"
+                        value={formData.backSidesWood}
+                        onChange={(e) => setFormData({ ...formData, backSidesWood: e.target.value })}
+                        placeholder="e.g., Rosewood, Mahogany"
+                        className="mt-1.5"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2 mt-4">
+                    <div>
+                      <Label htmlFor="finishType">Finish</Label>
+                      <Input
+                        id="finishType"
+                        value={formData.finishType}
+                        onChange={(e) => setFormData({ ...formData, finishType: e.target.value })}
+                        placeholder="e.g., Natural, Sunburst, Gloss"
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="countryOfOrigin">Country of Origin</Label>
+                      <Input
+                        id="countryOfOrigin"
+                        value={formData.countryOfOrigin}
+                        onChange={(e) => setFormData({ ...formData, countryOfOrigin: e.target.value })}
+                        placeholder="e.g., Japan, USA, Korea"
+                        className="mt-1.5"
+                      />
+                    </div>
                   </div>
                 </div>
 
