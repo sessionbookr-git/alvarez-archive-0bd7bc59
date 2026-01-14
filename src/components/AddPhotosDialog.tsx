@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Camera, X, Loader2, Upload, ImagePlus } from "lucide-react";
-import { validateImageFiles, MAX_FILE_SIZE_MB } from "@/lib/fileValidation";
+import { validateImageFiles, compressImage } from "@/lib/fileValidation";
 
 interface AddPhotosDialogProps {
   open: boolean;
@@ -36,12 +36,15 @@ export const AddPhotosDialog = ({
   const uploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
       const uploadPromises = files.map(async (file, index) => {
-        const fileExt = file.name.split(".").pop();
+        // Compress image before upload
+        const compressedFile = await compressImage(file);
+        
+        const fileExt = compressedFile.name.split(".").pop() || 'jpg';
         const fileName = `${guitarId}/additional-${Date.now()}-${index}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from("guitar-photos")
-          .upload(fileName, file);
+          .upload(fileName, compressedFile);
 
         if (uploadError) throw uploadError;
 
@@ -145,7 +148,7 @@ export const AddPhotosDialog = ({
                 Click to select photos or drag and drop
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                PNG, JPG, WebP up to {MAX_FILE_SIZE_MB}MB each (max 8 total)
+                PNG, JPG, WebP • Auto-compressed for optimal storage (max 8 photos)
               </p>
             </div>
             <Input
