@@ -77,14 +77,18 @@ export type Database = {
           bridge_style: string | null
           confidence_level: string | null
           created_at: string
+          display_name: string | null
           estimated_year: number | null
           id: string
+          is_featured: boolean | null
+          is_story_public: boolean | null
           label_color: string | null
           label_type: string | null
           model_id: string | null
           neck_block_number: string | null
           serial_number: string
           status: string | null
+          story: string | null
           submission_notes: string | null
           submitted_by_email: string | null
           truss_rod_location: string | null
@@ -96,14 +100,18 @@ export type Database = {
           bridge_style?: string | null
           confidence_level?: string | null
           created_at?: string
+          display_name?: string | null
           estimated_year?: number | null
           id?: string
+          is_featured?: boolean | null
+          is_story_public?: boolean | null
           label_color?: string | null
           label_type?: string | null
           model_id?: string | null
           neck_block_number?: string | null
           serial_number: string
           status?: string | null
+          story?: string | null
           submission_notes?: string | null
           submitted_by_email?: string | null
           truss_rod_location?: string | null
@@ -115,14 +123,18 @@ export type Database = {
           bridge_style?: string | null
           confidence_level?: string | null
           created_at?: string
+          display_name?: string | null
           estimated_year?: number | null
           id?: string
+          is_featured?: boolean | null
+          is_story_public?: boolean | null
           label_color?: string | null
           label_type?: string | null
           model_id?: string | null
           neck_block_number?: string | null
           serial_number?: string
           status?: string | null
+          story?: string | null
           submission_notes?: string | null
           submitted_by_email?: string | null
           truss_rod_location?: string | null

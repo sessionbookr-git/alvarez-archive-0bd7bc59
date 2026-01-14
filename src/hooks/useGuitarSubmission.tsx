@@ -14,6 +14,9 @@ interface SubmissionData {
   labelType?: string;
   labelColor?: string;
   email?: string;
+  story?: string;
+  displayName?: string;
+  isStoryPublic?: boolean;
 }
 
 export const useGuitarSubmission = () => {
@@ -70,6 +73,9 @@ export const useGuitarSubmission = () => {
           submission_notes: [data.purchaseLocation, data.notes].filter(Boolean).join("\n\n"),
           status: "pending",
           confidence_level: "medium",
+          story: data.story || null,
+          display_name: data.displayName || null,
+          is_story_public: data.isStoryPublic || false,
         })
         .select()
         .single();
