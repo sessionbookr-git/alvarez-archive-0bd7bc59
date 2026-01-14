@@ -5,6 +5,7 @@ import FeatureCards from "@/components/FeatureCards";
 import StatsSection from "@/components/StatsSection";
 import ModelGrid from "@/components/ModelGrid";
 import Timeline from "@/components/Timeline";
+import FeaturedStories from "@/components/FeaturedStories";
 
 const Index = () => {
   return (
@@ -14,6 +15,7 @@ const Index = () => {
         <HeroSection />
         <FeatureCards />
         <StatsSection />
+        <FeaturedStories />
         <Timeline />
         <ModelGrid />
       </main>

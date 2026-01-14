@@ -42,6 +42,12 @@ const Header = () => {
             Identify
           </Link>
           <Link 
+            to="/community" 
+            className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
+          >
+            Community
+          </Link>
+          <Link 
             to="/submit" 
             className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
           >

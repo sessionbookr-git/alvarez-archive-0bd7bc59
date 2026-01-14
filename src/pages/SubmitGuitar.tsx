@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, X, Check, Loader2, AlertCircle, FileText } from "lucide-react";
+import { Upload, X, Check, Loader2, AlertCircle, FileText, BookOpen, Eye, EyeOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 
 // Helper to format features from Identify page into notes
@@ -50,6 +51,9 @@ const SubmitGuitar = () => {
     purchaseLocation: "",
     notes: prefilledFeatures ? formatFeaturesAsNotes(prefilledFeatures) : "",
     email: "",
+    story: "",
+    displayName: "",
+    isStoryPublic: false,
   });
 
   // Redirect to auth if not logged in
@@ -176,7 +180,7 @@ const SubmitGuitar = () => {
                 setStep(1); 
                 setImages([]); 
                 setImagePreviews([]);
-                setFormData({ serialNumber: "", neckBlock: "", model: "", year: "", purchaseLocation: "", notes: "", email: "" }); 
+                setFormData({ serialNumber: "", neckBlock: "", model: "", year: "", purchaseLocation: "", notes: "", email: "", story: "", displayName: "", isStoryPublic: false }); 
               }} 
               className="opacity-0 animate-fade-in" 
               style={{ animationDelay: "300ms" }}
@@ -359,41 +363,104 @@ const SubmitGuitar = () => {
               </div>
             )}
 
-            {/* Step 3: Additional Info */}
+            {/* Step 3: Story & Additional Info */}
             {step === 3 && (
               <div className="space-y-6 opacity-0 animate-fade-in">
-                <div>
-                  <Label htmlFor="email">Your Email (optional)</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="For updates when your submission is approved"
-                    className="mt-1.5"
-                  />
+                {/* Story Section */}
+                <div className="p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-800/30 rounded-lg">
+                  <div className="flex items-start gap-3 mb-4">
+                    <BookOpen className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <div>
+                      <h3 className="font-semibold text-amber-900 dark:text-amber-100">Share Your Guitar's Story</h3>
+                      <p className="text-sm text-amber-700/80 dark:text-amber-200/70">
+                        Help bring life to the archive! Share the history and memories behind your guitar.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="story" className="text-amber-900 dark:text-amber-100">Your Story</Label>
+                      <Textarea
+                        id="story"
+                        value={formData.story}
+                        onChange={(e) => setFormData({ ...formData, story: e.target.value })}
+                        placeholder="How did you acquire this guitar? What memories do you have with it? Is there any interesting history you know about it?"
+                        className="mt-1.5 min-h-[140px] bg-background"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="displayName" className="text-amber-900 dark:text-amber-100">Your Name (for attribution)</Label>
+                      <Input
+                        id="displayName"
+                        value={formData.displayName}
+                        onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                        placeholder="e.g., John M. from Texas"
+                        className="mt-1.5 bg-background"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">This will appear alongside your story if you choose to share publicly.</p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
+                      <div className="flex items-center gap-3">
+                        {formData.isStoryPublic ? (
+                          <Eye className="h-4 w-4 text-confidence-high" />
+                        ) : (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <div>
+                          <p className="text-sm font-medium">Share story publicly</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formData.isStoryPublic 
+                              ? "Your story will appear in the Community section" 
+                              : "Your story will only be visible to admins"}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={formData.isStoryPublic}
+                        onCheckedChange={(checked) => setFormData({ ...formData, isStoryPublic: checked })}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="purchase">Purchase Details</Label>
-                  <Input
-                    id="purchase"
-                    value={formData.purchaseLocation}
-                    onChange={(e) => setFormData({ ...formData, purchaseLocation: e.target.value })}
-                    placeholder="Where and when did you acquire this guitar?"
-                    className="mt-1.5"
-                  />
-                </div>
+                {/* Contact & Notes */}
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="email">Your Email (optional)</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="For updates when your submission is approved"
+                      className="mt-1.5"
+                    />
+                  </div>
 
-                <div>
-                  <Label htmlFor="notes">Additional Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Any other details that might help with identification..."
-                    className="mt-1.5 min-h-[120px]"
-                  />
+                  <div>
+                    <Label htmlFor="purchase">Purchase Details</Label>
+                    <Input
+                      id="purchase"
+                      value={formData.purchaseLocation}
+                      onChange={(e) => setFormData({ ...formData, purchaseLocation: e.target.value })}
+                      placeholder="Where and when did you acquire this guitar?"
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="notes">Additional Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Any other details that might help with identification..."
+                      className="mt-1.5 min-h-[80px]"
+                    />
+                  </div>
                 </div>
 
                 {/* Preview */}

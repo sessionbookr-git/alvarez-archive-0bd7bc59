@@ -5,8 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Edit, ArrowLeft } from "lucide-react";
+import { Check, X, ArrowLeft, Star, BookOpen, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -72,6 +75,23 @@ const AdminSubmissions = () => {
   const handleReject = (id: string) => {
     updateStatus.mutate({ id, status: "rejected", notes: adminNotes });
   };
+
+  const toggleFeatured = useMutation({
+    mutationFn: async ({ id, isFeatured }: { id: string; isFeatured: boolean }) => {
+      const { error } = await supabase
+        .from("guitars")
+        .update({ is_featured: isFeatured })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, { isFeatured }) => {
+      queryClient.invalidateQueries({ queryKey: ["pending-submissions"] });
+      toast({
+        title: isFeatured ? "Story featured!" : "Story unfeatured",
+        description: isFeatured ? "This story will appear on the homepage." : "Story removed from featured.",
+      });
+    },
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -195,6 +215,41 @@ const AdminSubmissions = () => {
                         <div className="mt-4 p-3 bg-muted rounded-lg">
                           <span className="text-sm text-muted-foreground">Submission Notes:</span>
                           <p className="text-sm mt-1">{guitar.submission_notes}</p>
+                        </div>
+                      )}
+                      
+                      {/* Story Section */}
+                      {guitar.story && (
+                        <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <BookOpen className="h-4 w-4 text-amber-600" />
+                              <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Contributor Story</span>
+                            </div>
+                            {guitar.is_story_public && (
+                              <Badge variant="outline" className="text-xs border-amber-300 text-amber-700">
+                                <Eye className="h-3 w-3 mr-1" />
+                                Public
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-amber-800 dark:text-amber-200">{guitar.story}</p>
+                          {guitar.display_name && (
+                            <p className="text-xs text-amber-600 mt-2">— {guitar.display_name}</p>
+                          )}
+                          
+                          {guitar.is_story_public && (
+                            <div className="mt-3 pt-3 border-t border-amber-200 dark:border-amber-800 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Star className={`h-4 w-4 ${guitar.is_featured ? "text-amber-500 fill-amber-500" : "text-muted-foreground"}`} />
+                                <Label className="text-xs">Feature on homepage</Label>
+                              </div>
+                              <Switch
+                                checked={guitar.is_featured || false}
+                                onCheckedChange={(checked) => toggleFeatured.mutate({ id: guitar.id, isFeatured: checked })}
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

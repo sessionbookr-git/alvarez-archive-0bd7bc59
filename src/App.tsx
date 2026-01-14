@@ -11,6 +11,7 @@ import Encyclopedia from "./pages/Encyclopedia";
 import ModelDetail from "./pages/ModelDetail";
 import Identify from "./pages/Identify";
 import SubmitGuitar from "./pages/SubmitGuitar";
+import Community from "./pages/Community";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import MySubmissions from "./pages/MySubmissions";
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/encyclopedia/:modelId" element={<ModelDetail />} />
             <Route path="/identify" element={<Identify />} />
             <Route path="/submit" element={<SubmitGuitar />} />
+            <Route path="/community" element={<Community />} />
             <Route path="/submit-guidelines" element={<SubmitGuidelines />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
