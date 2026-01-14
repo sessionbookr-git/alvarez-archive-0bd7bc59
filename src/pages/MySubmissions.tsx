@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,18 +8,26 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Guitar, Plus } from "lucide-react";
+import { Loader2, Guitar, Plus, ImagePlus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { AddPhotosDialog } from "@/components/AddPhotosDialog";
 
 const MySubmissions = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
+  const [selectedGuitar, setSelectedGuitar] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth?redirect=/my-submissions");
     }
   }, [user, authLoading, navigate]);
+
+  const handleAddPhotos = (guitarId: string, guitarName: string) => {
+    setSelectedGuitar({ id: guitarId, name: guitarName });
+    setPhotoDialogOpen(true);
+  };
 
   const { data: submissions, isLoading } = useQuery({
     queryKey: ["my-submissions", user?.email],
@@ -138,11 +146,31 @@ const MySubmissions = () => {
                     {guitar.admin_notes && guitar.status === "rejected" && (
                       <p className="text-sm text-destructive mt-2">{guitar.admin_notes}</p>
                     )}
+                    {guitar.status === "approved" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 w-full"
+                        onClick={() => handleAddPhotos(guitar.id, guitar.models?.model_name || guitar.serial_number)}
+                      >
+                        <ImagePlus className="h-4 w-4 mr-2" />
+                        Add Photos
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );
             })}
           </div>
+        )}
+
+        {selectedGuitar && (
+          <AddPhotosDialog
+            open={photoDialogOpen}
+            onOpenChange={setPhotoDialogOpen}
+            guitarId={selectedGuitar.id}
+            guitarName={selectedGuitar.name}
+          />
         )}
       </main>
       <Footer />
