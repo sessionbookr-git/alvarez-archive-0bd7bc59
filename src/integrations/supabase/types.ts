@@ -74,69 +74,90 @@ export type Database = {
         Row: {
           admin_notes: string | null
           approved_at: string | null
+          back_sides_wood: string | null
+          body_style: string | null
           bridge_style: string | null
           confidence_level: string | null
+          country_of_origin: string | null
           created_at: string
           display_name: string | null
+          electronics: string | null
           estimated_year: number | null
+          finish_type: string | null
           id: string
           is_featured: boolean | null
           is_story_public: boolean | null
           label_color: string | null
           label_type: string | null
           model_id: string | null
+          model_name_submitted: string | null
           neck_block_number: string | null
           serial_number: string
           status: string | null
           story: string | null
           submission_notes: string | null
           submitted_by_email: string | null
+          top_wood: string | null
           truss_rod_location: string | null
           tuner_type: string | null
         }
         Insert: {
           admin_notes?: string | null
           approved_at?: string | null
+          back_sides_wood?: string | null
+          body_style?: string | null
           bridge_style?: string | null
           confidence_level?: string | null
+          country_of_origin?: string | null
           created_at?: string
           display_name?: string | null
+          electronics?: string | null
           estimated_year?: number | null
+          finish_type?: string | null
           id?: string
           is_featured?: boolean | null
           is_story_public?: boolean | null
           label_color?: string | null
           label_type?: string | null
           model_id?: string | null
+          model_name_submitted?: string | null
           neck_block_number?: string | null
           serial_number: string
           status?: string | null
           story?: string | null
           submission_notes?: string | null
           submitted_by_email?: string | null
+          top_wood?: string | null
           truss_rod_location?: string | null
           tuner_type?: string | null
         }
         Update: {
           admin_notes?: string | null
           approved_at?: string | null
+          back_sides_wood?: string | null
+          body_style?: string | null
           bridge_style?: string | null
           confidence_level?: string | null
+          country_of_origin?: string | null
           created_at?: string
           display_name?: string | null
+          electronics?: string | null
           estimated_year?: number | null
+          finish_type?: string | null
           id?: string
           is_featured?: boolean | null
           is_story_public?: boolean | null
           label_color?: string | null
           label_type?: string | null
           model_id?: string | null
+          model_name_submitted?: string | null
           neck_block_number?: string | null
           serial_number?: string
           status?: string | null
           story?: string | null
           submission_notes?: string | null
           submitted_by_email?: string | null
+          top_wood?: string | null
           truss_rod_location?: string | null
           tuner_type?: string | null
         }

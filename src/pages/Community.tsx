@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Star, Music, Calendar, MapPin } from "lucide-react";
+import { Search, Star, Music, Calendar, Guitar, MapPin } from "lucide-react";
 
 const Community = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,6 +24,13 @@ const Community = () => {
           display_name,
           is_featured,
           approved_at,
+          model_name_submitted,
+          body_style,
+          electronics,
+          top_wood,
+          back_sides_wood,
+          finish_type,
+          country_of_origin,
           model:models(model_name, series),
           photos:guitar_photos(photo_url, photo_type)
         `)
@@ -43,11 +50,30 @@ const Community = () => {
     const query = searchQuery.toLowerCase();
     return (
       story.model?.model_name?.toLowerCase().includes(query) ||
+      story.model_name_submitted?.toLowerCase().includes(query) ||
       story.display_name?.toLowerCase().includes(query) ||
       story.story?.toLowerCase().includes(query) ||
-      story.serial_number?.toLowerCase().includes(query)
+      story.serial_number?.toLowerCase().includes(query) ||
+      story.body_style?.toLowerCase().includes(query)
     );
   });
+
+  // Helper to get display name for guitar
+  const getGuitarDisplayName = (guitar: NonNullable<typeof stories>[number]) => {
+    if (guitar.model?.model_name) return guitar.model.model_name;
+    if (guitar.model_name_submitted) return guitar.model_name_submitted;
+    return null;
+  };
+
+  // Helper to build specs array
+  const getSpecs = (guitar: NonNullable<typeof stories>[number]) => {
+    const specs: string[] = [];
+    if (guitar.body_style) specs.push(guitar.body_style);
+    if (guitar.top_wood) specs.push(guitar.top_wood + " Top");
+    if (guitar.electronics) specs.push(guitar.electronics);
+    if (guitar.country_of_origin) specs.push("Made in " + guitar.country_of_origin);
+    return specs;
+  };
 
   const featuredStories = filteredStories?.filter((s) => s.is_featured);
   const regularStories = filteredStories?.filter((s) => !s.is_featured);
@@ -99,48 +125,61 @@ const Community = () => {
                 <h2 className="text-2xl font-semibold">Featured Stories</h2>
               </div>
               <div className="grid md:grid-cols-2 gap-8">
-                {featuredStories.map((guitar) => (
-                  <Card key={guitar.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
-                    <div className="grid md:grid-cols-2">
-                      {getPrimaryPhoto(guitar.photos) && (
-                        <div className="aspect-square md:aspect-auto overflow-hidden bg-muted">
-                          <img
-                            src={getPrimaryPhoto(guitar.photos)!}
-                            alt={guitar.model?.model_name || "Guitar"}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        </div>
-                      )}
-                      <CardContent className="p-6 flex flex-col justify-center">
-                        <Badge className="w-fit mb-3 bg-amber-500/10 text-amber-700 border-amber-200">
-                          <Star className="h-3 w-3 mr-1 fill-current" />
-                          Featured
-                        </Badge>
-                        <h3 className="text-xl font-semibold mb-1">
-                          {guitar.model?.model_name || `Serial #${guitar.serial_number}`}
-                        </h3>
-                        {guitar.model?.series && (
-                          <p className="text-sm text-muted-foreground mb-3">{guitar.model.series} Series</p>
+                {featuredStories.map((guitar) => {
+                  const displayName = getGuitarDisplayName(guitar);
+                  const specs = getSpecs(guitar);
+                  return (
+                    <Card key={guitar.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
+                      <div className="grid md:grid-cols-2">
+                        {getPrimaryPhoto(guitar.photos) && (
+                          <div className="aspect-square md:aspect-auto overflow-hidden bg-muted">
+                            <img
+                              src={getPrimaryPhoto(guitar.photos)!}
+                              alt={displayName || "Guitar"}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </div>
                         )}
-                        <p className="text-muted-foreground line-clamp-4 mb-4">{guitar.story}</p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-auto">
-                          {guitar.display_name && (
-                            <span className="flex items-center gap-1">
-                              <Music className="h-3 w-3" />
-                              {guitar.display_name}
-                            </span>
+                        <CardContent className="p-6 flex flex-col justify-center">
+                          <Badge className="w-fit mb-3 bg-amber-500/10 text-amber-700 border-amber-200">
+                            <Star className="h-3 w-3 mr-1 fill-current" />
+                            Featured
+                          </Badge>
+                          <h3 className="text-xl font-semibold mb-1">
+                            {displayName || "Alvarez Guitar"}
+                          </h3>
+                          {guitar.model?.series && (
+                            <p className="text-sm text-amber-700 mb-2">{guitar.model.series} Series</p>
                           )}
-                          {guitar.estimated_year && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {guitar.estimated_year}
-                            </span>
+                          {specs.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mb-3">
+                              {specs.slice(0, 3).map((spec, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs font-normal">
+                                  {spec}
+                                </Badge>
+                              ))}
+                            </div>
                           )}
-                        </div>
-                      </CardContent>
-                    </div>
-                  </Card>
-                ))}
+                          <p className="text-muted-foreground line-clamp-4 mb-4 italic">"{guitar.story}"</p>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-auto pt-3 border-t border-border/50">
+                            {guitar.display_name && (
+                              <span className="flex items-center gap-1">
+                                <Music className="h-3 w-3" />
+                                {guitar.display_name}
+                              </span>
+                            )}
+                            {guitar.estimated_year && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {guitar.estimated_year}
+                              </span>
+                            )}
+                          </div>
+                        </CardContent>
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -173,42 +212,55 @@ const Community = () => {
               </Card>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {regularStories?.map((guitar) => (
-                  <Card key={guitar.id} className="overflow-hidden group hover:shadow-md transition-shadow">
-                    {getPrimaryPhoto(guitar.photos) && (
-                      <div className="aspect-[4/3] overflow-hidden bg-muted">
-                        <img
-                          src={getPrimaryPhoto(guitar.photos)!}
-                          alt={guitar.model?.model_name || "Guitar"}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-                    )}
-                    <CardContent className="p-5">
-                      <h3 className="font-semibold mb-1">
-                        {guitar.model?.model_name || `Serial #${guitar.serial_number}`}
-                      </h3>
-                      {guitar.model?.series && (
-                        <p className="text-sm text-muted-foreground mb-2">{guitar.model.series} Series</p>
+                {regularStories?.map((guitar) => {
+                  const displayName = getGuitarDisplayName(guitar);
+                  const specs = getSpecs(guitar);
+                  return (
+                    <Card key={guitar.id} className="overflow-hidden group hover:shadow-md transition-shadow">
+                      {getPrimaryPhoto(guitar.photos) && (
+                        <div className="aspect-[4/3] overflow-hidden bg-muted">
+                          <img
+                            src={getPrimaryPhoto(guitar.photos)!}
+                            alt={displayName || "Guitar"}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
                       )}
-                      <p className="text-sm text-muted-foreground line-clamp-3 mb-3">{guitar.story}</p>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        {guitar.display_name && (
-                          <span className="flex items-center gap-1">
-                            <Music className="h-3 w-3" />
-                            {guitar.display_name}
-                          </span>
+                      <CardContent className="p-5">
+                        <h3 className="font-semibold text-lg mb-1">
+                          {displayName || "Alvarez Guitar"}
+                        </h3>
+                        {guitar.model?.series && (
+                          <p className="text-sm text-amber-700 mb-2">{guitar.model.series} Series</p>
                         )}
-                        {guitar.estimated_year && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {guitar.estimated_year}
-                          </span>
+                        {specs.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {specs.slice(0, 2).map((spec, i) => (
+                              <Badge key={i} variant="secondary" className="text-xs font-normal">
+                                {spec}
+                              </Badge>
+                            ))}
+                          </div>
                         )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <p className="text-sm text-muted-foreground line-clamp-3 mb-3 italic">"{guitar.story}"</p>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground pt-3 border-t border-border/50">
+                          {guitar.display_name && (
+                            <span className="flex items-center gap-1">
+                              <Music className="h-3 w-3" />
+                              {guitar.display_name}
+                            </span>
+                          )}
+                          {guitar.estimated_year && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {guitar.estimated_year}
+                            </span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>

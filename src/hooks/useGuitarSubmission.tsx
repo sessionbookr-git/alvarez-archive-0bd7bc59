@@ -6,6 +6,12 @@ interface SubmissionData {
   neckBlock?: string;
   model?: string;
   year?: string;
+  bodyStyle?: string;
+  electronics?: string;
+  topWood?: string;
+  backSidesWood?: string;
+  finishType?: string;
+  countryOfOrigin?: string;
   purchaseLocation?: string;
   notes?: string;
   tunerType?: string;
@@ -63,7 +69,14 @@ export const useGuitarSubmission = () => {
           serial_number: data.serialNumber,
           neck_block_number: data.neckBlock || null,
           model_id: modelId,
+          model_name_submitted: data.model || null,
           estimated_year: data.year ? parseInt(data.year) : null,
+          body_style: data.bodyStyle || null,
+          electronics: data.electronics || null,
+          top_wood: data.topWood || null,
+          back_sides_wood: data.backSidesWood || null,
+          finish_type: data.finishType || null,
+          country_of_origin: data.countryOfOrigin || null,
           tuner_type: data.tunerType || null,
           truss_rod_location: data.trussRodLocation || null,
           bridge_style: data.bridgeStyle || null,

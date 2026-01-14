@@ -19,6 +19,9 @@ const FeaturedStories = () => {
           story,
           display_name,
           approved_at,
+          model_name_submitted,
+          body_style,
+          top_wood,
           model:models(model_name, series),
           photos:guitar_photos(photo_url, photo_type)
         `)
@@ -46,6 +49,21 @@ const FeaturedStories = () => {
   const truncateStory = (story: string, maxLength: number = 150) => {
     if (story.length <= maxLength) return story;
     return story.slice(0, maxLength).trim() + "...";
+  };
+
+  // Helper to get display name for guitar
+  const getGuitarDisplayName = (guitar: NonNullable<typeof stories>[number]) => {
+    if (guitar.model?.model_name) return guitar.model.model_name;
+    if (guitar.model_name_submitted) return guitar.model_name_submitted;
+    return null;
+  };
+
+  // Helper to build specs string
+  const getSpecsLine = (guitar: NonNullable<typeof stories>[number]) => {
+    const parts: string[] = [];
+    if (guitar.body_style) parts.push(guitar.body_style);
+    if (guitar.top_wood) parts.push(guitar.top_wood);
+    return parts.join(" • ");
   };
 
   return (
@@ -77,59 +95,69 @@ const FeaturedStories = () => {
 
         {/* Stories Grid */}
         <div className="grid md:grid-cols-3 gap-6">
-          {stories.map((guitar, index) => (
-            <Card 
-              key={guitar.id} 
-              className={`overflow-hidden group hover:shadow-lg transition-all duration-300 ${
-                index === 0 ? "md:col-span-2 md:row-span-1" : ""
-              }`}
-            >
-              <div className={`${index === 0 ? "md:grid md:grid-cols-2" : ""}`}>
-                {getPrimaryPhoto(guitar.photos) && (
-                  <div className={`${index === 0 ? "aspect-[4/3] md:aspect-auto" : "aspect-[4/3]"} overflow-hidden bg-muted relative`}>
-                    <img
-                      src={getPrimaryPhoto(guitar.photos)!}
-                      alt={guitar.model?.model_name || "Guitar"}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 left-3">
-                      <Badge className="bg-amber-500/90 text-white border-0">
-                        <Star className="h-3 w-3 mr-1 fill-current" />
-                        Featured
-                      </Badge>
+          {stories.map((guitar, index) => {
+            const displayName = getGuitarDisplayName(guitar);
+            const specsLine = getSpecsLine(guitar);
+            return (
+              <Card 
+                key={guitar.id} 
+                className={`overflow-hidden group hover:shadow-lg transition-all duration-300 ${
+                  index === 0 ? "md:col-span-2 md:row-span-1" : ""
+                }`}
+              >
+                <div className={`${index === 0 ? "md:grid md:grid-cols-2" : ""}`}>
+                  {getPrimaryPhoto(guitar.photos) && (
+                    <div className={`${index === 0 ? "aspect-[4/3] md:aspect-auto" : "aspect-[4/3]"} overflow-hidden bg-muted relative`}>
+                      <img
+                        src={getPrimaryPhoto(guitar.photos)!}
+                        alt={displayName || "Guitar"}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-3 left-3">
+                        <Badge className="bg-amber-500/90 text-white border-0">
+                          <Star className="h-3 w-3 mr-1 fill-current" />
+                          Featured
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                )}
-                <CardContent className={`p-6 ${index === 0 ? "flex flex-col justify-center" : ""}`}>
-                  <div className="flex items-start gap-2 mb-3">
-                    <Quote className="h-8 w-8 text-amber-500/30 flex-shrink-0 -mt-1" />
-                    <p className={`text-muted-foreground italic ${index === 0 ? "line-clamp-4" : "line-clamp-3"}`}>
-                      {truncateStory(guitar.story || "", index === 0 ? 200 : 120)}
-                    </p>
-                  </div>
-                  <div className="mt-auto pt-4 border-t border-border/50">
-                    <h3 className="font-semibold">
-                      {guitar.model?.model_name || `Serial #${guitar.serial_number}`}
+                  )}
+                  <CardContent className={`p-6 ${index === 0 ? "flex flex-col justify-center" : ""}`}>
+                    <h3 className="font-semibold text-lg mb-1">
+                      {displayName || "Alvarez Guitar"}
                     </h3>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                      {guitar.display_name && (
-                        <span className="flex items-center gap-1">
-                          <Music className="h-3 w-3" />
-                          {guitar.display_name}
-                        </span>
-                      )}
-                      {guitar.estimated_year && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {guitar.estimated_year}
-                        </span>
-                      )}
+                    {guitar.model?.series && (
+                      <p className="text-sm text-amber-700 mb-1">{guitar.model.series} Series</p>
+                    )}
+                    {specsLine && (
+                      <p className="text-xs text-muted-foreground mb-3">{specsLine}</p>
+                    )}
+                    <div className="flex items-start gap-2 mb-3">
+                      <Quote className="h-6 w-6 text-amber-500/30 flex-shrink-0 -mt-0.5" />
+                      <p className={`text-muted-foreground italic ${index === 0 ? "line-clamp-4" : "line-clamp-3"}`}>
+                        {truncateStory(guitar.story || "", index === 0 ? 200 : 120)}
+                      </p>
                     </div>
-                  </div>
-                </CardContent>
-              </div>
-            </Card>
-          ))}
+                    <div className="mt-auto pt-3 border-t border-border/50">
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        {guitar.display_name && (
+                          <span className="flex items-center gap-1">
+                            <Music className="h-3 w-3" />
+                            {guitar.display_name}
+                          </span>
+                        )}
+                        {guitar.estimated_year && (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {guitar.estimated_year}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </div>
+              </Card>
+            );
+          })}
         </div>
 
         {/* CTA */}
