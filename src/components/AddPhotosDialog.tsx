@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Camera, X, Loader2, Upload, ImagePlus } from "lucide-react";
+import { validateImageFiles, MAX_FILE_SIZE_MB } from "@/lib/fileValidation";
 
 interface AddPhotosDialogProps {
   open: boolean;
@@ -84,6 +85,14 @@ export const AddPhotosDialog = ({
       return;
     }
 
+    // Validate file sizes
+    const validation = validateImageFiles(files);
+    if (!validation.valid) {
+      toast.error(validation.error);
+      e.target.value = ""; // Reset input
+      return;
+    }
+
     const newPreviews = files.map((file) => URL.createObjectURL(file));
     setPhotos((prev) => [...prev, ...files]);
     setPreviews((prev) => [...prev, ...newPreviews]);
@@ -136,7 +145,7 @@ export const AddPhotosDialog = ({
                 Click to select photos or drag and drop
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                PNG, JPG up to 10MB each (max 8 total)
+                PNG, JPG, WebP up to {MAX_FILE_SIZE_MB}MB each (max 8 total)
               </p>
             </div>
             <Input

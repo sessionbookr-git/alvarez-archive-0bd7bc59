@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Upload, X, Check, Loader2, AlertCircle, FileText, BookOpen, Eye, EyeOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { validateImageFiles, MAX_FILE_SIZE_MB } from "@/lib/fileValidation";
 
 // Helper to format features from Identify page into notes
 const formatFeaturesAsNotes = (features: Record<string, string>): string => {
@@ -121,6 +122,19 @@ const SubmitGuitar = () => {
     const files = e.target.files;
     if (files) {
       const newFiles = Array.from(files);
+      
+      // Validate file sizes
+      const validation = validateImageFiles(newFiles);
+      if (!validation.valid) {
+        toast({
+          title: "Upload Error",
+          description: validation.error,
+          variant: "destructive",
+        });
+        e.target.value = ""; // Reset input
+        return;
+      }
+      
       setImages([...images, ...newFiles]);
       
       // Create previews
@@ -278,7 +292,7 @@ const SubmitGuitar = () => {
                     />
                     <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
                     <p className="font-medium">Click to upload or drag and drop</p>
-                    <p className="text-sm text-muted-foreground mt-1">PNG, JPG up to 10MB</p>
+                    <p className="text-sm text-muted-foreground mt-1">PNG, JPG, WebP up to {MAX_FILE_SIZE_MB}MB each</p>
                   </label>
 
                   {/* Image Previews */}
