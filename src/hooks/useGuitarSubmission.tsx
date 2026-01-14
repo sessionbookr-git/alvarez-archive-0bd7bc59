@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/fileValidation";
 
 interface SubmissionData {
   serialNumber: string;
@@ -30,12 +31,15 @@ export const useGuitarSubmission = () => {
   const [error, setError] = useState<string | null>(null);
 
   const uploadPhoto = async (file: File, guitarId: string, photoType: string) => {
-    const fileExt = file.name.split(".").pop();
+    // Compress image before upload
+    const compressedFile = await compressImage(file);
+    
+    const fileExt = compressedFile.name.split(".").pop() || 'jpg';
     const fileName = `${guitarId}/${photoType}-${Date.now()}.${fileExt}`;
 
-    const { error: uploadError, data } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("guitar-photos")
-      .upload(fileName, file);
+      .upload(fileName, compressedFile);
 
     if (uploadError) throw uploadError;
 
