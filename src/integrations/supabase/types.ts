@@ -38,6 +38,99 @@ export type Database = {
         }
         Relationships: []
       }
+      guitar_comments: {
+        Row: {
+          content: string
+          created_at: string
+          guitar_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          guitar_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          guitar_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guitar_comments_guitar_id_fkey"
+            columns: ["guitar_id"]
+            isOneToOne: false
+            referencedRelation: "guitars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guitar_likes: {
+        Row: {
+          created_at: string
+          guitar_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          guitar_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          guitar_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guitar_likes_guitar_id_fkey"
+            columns: ["guitar_id"]
+            isOneToOne: false
+            referencedRelation: "guitars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guitar_ownership: {
+        Row: {
+          created_at: string
+          guitar_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          guitar_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          guitar_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guitar_ownership_guitar_id_fkey"
+            columns: ["guitar_id"]
+            isOneToOne: false
+            referencedRelation: "guitars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guitar_photos: {
         Row: {
           created_at: string
