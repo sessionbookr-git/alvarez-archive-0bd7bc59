@@ -1,6 +1,9 @@
+import { Link } from "react-router-dom";
+import { Users } from "lucide-react";
 import SerialSearch from "@/components/SerialSearch";
 import yairiHero from "@/assets/yairi-hero.png";
 import alvarezBlackLogo from "@/assets/alvarez-black-logo.png";
+
 const HeroSection = () => {
   return <section className="relative overflow-hidden bg-background">
       {/* Mobile/Tablet Layout */}
@@ -19,13 +22,23 @@ const HeroSection = () => {
             Alvarez guitars.
           </p>
           
-          <div className="opacity-0 animate-fade-in mb-8" style={{
+          <div className="opacity-0 animate-fade-in mb-6" style={{
           animationDelay: "200ms"
         }}>
             <SerialSearch variant="hero" />
           </div>
+
+          {/* Community CTA - Mobile Only */}
+          <Link 
+            to="/community" 
+            className="inline-flex items-center justify-center gap-3 w-full max-w-md mx-auto px-6 py-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-xl text-primary font-medium transition-all opacity-0 animate-fade-in"
+            style={{ animationDelay: "250ms" }}
+          >
+            <Users className="h-5 w-5" />
+            <span>Explore Community Stories</span>
+          </Link>
           
-          <div className="relative max-w-sm mx-auto">
+          <div className="relative max-w-sm mx-auto mt-8">
             <div className="absolute inset-0 rounded-full bg-warm/40 blur-3xl" />
             <img src={yairiHero} alt="Alvarez Yairi DYM70 Sunburst acoustic guitar" className="relative z-10 w-full h-auto object-contain max-h-[50vh]" />
           </div>
