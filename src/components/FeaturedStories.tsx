@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -99,12 +99,12 @@ const FeaturedStories = () => {
             const displayName = getGuitarDisplayName(guitar);
             const specsLine = getSpecsLine(guitar);
             return (
-              <Card 
-                key={guitar.id} 
-                className={`overflow-hidden group hover:shadow-lg transition-all duration-300 ${
-                  index === 0 ? "md:col-span-2 md:row-span-1" : ""
-                }`}
-              >
+              <Link to={`/community/${guitar.id}`} key={guitar.id} className="block">
+                <Card 
+                  className={`overflow-hidden group hover:shadow-lg transition-all duration-300 cursor-pointer ${
+                    index === 0 ? "md:col-span-2 md:row-span-1" : ""
+                  }`}
+                >
                 <div className={`${index === 0 ? "md:grid md:grid-cols-2" : ""}`}>
                   {getPrimaryPhoto(guitar.photos) && (
                     <div className={`${index === 0 ? "aspect-[4/3] md:aspect-auto" : "aspect-[4/3]"} overflow-hidden bg-muted relative`}>
@@ -156,6 +156,7 @@ const FeaturedStories = () => {
                   </CardContent>
                 </div>
               </Card>
+              </Link>
             );
           })}
         </div>
