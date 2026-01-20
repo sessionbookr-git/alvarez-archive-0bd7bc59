@@ -28,6 +28,7 @@ export const useModels = (filters?: {
       let query = supabase
         .from("models")
         .select("*")
+        .eq("is_published", true)
         .order("model_name");
 
       if (filters?.country && filters.country !== "All") {

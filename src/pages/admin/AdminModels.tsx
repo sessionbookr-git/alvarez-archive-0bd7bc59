@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, ArrowLeft, Layers, Upload, Image, X, Loader2, Settings2, Globe } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowLeft, Layers, Upload, Image, X, Loader2, Settings2, Globe, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -165,6 +167,24 @@ const AdminModels = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-models"] });
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
       toast({ title: "Model deleted" });
+    },
+  });
+
+  const togglePublishMutation = useMutation({
+    mutationFn: async ({ id, isPublished }: { id: string; isPublished: boolean }) => {
+      const { error } = await supabase
+        .from("models")
+        .update({ is_published: isPublished })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, { isPublished }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-models"] });
+      queryClient.invalidateQueries({ queryKey: ["models"] });
+      toast({ 
+        title: isPublished ? "Model published" : "Model unpublished",
+        description: isPublished ? "Now visible in encyclopedia" : "Hidden from public encyclopedia"
+      });
     },
   });
 
@@ -432,8 +452,9 @@ const AdminModels = () => {
           <div className="grid gap-4">
             {models?.map((model) => {
               const photoUrl = (model as { photo_url?: string }).photo_url;
+              const isPublished = (model as { is_published?: boolean }).is_published !== false;
               return (
-                <Card key={model.id}>
+                <Card key={model.id} className={!isPublished ? "opacity-60 border-dashed" : ""}>
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <div className="flex gap-4">
@@ -449,7 +470,15 @@ const AdminModels = () => {
                           </div>
                         )}
                         <div>
-                          <CardTitle className="text-lg">{model.model_name}</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-lg">{model.model_name}</CardTitle>
+                            {!isPublished && (
+                              <Badge variant="outline" className="text-xs">
+                                <EyeOff className="h-3 w-3 mr-1" />
+                                Draft
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             {model.series && `${model.series} • `}
                             {model.body_shape && `${model.body_shape} • `}
@@ -459,33 +488,50 @@ const AdminModels = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => setFeaturesDialogModel({ id: model.id, name: model.model_name })}
-                          title="Manage Features"
-                        >
-                          <Settings2 className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" asChild>
-                          <Link to={`/admin/patterns?model=${model.id}`}>
-                            <Layers className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(model)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive"
-                          onClick={() => {
-                            if (confirm("Delete this model?")) deleteMutation.mutate(model.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div className="flex items-center gap-3">
+                        {/* Publish Toggle */}
+                        <div className="flex items-center gap-2 px-2 py-1 border rounded-md bg-muted/30">
+                          {isPublished ? (
+                            <Eye className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <Switch
+                            checked={isPublished}
+                            onCheckedChange={(checked) => 
+                              togglePublishMutation.mutate({ id: model.id, isPublished: checked })
+                            }
+                            disabled={togglePublishMutation.isPending}
+                          />
+                        </div>
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => setFeaturesDialogModel({ id: model.id, name: model.model_name })}
+                            title="Manage Features"
+                          >
+                            <Settings2 className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" asChild>
+                            <Link to={`/admin/patterns?model=${model.id}`}>
+                              <Layers className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(model)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive"
+                            onClick={() => {
+                              if (confirm("Delete this model?")) deleteMutation.mutate(model.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
