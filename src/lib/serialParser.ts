@@ -1,5 +1,25 @@
 // Alvarez Serial Number Parser
 // Based on official Alvarez customer service documentation
+//
+// SERIAL PREFIX REFERENCE (Updated January 2026):
+// ┌─────────┬────────────────┬─────────────────────┬────────────┐
+// │ Prefix  │ Era            │ Country             │ Confidence │
+// ├─────────┼────────────────┼─────────────────────┼────────────┤
+// │ E       │ 2010s-present  │ China ✓             │ High       │
+// │ CS      │ 2010s          │ Unknown             │ Medium     │
+// │ CD      │ Mid-2000s      │ Unknown             │ Medium     │
+// │ F       │ 2000s          │ China/Korea         │ Medium     │
+// │ S       │ 1990s          │ Korea/China         │ Medium     │
+// │ A       │ 1970s-1980s    │ Japan               │ Low        │
+// └─────────┴────────────────┴─────────────────────┴────────────┘
+//
+// KEY FACTS:
+// - Only E-prefix is CONFIRMED China production
+// - CS-prefix was incorrectly assumed to be "China Serial" - it is NOT
+// - Pre-1999: 4-digit model numbers (5021, 5043, etc.)
+// - 1999+: Two-letter + two-number model codes (AD60, RD16, etc.)
+//
+// Sources: Alvarez customer service data, guitar-list.com, community research
 
 export type SerialFormat = 
   | "modern"      // Letter prefix + digits (e.g., E24113487, CS12071753, CD05069348)
@@ -176,8 +196,10 @@ export function parseSerial(serial: string): SerialParseResult {
     };
   }
   
-  // CS-prefix: 2010s China, CS + 2-digit year + 2-digit month + sequence
-  // Example: CS12071753 = 2012, July, unit 1753
+  // CS-prefix: 2010s production (NOT China - E-prefix is China)
+  // CS + 2-digit year + 2-digit month + sequence
+  // Example: CS12071753 = 2012, July, unit 1753 (verified: RD16CE model)
+  // Country of origin uncertain - pattern-based dating only
   const csMatch = cleaned.match(/^CS(\d{2})(\d{2})(\d+)$/);
   if (csMatch) {
     const [, yearDigits, monthDigits, sequence] = csMatch;
@@ -194,17 +216,18 @@ export function parseSerial(serial: string): SerialParseResult {
       estimatedYear: year,
       estimatedMonth: validMonth,
       yearRange: `${year}`,
-      confidence: "high",
-      country: "China",
-      notes: `CS-prefix serial: Made in China, ${monthNote}.`,
+      confidence: "medium",
+      country: "Unknown",
+      notes: `CS-prefix serial: 2010s production, ${monthNote}. Country of manufacture not confirmed for this prefix.`,
       isYairi: false,
       needsEmperorCode: false,
       prefix: "CS",
     };
   }
   
-  // CD-prefix: Mid-2000s, CD + 2-digit year + 2-digit month + sequence
-  // Example: CD05069348 = 2005, June, unit 9348
+  // CD-prefix: Mid-2000s production (country unknown)
+  // CD + 2-digit year + 2-digit month + sequence
+  // Example: CD05069348 = 2005, June, unit 9348 (verified: RD-20SCLH model)
   const cdMatch = cleaned.match(/^CD(\d{2})(\d{2})(\d+)$/);
   if (cdMatch) {
     const [, yearDigits, monthDigits, sequence] = cdMatch;
@@ -222,8 +245,8 @@ export function parseSerial(serial: string): SerialParseResult {
       estimatedMonth: validMonth,
       yearRange: `${year}`,
       confidence: "medium",
-      country: "China",
-      notes: `CD-prefix serial: Likely ${monthNote}`,
+      country: "Unknown",
+      notes: `CD-prefix serial: Mid-2000s production, likely ${monthNote}. Country of manufacture not confirmed for this prefix.`,
       isYairi: false,
       needsEmperorCode: false,
       prefix: "CD",
