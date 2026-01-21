@@ -1,21 +1,7 @@
 import { Link } from "react-router-dom";
-import { Search, BookOpen, HelpCircle, Upload } from "lucide-react";
+import { BookOpen, Users, Upload } from "lucide-react";
 
 const features = [
-  {
-    icon: Search,
-    title: "Serial Number Lookup",
-    description: "Enter your serial number to identify your guitar's year and model with confidence ratings.",
-    href: "/lookup",
-    cta: "Look Up Serial",
-  },
-  {
-    icon: HelpCircle,
-    title: "Identify by Features",
-    description: "Not sure of the serial? Use our visual quiz to identify your guitar by its physical features.",
-    href: "/identify",
-    cta: "Start Identification",
-  },
   {
     icon: BookOpen,
     title: "Model Encyclopedia",
@@ -24,11 +10,18 @@ const features = [
     cta: "Browse Models",
   },
   {
+    icon: Users,
+    title: "Community Stories",
+    description: "Discover the stories behind the guitars. See what fellow collectors have shared.",
+    href: "/community",
+    cta: "Explore Stories",
+  },
+  {
     icon: Upload,
     title: "Submit Your Guitar",
-    description: "Help expand our database by contributing photos and details of your Alvarez guitar.",
+    description: "Help expand our database by contributing photos and the story of your Alvarez guitar.",
     href: "/submit",
-    cta: "Contribute",
+    cta: "Share Yours",
   },
 ];
 
@@ -39,11 +32,11 @@ const FeatureCards = () => {
         <div className="text-center mb-12">
           <h2 className="text-2xl font-semibold mb-3">Explore the Archive</h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Multiple ways to identify and learn about your vintage Alvarez guitar
+            A community-driven resource for Alvarez guitar enthusiasts
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto">
           {features.map((feature, index) => (
             <Link
               key={feature.title}

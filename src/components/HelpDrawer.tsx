@@ -1,4 +1,4 @@
-import { HelpCircle, Search, BookOpen, Upload, UserPlus, Key } from "lucide-react";
+import { HelpCircle, BookOpen, Upload, UserPlus, Users } from "lucide-react";
 import {
   Drawer,
   DrawerClose,
@@ -23,30 +23,13 @@ const HelpDrawer = () => {
       </DrawerTrigger>
       <DrawerContent className="max-h-[85vh]">
         <DrawerHeader className="text-left">
-          <DrawerTitle>How to Use the Alvarez Guitar Archive</DrawerTitle>
+          <DrawerTitle>How to Use the Alvarez Legacy Archive</DrawerTitle>
           <DrawerDescription>
-            Your comprehensive guide to identifying, researching, and documenting Alvarez guitars
+            A community-driven encyclopedia celebrating the history of Alvarez guitars
           </DrawerDescription>
         </DrawerHeader>
         <ScrollArea className="px-4 pb-4 max-h-[60vh]">
           <div className="space-y-6">
-            {/* Serial Lookup */}
-            <section className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Search className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold">Serial Number Lookup</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Enter your guitar's serial number (found on the headstock or inside the soundhole) 
-                to get an estimated production year and possible model matches. Our database uses 
-                known serial patterns to provide confidence-rated results.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                You can also search by <strong>neck block number</strong> if your guitar has one 
-                stamped inside the body near the neck joint.
-              </p>
-            </section>
-
             {/* Encyclopedia */}
             <section className="space-y-2">
               <div className="flex items-center gap-2">
@@ -59,26 +42,23 @@ const HelpDrawer = () => {
                 includes production years, specifications, photos, and key identifying features.
               </p>
               <p className="text-sm text-muted-foreground">
-                Click on any model to view its full detail page with photos, linked features, 
-                and related serial number patterns.
+                Click on any model to view its full detail page with photos and specifications.
               </p>
             </section>
 
-            {/* Identify */}
+            {/* Community */}
             <section className="space-y-2">
               <div className="flex items-center gap-2">
-                <Key className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold">Identify by Features</h3>
+                <Users className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold">Community Stories</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                Don't have a serial number? Use our step-by-step visual identification tool to 
-                narrow down your guitar's era and model. Answer questions about physical features 
-                like body shape, tuner style, truss rod location, label type, fingerboard material, 
-                and bridge design.
+                Discover the stories behind the guitars. See what fellow collectors and enthusiasts 
+                have shared about their Alvarez instruments. Each story includes photos, specifications, 
+                and the unique journey of how the guitar came to its owner.
               </p>
               <p className="text-sm text-muted-foreground">
-                The tool will show you matching models ranked by how well they fit your selections, 
-                helping you identify even unlabeled or mystery guitars.
+                Like stories you enjoy, mark guitars you own, and join the conversation in the comments.
               </p>
             </section>
 
@@ -89,13 +69,13 @@ const HelpDrawer = () => {
                 <h3 className="font-semibold">Submit Your Guitar</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                Help grow our archive by submitting your own Alvarez guitar. Include clear photos 
-                of the headstock, label, body, and any unique features. Submissions are reviewed 
-                by our team before being added to the public database.
+                Share your own Alvarez guitar with the community! Include clear photos and tell the 
+                story of your instrument. Submissions are reviewed by our team before being added 
+                to the public archive.
               </p>
               <p className="text-sm text-muted-foreground">
-                <strong>Required photos:</strong> Headstock front, soundhole label, and full front view. 
-                Additional photos of the back, neck heel, and bridge are helpful for verification.
+                <strong>Recommended photos:</strong> Headstock front, soundhole label, and full front view. 
+                Additional photos of the back, neck heel, and bridge help tell the complete story.
               </p>
             </section>
 
@@ -106,9 +86,9 @@ const HelpDrawer = () => {
                 <h3 className="font-semibold">Creating an Account</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                To submit guitars, you'll need to create an account. Registration requires an 
-                <strong> invite code</strong> — this helps us maintain data quality and prevent 
-                spam. Contact an existing member or admin to request a code.
+                To submit guitars and interact with the community, you'll need to create an account. 
+                Registration requires an <strong>invite code</strong> — this helps us maintain quality 
+                and prevent spam. Contact an existing member or admin to request a code.
               </p>
               <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 mt-2">
                 <li>Password must be at least 12 characters</li>
@@ -122,11 +102,10 @@ const HelpDrawer = () => {
             <section className="space-y-2 border-t pt-4">
               <h3 className="font-semibold">Quick Tips</h3>
               <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                <li>Serial numbers on Alvarez guitars are typically 4-8 digits</li>
-                <li>Japanese-made guitars (pre-1990s) often have the most reliable serial patterns</li>
                 <li>The label inside the soundhole can reveal era and origin</li>
-                <li>Neck block numbers are often stamped inside the body near the neck joint</li>
-                <li>When in doubt, compare your guitar to approved examples in the archive</li>
+                <li>Japanese-made guitars (pre-1990s) are particularly collectible</li>
+                <li>Sharing your guitar's story helps build our community knowledge</li>
+                <li>Compare your guitar to examples in the encyclopedia</li>
               </ul>
             </section>
 
@@ -134,10 +113,10 @@ const HelpDrawer = () => {
             <section className="space-y-2 border-t pt-4">
               <h3 className="font-semibold">About This Archive</h3>
               <p className="text-sm text-muted-foreground">
-                The Alvarez Guitar Archive is a community-driven reference for Alvarez acoustic 
-                guitars. Our goal is to document the rich history of Alvarez instruments, from 
-                the early Japanese-made models through to modern production. All data is 
-                contributed and verified by guitar enthusiasts and collectors.
+                The Alvarez Legacy Archive is a community-driven encyclopedia for Alvarez acoustic 
+                guitars. Our goal is to celebrate and document the rich history of Alvarez instruments, 
+                from the early Japanese-made models through to modern production. All content is 
+                contributed and curated by guitar enthusiasts and collectors.
               </p>
             </section>
           </div>

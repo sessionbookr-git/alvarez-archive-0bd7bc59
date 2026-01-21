@@ -5,20 +5,25 @@ import alvarezLogo from "@/assets/alvarez-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import HelpDrawer from "@/components/HelpDrawer";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const Header = () => {
-  const { user, signOut } = useAuth();
-  const isMobile = useIsMobile();
+  const { user, signOut, isAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Main public navigation - focused on Community + Encyclopedia
   const navLinks = [
-    { to: "/lookup", label: "Serial Lookup" },
     { to: "/encyclopedia", label: "Encyclopedia" },
-    { to: "/identify", label: "Identify" },
     { to: "/community", label: "Community" },
     { to: "/submit", label: "Submit" },
   ];
+
+  // Expert tools only shown to admins
+  const expertLinks = isAdmin
+    ? [
+        { to: "/lookup", label: "Serial Lookup" },
+        { to: "/identify", label: "Identify" },
+      ]
+    : [];
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -26,9 +31,9 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container-wide flex h-16 md:h-20 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2 md:gap-4" onClick={closeMobileMenu}>
-          <img 
-            src={alvarezLogo} 
-            alt="Alvarez Guitars" 
+          <img
+            src={alvarezLogo}
+            alt="Alvarez Guitars"
             className="h-14 md:h-24 w-auto"
           />
           <span className="hidden sm:inline-block text-sm font-medium text-muted-foreground">
@@ -39,19 +44,33 @@ const Header = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6 lg:gap-8">
           {navLinks.map((link) => (
-            <Link 
+            <Link
               key={link.to}
-              to={link.to} 
+              to={link.to}
               className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
             >
               {link.label}
             </Link>
           ))}
+          {expertLinks.length > 0 && (
+            <>
+              <span className="text-muted-foreground/50">|</span>
+              {expertLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </>
+          )}
           <HelpDrawer />
           {user && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={signOut}
               className="text-muted-foreground hover:text-foreground"
             >
@@ -78,21 +97,40 @@ const Header = () => {
         <div className="md:hidden border-t border-border bg-background">
           <nav className="flex flex-col px-4 py-4 space-y-3">
             {navLinks.map((link) => (
-              <Link 
+              <Link
                 key={link.to}
-                to={link.to} 
+                to={link.to}
                 className="text-base font-medium text-foreground/80 transition-colors hover:text-foreground py-2"
                 onClick={closeMobileMenu}
               >
                 {link.label}
               </Link>
             ))}
+            {expertLinks.length > 0 && (
+              <>
+                <div className="pt-2 border-t border-border">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                    Expert Tools
+                  </span>
+                </div>
+                {expertLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground py-2"
+                    onClick={closeMobileMenu}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </>
+            )}
             <div className="pt-2 border-t border-border flex items-center gap-4">
               <HelpDrawer />
               {user && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     signOut();
                     closeMobileMenu();
