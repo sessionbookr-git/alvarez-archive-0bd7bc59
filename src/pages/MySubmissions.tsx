@@ -8,15 +8,17 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Guitar, Plus, ImagePlus } from "lucide-react";
+import { Loader2, Guitar, Plus, ImagePlus, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AddPhotosDialog } from "@/components/AddPhotosDialog";
+import { EditSubmissionDialog } from "@/components/EditSubmissionDialog";
 
 const MySubmissions = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [selectedGuitar, setSelectedGuitar] = useState<{ id: string; name: string } | null>(null);
+  const [editGuitar, setEditGuitar] = useState<any | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -146,6 +148,17 @@ const MySubmissions = () => {
                     {guitar.admin_notes && guitar.status === "rejected" && (
                       <p className="text-sm text-destructive mt-2">{guitar.admin_notes}</p>
                     )}
+                    {guitar.status === "pending" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 w-full"
+                        onClick={() => setEditGuitar(guitar)}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit Submission
+                      </Button>
+                    )}
                     {guitar.status === "approved" && (
                       <Button
                         variant="outline"
@@ -170,6 +183,14 @@ const MySubmissions = () => {
             onOpenChange={setPhotoDialogOpen}
             guitarId={selectedGuitar.id}
             guitarName={selectedGuitar.name}
+          />
+        )}
+
+        {editGuitar && (
+          <EditSubmissionDialog
+            open={!!editGuitar}
+            onOpenChange={(open) => { if (!open) setEditGuitar(null); }}
+            guitar={editGuitar}
           />
         )}
       </main>
