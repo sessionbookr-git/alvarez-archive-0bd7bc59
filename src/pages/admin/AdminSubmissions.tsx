@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { EditSubmissionDialog } from "@/components/EditSubmissionDialog";
+import { AdminPhotoManager } from "@/components/AdminPhotoManager";
 
 type StatusFilter = "all" | "pending" | "approved" | "rejected";
 
@@ -341,27 +342,11 @@ const AdminSubmissions = () => {
 
                     {/* Photos */}
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Photos ({guitar.photos?.length || 0})</p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {guitar.photos?.map((photo) => (
-                          <a
-                            key={photo.id}
-                            href={photo.photo_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="aspect-square rounded-lg overflow-hidden bg-muted hover:opacity-80 transition-opacity"
-                          >
-                            <img
-                              src={photo.photo_url}
-                              alt={photo.photo_type || "Guitar photo"}
-                              className="w-full h-full object-cover"
-                            />
-                          </a>
-                        ))}
-                        {(!guitar.photos || guitar.photos.length === 0) && (
-                          <p className="text-sm text-muted-foreground col-span-3">No photos submitted</p>
-                        )}
-                      </div>
+                      <AdminPhotoManager
+                        guitarId={guitar.id}
+                        photos={guitar.photos || []}
+                        serialNumber={guitar.serial_number}
+                      />
                     </div>
                   </div>
                 </CardContent>
