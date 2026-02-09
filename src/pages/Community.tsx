@@ -83,6 +83,8 @@ const Community = () => {
 
   const getPrimaryPhoto = (photos: { photo_url: string; photo_type: string | null }[] | null) => {
     if (!photos || photos.length === 0) return null;
+    const headstock = photos.find((p) => p.photo_type === "headstock");
+    if (headstock) return headstock.photo_url;
     const bodyPhoto = photos.find((p) => p.photo_type === "body");
     return bodyPhoto?.photo_url || photos[0]?.photo_url;
   };
