@@ -86,13 +86,11 @@ const HelpDrawer = () => {
                 <h3 className="font-semibold">Creating an Account</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                To submit guitars and interact with the community, you'll need to create an account. 
-                Registration requires an <strong>invite code</strong> — this helps us maintain quality 
-                and prevent spam. Contact an existing member or admin to request a code.
+                To submit guitars and interact with the community, create a free account with your 
+                email address.
               </p>
               <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 mt-2">
                 <li>Password must be at least 12 characters</li>
-                <li>Each invite code can only be used once</li>
                 <li>Track your submissions in "My Submissions"</li>
                 <li>Edit pending submissions before they're reviewed</li>
               </ul>

@@ -24,7 +24,7 @@ import AdminModels from "./pages/admin/AdminModels";
 import AdminPatterns from "./pages/admin/AdminPatterns";
 import AdminFeatures from "./pages/admin/AdminFeatures";
 import AdminImport from "./pages/admin/AdminImport";
-import AdminInviteCodes from "./pages/admin/AdminInviteCodes";
+
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import SubmitGuidelines from "./pages/SubmitGuidelines";
 import NotFound from "./pages/NotFound";
@@ -61,7 +61,7 @@ const App = () => (
             <Route path="/admin/patterns" element={<AdminRoute><AdminPatterns /></AdminRoute>} />
             <Route path="/admin/features" element={<AdminRoute><AdminFeatures /></AdminRoute>} />
             <Route path="/admin/import" element={<AdminRoute><AdminImport /></AdminRoute>} />
-            <Route path="/admin/invite-codes" element={<AdminRoute><AdminInviteCodes /></AdminRoute>} />
+            
             <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
             
             <Route path="*" element={<NotFound />} />
