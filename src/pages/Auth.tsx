@@ -12,10 +12,11 @@ import Footer from "@/components/Footer";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 
+
 // Validation schemas
 const emailSchema = z.string().trim().email("Please enter a valid email address").max(255, "Email is too long");
 const passwordSchema = z.string().min(12, "Password must be at least 12 characters").max(128, "Password is too long");
-const inviteCodeSchema = z.string().trim().min(1, "Invite code is required");
+
 
 // Allowed redirect paths (whitelist for security)
 const ALLOWED_REDIRECTS = ["/submit", "/admin", "/encyclopedia", "/serial-lookup", "/identify"];
@@ -29,11 +30,11 @@ const sanitizeRedirect = (redirect: string | null): string => {
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
+  
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [inviteCodeError, setInviteCodeError] = useState("");
+  
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const { user, signIn, signUp } = useAuth();
@@ -72,7 +73,6 @@ const Auth = () => {
     let valid = true;
     setEmailError("");
     setPasswordError("");
-    setInviteCodeError("");
 
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -83,12 +83,6 @@ const Auth = () => {
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       setPasswordError(passwordResult.error.errors[0].message);
-      valid = false;
-    }
-
-    const inviteResult = inviteCodeSchema.safeParse(inviteCode);
-    if (!inviteResult.success) {
-      setInviteCodeError(inviteResult.error.errors[0].message);
       valid = false;
     }
 
@@ -125,20 +119,6 @@ const Auth = () => {
     if (!validateSignUpForm()) return;
     
     setIsLoading(true);
-
-    // Validate invite code exists and is unused
-    const { data: codeData, error: codeError } = await supabase
-      .from("invite_codes")
-      .select("id, code")
-      .eq("code", inviteCode.trim())
-      .is("used_at", null)
-      .maybeSingle();
-
-    if (codeError || !codeData) {
-      setInviteCodeError("Invalid or already used invite code");
-      setIsLoading(false);
-      return;
-    }
     
     const { error } = await signUp(email.trim(), password);
     
@@ -151,15 +131,6 @@ const Auth = () => {
       setIsLoading(false);
       return;
     }
-
-    // Mark the invite code as used
-    await supabase
-      .from("invite_codes")
-      .update({ 
-        used_at: new Date().toISOString(), 
-        used_by_email: email.trim() 
-      })
-      .eq("id", codeData.id);
 
     toast({
       title: "Account created!",
@@ -327,23 +298,6 @@ const Auth = () => {
               
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-invite">Invite Code</Label>
-                    <Input
-                      id="signup-invite"
-                      type="text"
-                      placeholder="Enter your invite code"
-                      value={inviteCode}
-                      onChange={(e) => {
-                        setInviteCode(e.target.value);
-                        setInviteCodeError("");
-                      }}
-                      required
-                      aria-invalid={!!inviteCodeError}
-                    />
-                    {inviteCodeError && <p className="text-sm text-destructive">{inviteCodeError}</p>}
-                    <p className="text-xs text-muted-foreground">Registration is invite-only</p>
-                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input
