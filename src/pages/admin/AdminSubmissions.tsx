@@ -5,34 +5,45 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, ArrowLeft, Star, BookOpen, Eye } from "lucide-react";
+import { Check, X, ArrowLeft, Star, BookOpen, Eye, Pencil, Trash2, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { EditSubmissionDialog } from "@/components/EditSubmissionDialog";
+
+type StatusFilter = "all" | "pending" | "approved" | "rejected";
 
 const AdminSubmissions = () => {
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("pending");
   const [selectedGuitar, setSelectedGuitar] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
+  const [editGuitar, setEditGuitar] = useState<any | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const { data: submissions, isLoading } = useQuery({
-    queryKey: ["pending-submissions"],
+    queryKey: ["admin-submissions", statusFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("guitars")
         .select(`
           *,
           model:models(model_name, series),
           photos:guitar_photos(id, photo_url, photo_type)
         `)
-        .eq("status", "pending")
         .order("created_at", { ascending: false });
-      
+
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -40,24 +51,18 @@ const AdminSubmissions = () => {
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
-      const updates: Record<string, unknown> = { 
+      const updates: Record<string, unknown> = {
         status,
         admin_notes: notes || null,
       };
-      
       if (status === "approved") {
         updates.approved_at = new Date().toISOString();
       }
-      
-      const { error } = await supabase
-        .from("guitars")
-        .update(updates)
-        .eq("id", id);
-      
+      const { error } = await supabase.from("guitars").update(updates).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_, { status }) => {
-      queryClient.invalidateQueries({ queryKey: ["pending-submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-submissions"] });
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
       toast({
         title: status === "approved" ? "Guitar approved!" : "Guitar rejected",
@@ -65,6 +70,38 @@ const AdminSubmissions = () => {
       });
       setSelectedGuitar(null);
       setAdminNotes("");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // Delete photos first, then the guitar record
+      const { error: photoErr } = await supabase.from("guitar_photos").delete().eq("guitar_id", id);
+      if (photoErr) throw photoErr;
+      const { error } = await supabase.from("guitars").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+      toast({ title: "Submission deleted", description: "The submission and its photos have been removed." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const toggleFeatured = useMutation({
+    mutationFn: async ({ id, isFeatured }: { id: string; isFeatured: boolean }) => {
+      const { error } = await supabase.from("guitars").update({ is_featured: isFeatured }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, { isFeatured }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-submissions"] });
+      toast({
+        title: isFeatured ? "Story featured!" : "Story unfeatured",
+        description: isFeatured ? "This story will appear on the homepage." : "Story removed from featured.",
+      });
     },
   });
 
@@ -76,45 +113,48 @@ const AdminSubmissions = () => {
     updateStatus.mutate({ id, status: "rejected", notes: adminNotes });
   };
 
-  const toggleFeatured = useMutation({
-    mutationFn: async ({ id, isFeatured }: { id: string; isFeatured: boolean }) => {
-      const { error } = await supabase
-        .from("guitars")
-        .update({ is_featured: isFeatured })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: (_, { isFeatured }) => {
-      queryClient.invalidateQueries({ queryKey: ["pending-submissions"] });
-      toast({
-        title: isFeatured ? "Story featured!" : "Story unfeatured",
-        description: isFeatured ? "This story will appear on the homepage." : "Story removed from featured.",
-      });
-    },
-  });
+  const getStatusBadge = (status: string | null) => {
+    switch (status) {
+      case "approved":
+        return <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Approved</Badge>;
+      case "rejected":
+        return <Badge variant="destructive">Rejected</Badge>;
+      default:
+        return <Badge variant="secondary">Pending</Badge>;
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container-wide py-8">
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" size="icon" asChild>
             <Link to="/admin/dashboard"><ArrowLeft className="h-4 w-4" /></Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Pending Submissions</h1>
-            <p className="text-muted-foreground">Review and approve guitar submissions</p>
+            <h1 className="text-3xl font-bold">Submissions</h1>
+            <p className="text-muted-foreground">Review, edit, and manage all guitar submissions</p>
           </div>
         </div>
 
+        <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)} className="mb-6">
+          <TabsList>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="approved">Approved</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+            <TabsTrigger value="all">All</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : submissions?.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No pending submissions</p>
+              <p className="text-muted-foreground">No {statusFilter === "all" ? "" : statusFilter} submissions</p>
             </CardContent>
           </Card>
         ) : (
@@ -123,53 +163,92 @@ const AdminSubmissions = () => {
               <Card key={guitar.id} className="overflow-hidden">
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="font-mono text-xl">{guitar.serial_number}</CardTitle>
-                      <CardDescription>
-                        Submitted {new Date(guitar.created_at).toLocaleDateString()}
-                        {guitar.submitted_by_email && ` by ${guitar.submitted_by_email}`}
-                      </CardDescription>
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <CardTitle className="font-mono text-xl">{guitar.serial_number}</CardTitle>
+                        <CardDescription>
+                          Submitted {new Date(guitar.created_at).toLocaleDateString()}
+                          {guitar.submitted_by_email && ` by ${guitar.submitted_by_email}`}
+                        </CardDescription>
+                      </div>
+                      {getStatusBadge(guitar.status)}
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-green-600 border-green-600 hover:bg-green-50"
-                        onClick={() => handleApprove(guitar.id)}
-                      >
-                        <Check className="h-4 w-4 mr-1" /> Approve
+                      {/* Edit */}
+                      <Button size="sm" variant="outline" onClick={() => setEditGuitar(guitar)}>
+                        <Pencil className="h-4 w-4 mr-1" /> Edit
                       </Button>
-                      <Dialog>
-                        <DialogTrigger asChild>
+
+                      {/* Delete */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4 mr-1" /> Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete submission?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete the submission for <strong>{guitar.serial_number}</strong> and all its photos. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteMutation.mutate(guitar.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
+                      {/* Approve/Reject for pending */}
+                      {guitar.status === "pending" && (
+                        <>
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-red-600 border-red-600 hover:bg-red-50"
-                            onClick={() => setSelectedGuitar(guitar.id)}
+                            className="text-green-600 border-green-600 hover:bg-green-50"
+                            onClick={() => handleApprove(guitar.id)}
                           >
-                            <X className="h-4 w-4 mr-1" /> Reject
+                            <Check className="h-4 w-4 mr-1" /> Approve
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Reject Submission</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <Textarea
-                              placeholder="Add notes explaining the rejection..."
-                              value={adminNotes}
-                              onChange={(e) => setAdminNotes(e.target.value)}
-                            />
-                            <Button
-                              variant="destructive"
-                              onClick={() => handleReject(guitar.id)}
-                              className="w-full"
-                            >
-                              Confirm Rejection
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 border-red-600 hover:bg-red-50"
+                                onClick={() => setSelectedGuitar(guitar.id)}
+                              >
+                                <X className="h-4 w-4 mr-1" /> Reject
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Reject Submission</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <Textarea
+                                  placeholder="Add notes explaining the rejection..."
+                                  value={adminNotes}
+                                  onChange={(e) => setAdminNotes(e.target.value)}
+                                />
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => handleReject(guitar.id)}
+                                  className="w-full"
+                                >
+                                  Confirm Rejection
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
@@ -180,7 +259,7 @@ const AdminSubmissions = () => {
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
                           <span className="text-muted-foreground">Model:</span>
-                          <p className="font-medium">{guitar.model?.model_name || "Unknown"}</p>
+                          <p className="font-medium">{guitar.model?.model_name || guitar.model_name_submitted || "Unknown"}</p>
                         </div>
                         <div>
                           <span className="text-muted-foreground">Estimated Year:</span>
@@ -217,7 +296,13 @@ const AdminSubmissions = () => {
                           <p className="text-sm mt-1">{guitar.submission_notes}</p>
                         </div>
                       )}
-                      
+                      {guitar.admin_notes && (
+                        <div className="mt-4 p-3 bg-muted rounded-lg">
+                          <span className="text-sm text-muted-foreground">Admin Notes:</span>
+                          <p className="text-sm mt-1">{guitar.admin_notes}</p>
+                        </div>
+                      )}
+
                       {/* Story Section */}
                       {guitar.story && (
                         <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
@@ -237,7 +322,7 @@ const AdminSubmissions = () => {
                           {guitar.display_name && (
                             <p className="text-xs text-amber-600 mt-2">— {guitar.display_name}</p>
                           )}
-                          
+
                           {guitar.is_story_public && (
                             <div className="mt-3 pt-3 border-t border-amber-200 dark:border-amber-800 flex items-center justify-between">
                               <div className="flex items-center gap-2">
@@ -253,7 +338,7 @@ const AdminSubmissions = () => {
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Photos */}
                     <div>
                       <p className="text-sm text-muted-foreground mb-2">Photos ({guitar.photos?.length || 0})</p>
@@ -283,6 +368,17 @@ const AdminSubmissions = () => {
               </Card>
             ))}
           </div>
+        )}
+
+        {editGuitar && (
+          <EditSubmissionDialog
+            open={!!editGuitar}
+            onOpenChange={(open) => {
+              if (!open) setEditGuitar(null);
+              queryClient.invalidateQueries({ queryKey: ["admin-submissions"] });
+            }}
+            guitar={editGuitar}
+          />
         )}
       </main>
       <Footer />
