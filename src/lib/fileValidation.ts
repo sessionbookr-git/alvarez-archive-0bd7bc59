@@ -1,5 +1,3 @@
-import imageCompression from 'browser-image-compression';
-
 // Maximum file size in bytes (5MB) - for initial validation warning
 export const MAX_FILE_SIZE = 5 * 1024 * 1024;
 export const MAX_FILE_SIZE_MB = 5;
@@ -42,7 +40,7 @@ export const validateImageFiles = (files: File[]): FileValidationResult => {
 };
 
 /**
- * Compress an image file to reduce storage usage
+ * Compress an image file using native canvas API
  * Large images are resized and compressed to ~800KB
  */
 export const compressImage = async (file: File): Promise<File> => {
@@ -51,18 +49,50 @@ export const compressImage = async (file: File): Promise<File> => {
     return file;
   }
 
-  const options = {
-    maxSizeMB: TARGET_FILE_SIZE_MB,
-    maxWidthOrHeight: MAX_IMAGE_DIMENSION,
-    useWebWorker: false,
-  };
-
   try {
-    const compressedFile = await imageCompression(file, options);
-    return compressedFile;
+    const bitmap = await createImageBitmap(file);
+    const { width, height } = bitmap;
+
+    // Calculate new dimensions
+    let newWidth = width;
+    let newHeight = height;
+    if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+      const ratio = Math.min(MAX_IMAGE_DIMENSION / width, MAX_IMAGE_DIMENSION / height);
+      newWidth = Math.round(width * ratio);
+      newHeight = Math.round(height * ratio);
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas context unavailable');
+    ctx.drawImage(bitmap, 0, 0, newWidth, newHeight);
+    bitmap.close();
+
+    // Try decreasing quality until under target size
+    let quality = 0.85;
+    let blob: Blob | null = null;
+    const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+
+    for (let i = 0; i < 5; i++) {
+      blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, outputType, quality)
+      );
+      if (blob && blob.size <= TARGET_FILE_SIZE) break;
+      quality -= 0.1;
+    }
+
+    canvas.width = 0;
+    canvas.height = 0;
+
+    if (!blob) return file;
+
+    const ext = outputType === 'image/jpeg' ? '.jpg' : '.png';
+    const name = file.name.replace(/\.[^.]+$/, ext);
+    return new File([blob], name, { type: outputType, lastModified: Date.now() });
   } catch (error) {
     console.error('Image compression failed:', error);
-    // Return original file if compression fails
     return file;
   }
 };
