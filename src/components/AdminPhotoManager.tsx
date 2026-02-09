@@ -56,11 +56,22 @@ export const AdminPhotoManager = ({
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
-    mutationFn: async (photoId: string) => {
+    mutationFn: async (photo: Photo) => {
+      // Delete from storage first
+      try {
+        const url = new URL(photo.photo_url);
+        const pathMatch = url.pathname.match(/\/guitar-photos\/(.+)$/);
+        if (pathMatch) {
+          await supabase.storage.from("guitar-photos").remove([pathMatch[1]]);
+        }
+      } catch {
+        // Storage deletion is best-effort; continue with DB deletion
+      }
+
       const { error } = await supabase
         .from("guitar_photos")
         .delete()
-        .eq("id", photoId);
+        .eq("id", photo.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -338,7 +349,7 @@ export const AdminPhotoManager = ({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deletePhoto && deleteMutation.mutate(deletePhoto.id)}
+              onClick={() => deletePhoto && deleteMutation.mutate(deletePhoto)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete Photo
