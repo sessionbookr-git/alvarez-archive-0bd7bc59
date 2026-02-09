@@ -55,7 +55,6 @@ export const compressImage = async (file: File): Promise<File> => {
     maxSizeMB: TARGET_FILE_SIZE_MB,
     maxWidthOrHeight: MAX_IMAGE_DIMENSION,
     useWebWorker: true,
-    fileType: file.type as 'image/jpeg' | 'image/png' | 'image/webp',
   };
 
   try {
