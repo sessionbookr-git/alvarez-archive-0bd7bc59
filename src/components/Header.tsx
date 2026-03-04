@@ -20,7 +20,6 @@ const Header = () => {
   // Expert tools only shown to admins
   const expertLinks = isAdmin
     ? [
-        { to: "/lookup", label: "Serial Lookup" },
         { to: "/identify", label: "Identify" },
       ]
     : [];
