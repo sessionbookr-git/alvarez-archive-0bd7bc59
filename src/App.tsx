@@ -57,6 +57,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/my-submissions" element={<BetaRoute><MySubmissions /></BetaRoute>} />
+            <Route path="/invite" element={<InviteEntry />} />
             <Route path="/invite/:code" element={<InviteLanding />} />
             <Route path="/request-access" element={<RequestAccess />} />
             <Route path="/terms" element={<Terms />} />
