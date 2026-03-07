@@ -292,6 +292,13 @@ export type Database = {
             referencedRelation: "models"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "guitars_submitted_by_user_id_fkey"
+            columns: ["submitted_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       identifying_features: {
