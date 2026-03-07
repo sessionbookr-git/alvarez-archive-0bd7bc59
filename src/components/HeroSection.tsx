@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
-import { Users, BookOpen } from "lucide-react";
+import { Users, BookOpen, Sparkles } from "lucide-react";
 import yairiHero from "@/assets/yairi-hero.png";
 import alvarezBlackLogo from "@/assets/alvarez-black-logo.png";
+import { useAuth } from "@/hooks/useAuth";
 
 const HeroSection = () => {
+  const { user } = useAuth();
+
   return (
     <section className="relative overflow-hidden bg-background">
       {/* Mobile/Tablet Layout */}
@@ -28,25 +31,37 @@ const HeroSection = () => {
             Discover, share, and connect with fellow enthusiasts.
           </p>
 
-          {/* Dual CTAs - Mobile */}
+          {/* CTAs - Mobile */}
           <div
             className="flex flex-col gap-4 max-w-md mx-auto opacity-0 animate-fade-in"
             style={{ animationDelay: "200ms" }}
           >
-            <Link
-              to="/encyclopedia"
-              className="inline-flex items-center justify-center gap-3 w-full px-6 py-4 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-medium transition-all"
-            >
-              <BookOpen className="h-5 w-5" />
-              <span>Explore the Encyclopedia</span>
-            </Link>
-            <Link
-              to="/community"
-              className="inline-flex items-center justify-center gap-3 w-full px-6 py-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-xl text-primary font-medium transition-all"
-            >
-              <Users className="h-5 w-5" />
-              <span>Community Stories</span>
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  to="/encyclopedia"
+                  className="inline-flex items-center justify-center gap-3 w-full px-6 py-4 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-medium transition-all"
+                >
+                  <BookOpen className="h-5 w-5" />
+                  <span>Explore the Encyclopedia</span>
+                </Link>
+                <Link
+                  to="/community"
+                  className="inline-flex items-center justify-center gap-3 w-full px-6 py-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-xl text-primary font-medium transition-all"
+                >
+                  <Users className="h-5 w-5" />
+                  <span>Community Stories</span>
+                </Link>
+              </>
+            ) : (
+              <Link
+                to="/request-access"
+                className="inline-flex items-center justify-center gap-3 w-full px-6 py-4 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-medium transition-all"
+              >
+                <Sparkles className="h-5 w-5" />
+                <span>Request Early Access</span>
+              </Link>
+            )}
           </div>
 
           <div className="relative max-w-sm mx-auto mt-8">
@@ -83,33 +98,43 @@ const HeroSection = () => {
             Discover models, share your story, and connect with fellow enthusiasts.
           </p>
 
-          {/* Dual CTAs - Desktop */}
+          {/* CTAs - Desktop */}
           <div
             className="flex gap-4 opacity-0 animate-fade-in"
             style={{ animationDelay: "200ms" }}
           >
-            <Link
-              to="/encyclopedia"
-              className="inline-flex items-center gap-3 px-8 py-4 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-medium transition-all"
-            >
-              <BookOpen className="h-5 w-5" />
-              <span>Explore Encyclopedia</span>
-            </Link>
-            <Link
-              to="/community"
-              className="inline-flex items-center gap-3 px-8 py-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-xl text-primary font-medium transition-all"
-            >
-              <Users className="h-5 w-5" />
-              <span>Community Stories</span>
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  to="/encyclopedia"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-medium transition-all"
+                >
+                  <BookOpen className="h-5 w-5" />
+                  <span>Explore Encyclopedia</span>
+                </Link>
+                <Link
+                  to="/community"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-xl text-primary font-medium transition-all"
+                >
+                  <Users className="h-5 w-5" />
+                  <span>Community Stories</span>
+                </Link>
+              </>
+            ) : (
+              <Link
+                to="/request-access"
+                className="inline-flex items-center gap-3 px-8 py-4 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-medium transition-all"
+              >
+                <Sparkles className="h-5 w-5" />
+                <span>Request Early Access</span>
+              </Link>
+            )}
           </div>
         </div>
 
         <div className="w-[55%] relative flex justify-end items-center">
           <div className="relative w-full max-w-2xl">
-            {/* Soft circle glow behind guitar */}
             <div className="absolute inset-0 rounded-full bg-warm/60 blur-3xl translate-x-16 translate-y-6" />
-
             <img
               src={yairiHero}
               alt="Alvarez Yairi DYM70 Sunburst acoustic guitar"
