@@ -31,6 +31,7 @@ import AdminInviteCodes from "./pages/admin/AdminInviteCodes";
 import AdminAccessRequests from "./pages/admin/AdminAccessRequests";
 import SubmitGuidelines from "./pages/SubmitGuidelines";
 import InviteLanding from "./pages/InviteLanding";
+import InviteEntry from "./pages/InviteEntry";
 import RequestAccess from "./pages/RequestAccess";
 import NotFound from "./pages/NotFound";
 
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/my-submissions" element={<BetaRoute><MySubmissions /></BetaRoute>} />
+            <Route path="/invite" element={<InviteEntry />} />
             <Route path="/invite/:code" element={<InviteLanding />} />
             <Route path="/request-access" element={<RequestAccess />} />
             <Route path="/terms" element={<Terms />} />
