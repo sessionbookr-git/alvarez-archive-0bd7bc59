@@ -363,6 +363,23 @@ const Auth = () => {
                     />
                     {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-code">Invite Code</Label>
+                    <Input
+                      id="invite-code"
+                      type="text"
+                      placeholder="XXXX-XXXX-XXXX"
+                      value={inviteCode}
+                      onChange={(e) => {
+                        setInviteCode(e.target.value.toUpperCase());
+                        setInviteCodeError("");
+                      }}
+                      required
+                      aria-invalid={!!inviteCodeError}
+                      className="font-mono tracking-wider"
+                    />
+                    {inviteCodeError && <p className="text-sm text-destructive">{inviteCodeError}</p>}
+                  </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Creating account..." : "Create Account"}
                   </Button>
