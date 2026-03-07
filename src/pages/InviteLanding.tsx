@@ -49,16 +49,13 @@ const InviteLanding = () => {
       return;
     }
 
-    const { data } = await supabase
-      .from("invite_codes")
-      .select("id, used_at, notes")
-      .eq("code", code.toUpperCase())
-      .maybeSingle();
+    const { data, error } = await supabase.rpc("check_invite_code" as any, {
+      _code: code.toUpperCase(),
+    });
 
-    if (data && !data.used_at) {
+    if (!error && data && (data as any).valid) {
       setValid(true);
-      // If notes has a name stored, use it
-      if (data.notes) setName(data.notes);
+      if ((data as any).notes) setName((data as any).notes);
     } else {
       setValid(false);
     }
