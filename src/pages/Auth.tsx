@@ -30,7 +30,8 @@ const sanitizeRedirect = (redirect: string | null): string => {
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
+  const [inviteCode, setInviteCode] = useState("");
+  const [inviteCodeError, setInviteCodeError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -73,6 +74,7 @@ const Auth = () => {
     let valid = true;
     setEmailError("");
     setPasswordError("");
+    setInviteCodeError("");
 
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -83,6 +85,11 @@ const Auth = () => {
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       setPasswordError(passwordResult.error.errors[0].message);
+      valid = false;
+    }
+
+    if (!inviteCode.trim()) {
+      setInviteCodeError("Invite code is required");
       valid = false;
     }
 
@@ -119,6 +126,26 @@ const Auth = () => {
     if (!validateSignUpForm()) return;
     
     setIsLoading(true);
+
+    // Validate invite code against database
+    const trimmedCode = inviteCode.trim().toUpperCase();
+    const { data: codeData, error: codeError } = await supabase
+      .from("invite_codes")
+      .select("id, used_at")
+      .eq("code", trimmedCode)
+      .maybeSingle();
+
+    if (codeError || !codeData) {
+      setInviteCodeError("Invalid invite code");
+      setIsLoading(false);
+      return;
+    }
+
+    if (codeData.used_at) {
+      setInviteCodeError("This invite code has already been used");
+      setIsLoading(false);
+      return;
+    }
     
     const { error } = await signUp(email.trim(), password);
     
@@ -131,6 +158,12 @@ const Auth = () => {
       setIsLoading(false);
       return;
     }
+
+    // Mark the invite code as used
+    await supabase
+      .from("invite_codes")
+      .update({ used_at: new Date().toISOString(), used_by_email: email.trim() })
+      .eq("id", codeData.id);
 
     toast({
       title: "Account created!",
