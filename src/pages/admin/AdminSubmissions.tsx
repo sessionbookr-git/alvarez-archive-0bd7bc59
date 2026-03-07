@@ -170,7 +170,7 @@ const AdminSubmissions = () => {
                         <CardTitle className="font-mono text-xl">{guitar.serial_number}</CardTitle>
                         <CardDescription>
                           Submitted {new Date(guitar.created_at).toLocaleDateString()}
-                          {guitar.submitter?.email && ` by ${guitar.submitter.display_name || guitar.submitter.email}`}
+                          {(guitar as any).submitter?.email && ` by ${(guitar as any).submitter.display_name || (guitar as any).submitter.email}`}
                         </CardDescription>
                       </div>
                       {getStatusBadge(guitar.status)}

@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           setTimeout(() => {
             checkAdminRole(session.user.id);
+            ensureProfile(session.user);
           }, 0);
         } else {
           setIsAdmin(false);
@@ -44,6 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkAdminRole(session.user.id);
+        ensureProfile(session.user);
       }
       setLoading(false);
     });
@@ -60,6 +62,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .maybeSingle();
     
     setIsAdmin(!!data);
+  };
+
+  const ensureProfile = async (user: User) => {
+    await supabase.from("profiles").upsert(
+      { id: user.id, email: user.email },
+      { onConflict: "id", ignoreDuplicates: true }
+    );
   };
 
   const signIn = async (email: string, password: string) => {
