@@ -26,6 +26,7 @@ import AdminFeatures from "./pages/admin/AdminFeatures";
 import AdminImport from "./pages/admin/AdminImport";
 
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminInviteCodes from "./pages/admin/AdminInviteCodes";
 import SubmitGuidelines from "./pages/SubmitGuidelines";
 import NotFound from "./pages/NotFound";
 
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/admin/import" element={<AdminRoute><AdminImport /></AdminRoute>} />
             
             <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+            <Route path="/admin/invite-codes" element={<AdminRoute><AdminInviteCodes /></AdminRoute>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
