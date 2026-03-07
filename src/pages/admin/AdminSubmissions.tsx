@@ -36,7 +36,8 @@ const AdminSubmissions = () => {
         .select(`
           *,
           model:models(model_name, series),
-          photos:guitar_photos(id, photo_url, photo_type)
+          photos:guitar_photos(id, photo_url, photo_type),
+          submitter:profiles!submitted_by_user_id(display_name, email)
         `)
         .order("created_at", { ascending: false });
 
@@ -169,7 +170,7 @@ const AdminSubmissions = () => {
                         <CardTitle className="font-mono text-xl">{guitar.serial_number}</CardTitle>
                         <CardDescription>
                           Submitted {new Date(guitar.created_at).toLocaleDateString()}
-                          {guitar.submitted_by_email && ` by ${guitar.submitted_by_email}`}
+                          {guitar.submitter?.email && ` by ${guitar.submitter.display_name || guitar.submitter.email}`}
                         </CardDescription>
                       </div>
                       {getStatusBadge(guitar.status)}

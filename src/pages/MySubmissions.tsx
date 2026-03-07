@@ -32,9 +32,9 @@ const MySubmissions = () => {
   };
 
   const { data: submissions, isLoading } = useQuery({
-    queryKey: ["my-submissions", user?.email],
+    queryKey: ["my-submissions", user?.id],
     queryFn: async () => {
-      if (!user?.email) return [];
+      if (!user?.id) return [];
       const { data, error } = await supabase
         .from("guitars")
         .select(`
@@ -42,12 +42,12 @@ const MySubmissions = () => {
           models (model_name),
           guitar_photos (photo_url, photo_type)
         `)
-        .eq("submitted_by_email", user.email)
+        .eq("submitted_by_user_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.email,
+    enabled: !!user?.id,
   });
 
   if (authLoading) {

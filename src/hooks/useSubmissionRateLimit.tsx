@@ -8,14 +8,14 @@ export const useSubmissionRateLimit = () => {
   const { user } = useAuth();
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['pending-submissions-count', user?.email],
+    queryKey: ['pending-submissions-count', user?.id],
     queryFn: async () => {
-      if (!user?.email) return { count: 0, canSubmit: true };
+      if (!user?.id) return { count: 0, canSubmit: true };
 
       const { count, error } = await supabase
         .from('guitars')
         .select('*', { count: 'exact', head: true })
-        .eq('submitted_by_email', user.email)
+        .eq('submitted_by_user_id', user.id)
         .eq('status', 'pending');
 
       if (error) throw error;
@@ -27,7 +27,7 @@ export const useSubmissionRateLimit = () => {
         remaining: MAX_PENDING_SUBMISSIONS - pendingCount
       };
     },
-    enabled: !!user?.email,
+    enabled: !!user?.id,
   });
 
   return {
