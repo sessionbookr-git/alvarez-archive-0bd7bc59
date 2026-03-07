@@ -30,7 +30,8 @@ const sanitizeRedirect = (redirect: string | null): string => {
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
+  const [inviteCode, setInviteCode] = useState("");
+  const [inviteCodeError, setInviteCodeError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -73,6 +74,7 @@ const Auth = () => {
     let valid = true;
     setEmailError("");
     setPasswordError("");
+    setInviteCodeError("");
 
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -83,6 +85,11 @@ const Auth = () => {
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       setPasswordError(passwordResult.error.errors[0].message);
+      valid = false;
+    }
+
+    if (!inviteCode.trim()) {
+      setInviteCodeError("Invite code is required");
       valid = false;
     }
 
@@ -119,6 +126,26 @@ const Auth = () => {
     if (!validateSignUpForm()) return;
     
     setIsLoading(true);
+
+    // Validate invite code first (SELECT is allowed for unused codes)
+    const trimmedCode = inviteCode.trim().toUpperCase();
+    const { data: codeData, error: codeError } = await supabase
+      .from("invite_codes")
+      .select("id, used_at")
+      .eq("code", trimmedCode)
+      .maybeSingle();
+
+    if (codeError || !codeData) {
+      setInviteCodeError("Invalid invite code");
+      setIsLoading(false);
+      return;
+    }
+
+    if (codeData.used_at) {
+      setInviteCodeError("This invite code has already been used");
+      setIsLoading(false);
+      return;
+    }
     
     const { error } = await signUp(email.trim(), password);
     
@@ -131,6 +158,12 @@ const Auth = () => {
       setIsLoading(false);
       return;
     }
+
+    // Mark the invite code as used via secure SECURITY DEFINER function
+    await supabase.rpc("validate_and_redeem_invite_code", {
+      _code: trimmedCode,
+      _email: email.trim(),
+    });
 
     toast({
       title: "Account created!",
@@ -329,6 +362,23 @@ const Auth = () => {
                       aria-invalid={!!passwordError}
                     />
                     {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-code">Invite Code</Label>
+                    <Input
+                      id="invite-code"
+                      type="text"
+                      placeholder="XXXX-XXXX-XXXX"
+                      value={inviteCode}
+                      onChange={(e) => {
+                        setInviteCode(e.target.value.toUpperCase());
+                        setInviteCodeError("");
+                      }}
+                      required
+                      aria-invalid={!!inviteCodeError}
+                      className="font-mono tracking-wider"
+                    />
+                    {inviteCodeError && <p className="text-sm text-destructive">{inviteCodeError}</p>}
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Creating account..." : "Create Account"}
