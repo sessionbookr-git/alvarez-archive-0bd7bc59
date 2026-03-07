@@ -546,6 +546,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_invite_code: { Args: { _code: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
