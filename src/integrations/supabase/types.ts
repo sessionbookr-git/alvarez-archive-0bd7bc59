@@ -526,7 +526,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      redeem_invite_code: {
+      validate_and_redeem_invite_code: {
         Args: { _code: string; _email: string }
         Returns: boolean
       }
