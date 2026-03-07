@@ -127,7 +127,7 @@ const Auth = () => {
     
     setIsLoading(true);
 
-    // Validate invite code against database
+    // Validate invite code first (SELECT is allowed for unused codes)
     const trimmedCode = inviteCode.trim().toUpperCase();
     const { data: codeData, error: codeError } = await supabase
       .from("invite_codes")
@@ -159,8 +159,8 @@ const Auth = () => {
       return;
     }
 
-    // Mark the invite code as used via secure function
-    await supabase.rpc("redeem_invite_code", {
+    // Mark the invite code as used via secure SECURITY DEFINER function
+    await supabase.rpc("validate_and_redeem_invite_code", {
       _code: trimmedCode,
       _email: email.trim(),
     });
