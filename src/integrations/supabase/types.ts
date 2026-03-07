@@ -217,6 +217,7 @@ export type Database = {
           story: string | null
           submission_notes: string | null
           submitted_by_email: string | null
+          submitted_by_user_id: string | null
           top_wood: string | null
           truss_rod_location: string | null
           tuner_type: string | null
@@ -247,6 +248,7 @@ export type Database = {
           story?: string | null
           submission_notes?: string | null
           submitted_by_email?: string | null
+          submitted_by_user_id?: string | null
           top_wood?: string | null
           truss_rod_location?: string | null
           tuner_type?: string | null
@@ -277,6 +279,7 @@ export type Database = {
           story?: string | null
           submission_notes?: string | null
           submitted_by_email?: string | null
+          submitted_by_user_id?: string | null
           top_wood?: string | null
           truss_rod_location?: string | null
           tuner_type?: string | null
@@ -287,6 +290,13 @@ export type Database = {
             columns: ["model_id"]
             isOneToOne: false
             referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guitars_submitted_by_user_id_fkey"
+            columns: ["submitted_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -476,6 +486,27 @@ export type Database = {
           production_start_year?: number | null
           series?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
         }
         Relationships: []
       }

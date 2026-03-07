@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/fileValidation";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SubmissionData {
   serialNumber: string;
@@ -27,6 +28,7 @@ interface SubmissionData {
 }
 
 export const useGuitarSubmission = () => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,7 +88,7 @@ export const useGuitarSubmission = () => {
           bridge_style: data.bridgeStyle || null,
           label_type: data.labelType || null,
           label_color: data.labelColor || null,
-          submitted_by_email: data.email || null,
+          submitted_by_user_id: user?.id || null,
           submission_notes: [data.purchaseLocation, data.notes].filter(Boolean).join("\n\n"),
           status: "pending",
           confidence_level: "medium",
