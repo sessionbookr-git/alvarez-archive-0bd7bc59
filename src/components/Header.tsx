@@ -11,11 +11,15 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Main public navigation - focused on Community + Encyclopedia
-  const navLinks = [
-    { to: "/encyclopedia", label: "Encyclopedia" },
-    { to: "/community", label: "Community" },
-    { to: "/submit", label: "Submit" },
-  ];
+  const navLinks = user
+    ? [
+        { to: "/encyclopedia", label: "Encyclopedia" },
+        { to: "/community", label: "Community" },
+        { to: "/submit", label: "Submit" },
+      ]
+    : [
+        { to: "/request-access", label: "Request Access" },
+      ];
 
   // Expert tools only shown to admins
   const expertLinks = isAdmin
