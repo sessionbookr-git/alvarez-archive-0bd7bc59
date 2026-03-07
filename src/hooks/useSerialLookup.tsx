@@ -2,6 +2,25 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAnalytics } from "./useAnalytics";
 import { parseSerial, parseNeckBlock, SerialFormat } from "@/lib/serialParser";
+import type { Tables } from "@/integrations/supabase/types";
+
+interface PatternWithModel extends Tables<"serial_patterns"> {
+  models: {
+    id: string;
+    model_name: string;
+    series: string | null;
+    country_of_manufacture: string | null;
+    production_start_year: number | null;
+    production_end_year: number | null;
+  } | null;
+}
+
+interface GuitarWithModel {
+  id: string;
+  serial_number: string;
+  estimated_year: number | null;
+  models: { model_name: string } | null;
+}
 
 export interface SerialLookupResult {
   confidence: "high" | "medium" | "low";
