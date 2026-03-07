@@ -19,7 +19,7 @@ const passwordSchema = z.string().min(12, "Password must be at least 12 characte
 
 
 // Allowed redirect paths (whitelist for security)
-const ALLOWED_REDIRECTS = ["/submit", "/admin", "/encyclopedia", "/serial-lookup", "/identify"];
+const ALLOWED_REDIRECTS = ["/submit", "/admin", "/encyclopedia", "/lookup", "/identify", "/community", "/my-submissions", "/submit-guidelines"];
 
 const sanitizeRedirect = (redirect: string | null): string => {
   if (!redirect) return "/";
