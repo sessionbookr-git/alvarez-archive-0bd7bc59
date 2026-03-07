@@ -159,11 +159,11 @@ const Auth = () => {
       return;
     }
 
-    // Mark the invite code as used
-    await supabase
-      .from("invite_codes")
-      .update({ used_at: new Date().toISOString(), used_by_email: email.trim() })
-      .eq("id", codeData.id);
+    // Mark the invite code as used via secure function
+    await supabase.rpc("redeem_invite_code", {
+      _code: trimmedCode,
+      _email: email.trim(),
+    });
 
     toast({
       title: "Account created!",
