@@ -92,8 +92,8 @@ export const useSerialLookup = () => {
 
       // For Yairi serials, skip pattern matching - the serial is just a sequence number
       // Only do pattern lookup for non-Yairi formats
-      let patterns: any[] = [];
-      let similarGuitars: any[] = [];
+      let patterns: PatternWithModel[] = [];
+      let similarGuitars: GuitarWithModel[] = [];
       
       if (!parsed.isYairi) {
         // Query serial patterns that match the prefix
@@ -147,15 +147,15 @@ export const useSerialLookup = () => {
       if (!parsed.isYairi && patterns && patterns.length > 0) {
         // Only use pattern year range if we don't already have a specific year from parsing
         if (!parsed.estimatedYear) {
-          const years = patterns.flatMap((p: any) => [p.year_range_start, p.year_range_end]);
+          const years = patterns.flatMap((p) => [p.year_range_start, p.year_range_end]);
           const minYear = Math.min(...years);
           const maxYear = Math.max(...years);
           yearRange = minYear === maxYear ? `${minYear}` : `${minYear}-${maxYear}`;
         }
 
         const countries = patterns
-          .filter((p: any) => p.models?.country_of_manufacture)
-          .map((p: any) => p.models.country_of_manufacture);
+          .filter((p) => p.models?.country_of_manufacture)
+          .map((p) => p.models!.country_of_manufacture);
         if (countries.length > 0) {
           country = countries[0] || country;
         }
@@ -183,18 +183,18 @@ export const useSerialLookup = () => {
 
       // Calculate results from matching patterns (skip for Yairi)
       const matchedModels = parsed.isYairi ? [] : (patterns || [])
-        .filter((p: any) => p.models)
-        .map((p: any) => ({
-          id: p.models.id,
-          name: p.models.model_name,
-          series: p.models.series,
-          country: p.models.country_of_manufacture,
+        .filter((p) => p.models)
+        .map((p) => ({
+          id: p.models!.id,
+          name: p.models!.model_name,
+          series: p.models!.series,
+          country: p.models!.country_of_manufacture,
         }));
 
       // Check for exact serial matches in similar guitars (skip for Yairi)
       if (!parsed.isYairi) {
         const exactMatches = similarGuitars?.filter(
-          (g: any) => g.serial_number === serialNumber
+          (g) => g.serial_number === serialNumber
         ).length || 0;
         
         if (exactMatches > 0) {
@@ -218,14 +218,14 @@ export const useSerialLookup = () => {
         estimatedMonth: parsed.estimatedMonth,
         models: matchedModels,
         country,
-        patterns: (patterns || []).map((p: any) => ({
+        patterns: (patterns || []).map((p) => ({
           id: p.id,
           serial_prefix: p.serial_prefix,
           year_range_start: p.year_range_start,
           year_range_end: p.year_range_end,
           confidence_notes: p.confidence_notes,
         })),
-        similarGuitars: (similarGuitars || []).map((g: any) => ({
+        similarGuitars: (similarGuitars || []).map((g) => ({
           id: g.id,
           serial_number: g.serial_number,
           estimated_year: g.estimated_year,
