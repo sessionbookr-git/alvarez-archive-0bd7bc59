@@ -152,7 +152,7 @@ function parseModernYairiSerial(serialNum: number): ModernYairiResult {
   }
   
   // Build notes - keep simple for modern Yairis
-  let notes = `${verifiedNote}Estimated based on Alvarez official serial checker data and verified customer examples.`;
+  const notes = `${verifiedNote}Estimated based on Alvarez official serial checker data and verified customer examples.`;
   
   return {
     year: estimatedYear,
