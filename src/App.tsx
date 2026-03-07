@@ -31,6 +31,7 @@ import AdminInviteCodes from "./pages/admin/AdminInviteCodes";
 import AdminAccessRequests from "./pages/admin/AdminAccessRequests";
 import SubmitGuidelines from "./pages/SubmitGuidelines";
 import InviteLanding from "./pages/InviteLanding";
+import InviteEntry from "./pages/InviteEntry";
 import RequestAccess from "./pages/RequestAccess";
 import NotFound from "./pages/NotFound";
 
