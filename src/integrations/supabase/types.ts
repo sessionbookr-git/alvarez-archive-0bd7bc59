@@ -216,7 +216,6 @@ export type Database = {
           status: string | null
           story: string | null
           submission_notes: string | null
-          submitted_by_email: string | null
           submitted_by_user_id: string | null
           top_wood: string | null
           truss_rod_location: string | null
@@ -247,7 +246,6 @@ export type Database = {
           status?: string | null
           story?: string | null
           submission_notes?: string | null
-          submitted_by_email?: string | null
           submitted_by_user_id?: string | null
           top_wood?: string | null
           truss_rod_location?: string | null
@@ -278,7 +276,6 @@ export type Database = {
           status?: string | null
           story?: string | null
           submission_notes?: string | null
-          submitted_by_email?: string | null
           submitted_by_user_id?: string | null
           top_wood?: string | null
           truss_rod_location?: string | null

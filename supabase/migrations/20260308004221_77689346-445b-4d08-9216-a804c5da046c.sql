@@ -1,0 +1,1 @@
+ALTER TABLE public.guitars DROP COLUMN submitted_by_email;
