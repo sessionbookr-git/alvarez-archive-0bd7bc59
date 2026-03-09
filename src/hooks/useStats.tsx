@@ -58,6 +58,9 @@ export const useStats = () => {
         countriesCount: uniqueCountries.size || 3,
       } as ArchiveStats;
     },
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 };
