@@ -35,6 +35,10 @@ const FeaturedStories = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 
   // Don't render if no featured stories
