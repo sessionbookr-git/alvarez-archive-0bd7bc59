@@ -127,22 +127,13 @@ const Auth = () => {
     
     setIsLoading(true);
 
-    // Validate invite code first (SELECT is allowed for unused codes)
+    // Validate invite code via SECURITY DEFINER RPC (bypasses RLS)
     const trimmedCode = inviteCode.trim().toUpperCase();
-    const { data: codeData, error: codeError } = await supabase
-      .from("invite_codes")
-      .select("id, used_at")
-      .eq("code", trimmedCode)
-      .maybeSingle();
+    const { data: codeResult, error: codeError } = await supabase
+      .rpc("check_invite_code", { _code: trimmedCode });
 
-    if (codeError || !codeData) {
-      setInviteCodeError("Invalid invite code");
-      setIsLoading(false);
-      return;
-    }
-
-    if (codeData.used_at) {
-      setInviteCodeError("This invite code has already been used");
+    if (codeError || !codeResult || !(codeResult as any).valid) {
+      setInviteCodeError("Invalid or already used invite code");
       setIsLoading(false);
       return;
     }
