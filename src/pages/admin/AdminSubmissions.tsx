@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Check, X, ArrowLeft, Star, BookOpen, Eye, Pencil, Trash2, Loader2 } from "lucide-react";
+import { PromoteToEncyclopediaButton } from "@/components/PromoteToEncyclopediaButton";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -206,6 +207,11 @@ const AdminSubmissions = () => {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+
+                      {/* Publish to Encyclopedia for approved */}
+                      {guitar.status === "approved" && (
+                        <PromoteToEncyclopediaButton guitar={guitar} />
+                      )}
 
                       {/* Approve/Reject for pending */}
                       {guitar.status === "pending" && (
