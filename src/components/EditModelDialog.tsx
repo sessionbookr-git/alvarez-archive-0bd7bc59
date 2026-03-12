@@ -71,6 +71,7 @@ const EditModelDialog = ({ open, onOpenChange, model }: EditModelDialogProps) =>
         series: model.series || "",
         body_shape: model.body_shape || "",
         country_of_manufacture: model.country_of_manufacture || "",
+        instrument_type: model.instrument_type || "Acoustic",
         production_start_year: model.production_start_year?.toString() || "",
         production_end_year: model.production_end_year?.toString() || "",
         description: model.description || "",
