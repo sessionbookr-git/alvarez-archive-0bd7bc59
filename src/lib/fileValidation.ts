@@ -10,7 +10,7 @@ export const TARGET_FILE_SIZE_MB = 0.8;
 export const MAX_IMAGE_DIMENSION = 2000;
 
 // Allowed image types
-export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 export interface FileValidationResult {
   valid: boolean;
