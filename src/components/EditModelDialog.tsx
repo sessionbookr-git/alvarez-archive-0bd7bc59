@@ -222,6 +222,21 @@ const EditModelDialog = ({ open, onOpenChange, model }: EditModelDialogProps) =>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="instrument_type">Instrument Type</Label>
+              <Select value={form.instrument_type} onValueChange={(v) => setForm({ ...form, instrument_type: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INSTRUMENT_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="model_name">Model Name *</Label>
               <Input
