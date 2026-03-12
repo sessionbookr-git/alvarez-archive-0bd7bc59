@@ -74,12 +74,12 @@ const Encyclopedia = () => {
       )}
 
       <Link to={`/encyclopedia/${model.id}`}>
-        <div className="aspect-square bg-secondary rounded-md mb-4 flex items-center justify-center overflow-hidden">
+        <div className="aspect-[3/4] bg-secondary rounded-md mb-4 flex items-center justify-center overflow-hidden">
           {model.photo_url ? (
             <img
               src={model.photo_url}
               alt={model.model_name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           ) : (
             <span className="text-xs text-muted-foreground">No Photo</span>
