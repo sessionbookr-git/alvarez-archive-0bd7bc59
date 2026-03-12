@@ -87,6 +87,8 @@ const ModelDetail = () => {
               photos={modelPhotos}
               fallbackUrl={(model as { photo_url?: string }).photo_url}
               modelName={model.model_name}
+              modelId={model.id}
+              isAdmin={isAdmin}
             />
 
             {/* Details Section */}
