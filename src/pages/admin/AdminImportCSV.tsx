@@ -150,9 +150,9 @@ const AdminImportCSV = () => {
     return parts.join(" ");
   };
 
-  const getCountry = (series?: string): string | null => {
+  const getCountry = (series?: string): string => {
     if (series?.trim() === "Yairi Series") return "Japan";
-    return null;
+    return "China";
   };
 
   const handleImportSpecs = async () => {
