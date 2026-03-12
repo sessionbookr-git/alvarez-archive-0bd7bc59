@@ -190,7 +190,8 @@ const AdminImportCSV = () => {
       const isExisting = existingModelNames.has(modelName);
 
       const seriesFixed = fixSeries(row.series?.trim() || "", modelName);
-
+      const upper = modelName.toUpperCase();
+      const isClassical = upper.startsWith("AC") || upper.startsWith("CY") || upper.startsWith("CYM") || modelName.toLowerCase().startsWith("artist-ac");
       const record: Record<string, unknown> = {
         model_name: modelName,
         series: seriesFixed,
