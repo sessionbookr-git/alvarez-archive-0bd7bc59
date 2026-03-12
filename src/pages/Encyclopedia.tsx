@@ -40,7 +40,29 @@ const Encyclopedia = () => {
   const [selectedCountry, setSelectedCountry] = useState("All");
   const [selectedType, setSelectedType] = useState("Acoustic");
   const [editingModel, setEditingModel] = useState<any>(null);
+  const [deletingModel, setDeletingModel] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
+
+  const handleDeleteModel = async () => {
+    if (!deletingModel) return;
+    setIsDeleting(true);
+    try {
+      // Delete related records first
+      await supabase.from("model_photos").delete().eq("model_id", deletingModel.id);
+      await supabase.from("model_features").delete().eq("model_id", deletingModel.id);
+      const { error } = await supabase.from("models").delete().eq("id", deletingModel.id);
+      if (error) throw error;
+      toast({ title: "Model removed", description: `${deletingModel.model_name} has been removed from the encyclopedia.` });
+      queryClient.invalidateQueries({ queryKey: ["models"] });
+    } catch (err) {
+      toast({ title: "Error", description: String(err), variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+      setDeletingModel(null);
+    }
+  };
 
   const { data: models, isLoading, error } = useModels({
     decade: selectedDecade,
