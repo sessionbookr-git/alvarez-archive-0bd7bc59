@@ -75,7 +75,7 @@ export const compressImage = async (file: File): Promise<File> => {
     // Try decreasing quality until under target size
     let quality = 0.85;
     let blob: Blob | null = null;
-    const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    const outputType = (file.type === 'image/png' && !isHeic) ? 'image/png' : 'image/jpeg';
 
     for (let i = 0; i < 5; i++) {
       blob = await new Promise<Blob | null>((resolve) =>
