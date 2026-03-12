@@ -44,8 +44,10 @@ export const validateImageFiles = (files: File[]): FileValidationResult => {
  * Large images are resized and compressed to ~800KB
  */
 export const compressImage = async (file: File): Promise<File> => {
-  // Skip compression for already small files
-  if (file.size <= TARGET_FILE_SIZE) {
+  const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.match(/\.(heic|heif)$/i);
+  
+  // Skip compression for already small non-HEIC files
+  if (file.size <= TARGET_FILE_SIZE && !isHeic) {
     return file;
   }
 
