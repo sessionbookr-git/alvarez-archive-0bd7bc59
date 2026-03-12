@@ -156,7 +156,7 @@ const Encyclopedia = () => {
                       onClick={() => setSelectedType(type)}
                       className="text-xs"
                     >
-                      {instrumentIcons[type]} {type}
+                      {type}
                     </Button>
                   ))}
                 </div>
