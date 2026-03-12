@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export type InstrumentType = "Acoustic" | "Electric" | "Classical" | "Ukulele" | "Mandolin" | "Bass";
+
+export const INSTRUMENT_TYPES: InstrumentType[] = ["Acoustic", "Electric", "Classical", "Ukulele", "Mandolin", "Bass"];
+
 export interface Model {
   id: string;
   model_name: string;
@@ -12,6 +16,7 @@ export interface Model {
   description: string | null;
   key_features: string[] | null;
   photo_url: string | null;
+  instrument_type: InstrumentType;
   created_at: string;
   updated_at: string;
   guitar_count?: number;
