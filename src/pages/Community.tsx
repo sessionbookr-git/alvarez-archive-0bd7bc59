@@ -30,14 +30,15 @@ const Community = () => {
           is_featured,
           approved_at,
           model_name_submitted,
+          model_id,
           body_style,
           electronics,
           top_wood,
           back_sides_wood,
           finish_type,
           country_of_origin,
-          model:models(model_name, series),
-          photos:guitar_photos(photo_url, photo_type),
+          model:models(model_name, series, is_published),
+          photos:guitar_photos(id, photo_url, photo_type),
           likes:guitar_likes(id)
         `)
         .eq("status", "approved")
