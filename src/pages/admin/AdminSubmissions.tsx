@@ -36,7 +36,7 @@ const AdminSubmissions = () => {
         .from("guitars")
         .select(`
           *,
-          model:models(model_name, series),
+          model:models(model_name, series, is_published),
           photos:guitar_photos(id, photo_url, photo_type),
           submitter:profiles!submitted_by_user_id(display_name, email)
         `)
