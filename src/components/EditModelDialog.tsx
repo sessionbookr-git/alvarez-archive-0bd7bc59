@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Image, X } from "lucide-react";
+import { INSTRUMENT_TYPES } from "@/hooks/useModels";
 
 interface ModelForm {
   model_name: string;
