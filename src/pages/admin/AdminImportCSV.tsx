@@ -150,9 +150,30 @@ const AdminImportCSV = () => {
     return parts.join(" ");
   };
 
-  const getCountry = (series?: string): string => {
-    if (series?.trim() === "Yairi Series") return "Japan";
+  const getCountry = (series?: string, modelName?: string): string => {
+    const name = (modelName || "").toLowerCase();
+    if (series?.trim() === "Yairi Series" || name.startsWith("yairi-") || /^[a-z]y\d/i.test(name)) return "Japan";
     return "China";
+  };
+
+  /** Override series from website using model name prefix rules */
+  const fixSeries = (csvSeries: string, modelName: string): string => {
+    const upper = modelName.toUpperCase();
+    const lower = modelName.toLowerCase();
+    // Yairi prefixed models
+    if (lower.startsWith("yairi-") || /^[A-Z]Y\d/.test(upper)) return "Yairi Series";
+    // AE prefix = Artist Elite
+    if (upper.startsWith("AE")) return "Artist Elite Series";
+    // M prefix = Masterworks
+    if (upper.startsWith("M")) return "Masterworks Series";
+    // L prefix = Laureate
+    if (upper.startsWith("L")) return "Laureate Series";
+    // R prefix = Regent
+    if (upper.startsWith("R")) return "Regent Series";
+    // A prefix (not AE) = Artist
+    if (upper.startsWith("A")) return "Artist Guitars Series";
+    // Fallback to CSV value
+    return csvSeries;
   };
 
   const handleImportSpecs = async () => {
