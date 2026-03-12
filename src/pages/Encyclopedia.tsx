@@ -324,6 +324,27 @@ const Encyclopedia = () => {
           model={editingModel}
         />
       )}
+
+      <AlertDialog open={!!deletingModel} onOpenChange={(open) => !open && setDeletingModel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {deletingModel?.model_name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this model, its photos, and feature associations from the encyclopedia. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteModel}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Removing..." : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
