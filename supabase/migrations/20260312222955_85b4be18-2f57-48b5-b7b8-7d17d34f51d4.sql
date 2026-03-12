@@ -1,0 +1,1 @@
+UPDATE models SET is_published = false WHERE id = 'fb350689-075f-4c87-a397-83651b1a578a';
