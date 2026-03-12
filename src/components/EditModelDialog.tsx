@@ -144,6 +144,7 @@ const EditModelDialog = ({ open, onOpenChange, model }: EditModelDialogProps) =>
         series: data.series || null,
         body_shape: data.body_shape || null,
         country_of_manufacture: data.country_of_manufacture || null,
+        instrument_type: data.instrument_type || "Acoustic",
         production_start_year: data.production_start_year ? parseInt(data.production_start_year) : null,
         production_end_year: data.production_end_year ? parseInt(data.production_end_year) : null,
         description: data.description || null,
