@@ -200,7 +200,7 @@ const AdminImportCSV = () => {
         production_start_year: row.year_model ? parseInt(row.year_model) || null : null,
         photo_url: row.primary_image_url?.trim() || null,
         source_url: row.source_url?.trim() || null,
-        instrument_type: "Acoustic",
+        instrument_type: isClassical ? "Classical" : "Acoustic",
         is_published: true,
         country_of_manufacture: getCountry(seriesFixed, modelName),
         key_features: keyFeatures,
