@@ -10,7 +10,7 @@ export const TARGET_FILE_SIZE_MB = 0.8;
 export const MAX_IMAGE_DIMENSION = 2000;
 
 // Allowed image types
-export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 export interface FileValidationResult {
   valid: boolean;
@@ -19,10 +19,10 @@ export interface FileValidationResult {
 
 export const validateImageFile = (file: File): FileValidationResult => {
   // Check file type
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type) && !file.name.match(/\.(heic|heif)$/i)) {
     return {
       valid: false,
-      error: `Invalid file type. Please upload JPG, PNG, or WebP images.`,
+      error: `Invalid file type. Please upload JPG, PNG, WebP, or HEIC images.`,
     };
   }
 
@@ -44,8 +44,10 @@ export const validateImageFiles = (files: File[]): FileValidationResult => {
  * Large images are resized and compressed to ~800KB
  */
 export const compressImage = async (file: File): Promise<File> => {
-  // Skip compression for already small files
-  if (file.size <= TARGET_FILE_SIZE) {
+  const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.match(/\.(heic|heif)$/i);
+  
+  // Skip compression for already small non-HEIC files
+  if (file.size <= TARGET_FILE_SIZE && !isHeic) {
     return file;
   }
 
@@ -73,7 +75,7 @@ export const compressImage = async (file: File): Promise<File> => {
     // Try decreasing quality until under target size
     let quality = 0.85;
     let blob: Blob | null = null;
-    const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    const outputType = (file.type === 'image/png' && !isHeic) ? 'image/png' : 'image/jpeg';
 
     for (let i = 0; i < 5; i++) {
       blob = await new Promise<Blob | null>((resolve) =>
