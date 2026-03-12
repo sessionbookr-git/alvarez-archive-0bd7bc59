@@ -6,8 +6,21 @@ import { useModels, INSTRUMENT_TYPES, type InstrumentType } from "@/hooks/useMod
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Edit, Guitar } from "lucide-react";
+import { Search, Loader2, Edit, Guitar, Trash2 } from "lucide-react";
 import EditModelDialog from "@/components/EditModelDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const decades = ["All", "1970s", "1980s", "1990s", "2000s", "2010s", "2020s"];
 const countries = ["All", "Japan", "Korea", "China", "USA", "Indonesia"];
