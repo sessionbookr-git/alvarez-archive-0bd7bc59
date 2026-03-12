@@ -19,10 +19,10 @@ export interface FileValidationResult {
 
 export const validateImageFile = (file: File): FileValidationResult => {
   // Check file type
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type) && !file.name.match(/\.(heic|heif)$/i)) {
     return {
       valid: false,
-      error: `Invalid file type. Please upload JPG, PNG, or WebP images.`,
+      error: `Invalid file type. Please upload JPG, PNG, WebP, or HEIC images.`,
     };
   }
 
