@@ -175,6 +175,12 @@ const AdminSubmissions = () => {
                         </CardDescription>
                       </div>
                       {getStatusBadge(guitar.status)}
+                      {guitar.model_id && (guitar.model as any)?.is_published && (
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                          <BookOpen className="h-3 w-3 mr-1" />
+                          In Encyclopedia
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       {/* Edit */}
