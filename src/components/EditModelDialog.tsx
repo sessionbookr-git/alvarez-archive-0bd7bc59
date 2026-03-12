@@ -38,6 +38,7 @@ interface EditModelDialogProps {
     description?: string | null;
     photo_url?: string | null;
     key_features?: string[] | null;
+    instrument_type?: string;
   };
 }
 
