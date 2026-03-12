@@ -86,7 +86,7 @@ export const PromoteToEncyclopediaButton = ({ guitar }: Props) => {
           .insert({
             model_name: modelName,
             body_shape: guitar.body_style || null,
-            country_of_manufacture: guitar.country_of_origin || null,
+            country_of_manufacture: normalizeCountry(guitar.country_of_origin),
             production_start_year: guitar.estimated_year || null,
             is_published: true,
           })
