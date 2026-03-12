@@ -95,17 +95,30 @@ const Encyclopedia = () => {
       style={{ animationDelay: `${index * 30}ms` }}
     >
       {isAdmin && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setEditingModel(model);
-          }}
-          className="absolute top-2 right-2 z-10 p-2 bg-background/90 border border-border rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent"
-          title="Edit model"
-        >
-          <Edit className="h-4 w-4" />
-        </button>
+        <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setEditingModel(model);
+            }}
+            className="p-2 bg-background/90 border border-border rounded-md hover:bg-accent"
+            title="Edit model"
+          >
+            <Edit className="h-4 w-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDeletingModel(model);
+            }}
+            className="p-2 bg-background/90 border border-destructive/50 rounded-md hover:bg-destructive/10 text-destructive"
+            title="Remove model"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       )}
 
       <Link to={`/encyclopedia/${model.id}`}>
