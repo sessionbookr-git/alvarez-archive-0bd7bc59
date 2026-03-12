@@ -124,6 +124,32 @@ const AdminImportCSV = () => {
     return features;
   };
 
+  const buildDescription = (row: SpecRow): string | null => {
+    const parts: string[] = [];
+    const top = row.top_wood?.trim();
+    const shape = row.shape?.trim();
+    if (!top && !shape) return null;
+
+    parts.push([top, shape].filter(Boolean).join(" "));
+
+    const notable: string[] = [];
+    const pickup = row.pickup_eq?.trim();
+    if (pickup) notable.push(`with ${pickup} pickup`);
+    const armrest = row.armrest?.trim();
+    if (armrest && armrest.toLowerCase() !== "no" && armrest.toLowerCase() !== "n/a") notable.push("with armrest");
+    const backs = row.back_sides_wood?.trim();
+    if (backs) notable.push(`${backs.toLowerCase()} back and sides`);
+    const nut = row.nut_saddle?.trim();
+    if (nut && nut.toLowerCase().includes("bone")) notable.push("bone nut and saddle");
+
+    if (notable.length > 0) {
+      // first item already has "with" if needed, join rest with commas
+      parts.push(notable.join(", "));
+    }
+
+    return parts.join(" ");
+  };
+
   const getCountry = (series?: string): string | null => {
     if (series?.trim() === "Yairi Series") return "Japan";
     return null;
@@ -154,6 +180,7 @@ const AdminImportCSV = () => {
         is_published: true,
         country_of_manufacture: getCountry(row.series),
         key_features: keyFeatures,
+        description: buildDescription(row),
       };
 
       try {
