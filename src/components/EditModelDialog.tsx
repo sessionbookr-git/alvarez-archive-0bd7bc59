@@ -9,12 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Image, X } from "lucide-react";
+import { INSTRUMENT_TYPES } from "@/hooks/useModels";
 
 interface ModelForm {
   model_name: string;
   series: string;
   body_shape: string;
   country_of_manufacture: string;
+  instrument_type: string;
   production_start_year: string;
   production_end_year: string;
   description: string;
@@ -36,6 +38,7 @@ interface EditModelDialogProps {
     description?: string | null;
     photo_url?: string | null;
     key_features?: string[] | null;
+    instrument_type?: string;
   };
 }
 
@@ -45,6 +48,7 @@ const EditModelDialog = ({ open, onOpenChange, model }: EditModelDialogProps) =>
     series: "",
     body_shape: "",
     country_of_manufacture: "",
+    instrument_type: "Acoustic",
     production_start_year: "",
     production_end_year: "",
     description: "",
@@ -67,6 +71,7 @@ const EditModelDialog = ({ open, onOpenChange, model }: EditModelDialogProps) =>
         series: model.series || "",
         body_shape: model.body_shape || "",
         country_of_manufacture: model.country_of_manufacture || "",
+        instrument_type: model.instrument_type || "Acoustic",
         production_start_year: model.production_start_year?.toString() || "",
         production_end_year: model.production_end_year?.toString() || "",
         description: model.description || "",
@@ -139,6 +144,7 @@ const EditModelDialog = ({ open, onOpenChange, model }: EditModelDialogProps) =>
         series: data.series || null,
         body_shape: data.body_shape || null,
         country_of_manufacture: data.country_of_manufacture || null,
+        instrument_type: data.instrument_type || "Acoustic",
         production_start_year: data.production_start_year ? parseInt(data.production_start_year) : null,
         production_end_year: data.production_end_year ? parseInt(data.production_end_year) : null,
         description: data.description || null,
@@ -215,6 +221,21 @@ const EditModelDialog = ({ open, onOpenChange, model }: EditModelDialogProps) =>
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="instrument_type">Instrument Type</Label>
+              <Select value={form.instrument_type} onValueChange={(v) => setForm({ ...form, instrument_type: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INSTRUMENT_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="model_name">Model Name *</Label>
