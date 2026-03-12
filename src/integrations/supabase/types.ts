@@ -450,9 +450,11 @@ export type Database = {
           key_features: Json | null
           model_name: string
           photo_url: string | null
+          product_status: string | null
           production_end_year: number | null
           production_start_year: number | null
           series: string | null
+          source_url: string | null
           updated_at: string
         }
         Insert: {
@@ -466,9 +468,11 @@ export type Database = {
           key_features?: Json | null
           model_name: string
           photo_url?: string | null
+          product_status?: string | null
           production_end_year?: number | null
           production_start_year?: number | null
           series?: string | null
+          source_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -482,9 +486,11 @@ export type Database = {
           key_features?: Json | null
           model_name?: string
           photo_url?: string | null
+          product_status?: string | null
           production_end_year?: number | null
           production_start_year?: number | null
           series?: string | null
+          source_url?: string | null
           updated_at?: string
         }
         Relationships: []
