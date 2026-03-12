@@ -25,7 +25,7 @@ import AdminModels from "./pages/admin/AdminModels";
 import AdminPatterns from "./pages/admin/AdminPatterns";
 import AdminFeatures from "./pages/admin/AdminFeatures";
 import AdminImport from "./pages/admin/AdminImport";
-
+import AdminImportCSV from "./pages/admin/AdminImportCSV";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminInviteCodes from "./pages/admin/AdminInviteCodes";
 import AdminAccessRequests from "./pages/admin/AdminAccessRequests";
@@ -78,7 +78,8 @@ const App = () => (
             <Route path="/admin/patterns" element={<AdminRoute><AdminPatterns /></AdminRoute>} />
             <Route path="/admin/features" element={<AdminRoute><AdminFeatures /></AdminRoute>} />
             <Route path="/admin/import" element={<AdminRoute><AdminImport /></AdminRoute>} />
-            
+            <Route path="/admin/import-csv" element={<AdminRoute><AdminImportCSV /></AdminRoute>} />
+
             <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
             <Route path="/admin/invite-codes" element={<AdminRoute><AdminInviteCodes /></AdminRoute>} />
             <Route path="/admin/access-requests" element={<AdminRoute><AdminAccessRequests /></AdminRoute>} />

@@ -49,6 +49,7 @@ const AdminDashboard = () => {
     { title: "Serial Patterns", href: "/admin/patterns", icon: Layers, count: stats?.patterns },
     { title: "Feature Library", href: "/admin/features", icon: FileText, count: stats?.features },
     { title: "Bulk Import", href: "/admin/import", icon: Upload, description: "Import CSV data" },
+    { title: "Alvarez Import", href: "/admin/import-csv", icon: Upload, description: "Import scraped data" },
     { title: "Analytics", href: "/admin/analytics", icon: BarChart3, description: "Usage insights" },
     { title: "Invite Codes", href: "/admin/invite-codes", icon: Ticket, description: "Bulk generate" },
     { title: "Access Requests", href: "/admin/access-requests", icon: UserPlus, description: "Waitlist" },
