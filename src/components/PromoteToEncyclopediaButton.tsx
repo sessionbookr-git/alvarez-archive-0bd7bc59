@@ -51,6 +51,15 @@ export const PromoteToEncyclopediaButton = ({ guitar }: Props) => {
     setChecked(true);
   };
 
+  const normalizeCountry = (raw: string | null): string | null => {
+    if (!raw) return null;
+    const map: Record<string, string> = {
+      japan: "Japan", korea: "Korea", "south korea": "South Korea",
+      china: "China", usa: "USA", "united states": "USA", asia: "Asia",
+    };
+    return map[raw.toLowerCase().trim()] || raw;
+  };
+
   const promoteMutation = useMutation({
     mutationFn: async () => {
       if (!modelName) throw new Error("No model name available");
