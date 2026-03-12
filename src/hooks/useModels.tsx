@@ -26,6 +26,7 @@ export const useModels = (filters?: {
   decade?: string;
   country?: string;
   search?: string;
+  instrumentType?: string;
 }) => {
   return useQuery({
     queryKey: ["models", filters],
