@@ -45,6 +45,10 @@ export const useModels = (filters?: {
         query = query.or(`model_name.ilike.%${filters.search}%,series.ilike.%${filters.search}%`);
       }
 
+      if (filters?.instrumentType && filters.instrumentType !== "All") {
+        query = query.eq("instrument_type", filters.instrumentType);
+      }
+
       const { data, error } = await query;
 
       if (error) throw error;
