@@ -51,6 +51,15 @@ export const PromoteToEncyclopediaButton = ({ guitar }: Props) => {
     setChecked(true);
   };
 
+  const normalizeCountry = (raw: string | null): string | null => {
+    if (!raw) return null;
+    const map: Record<string, string> = {
+      japan: "Japan", korea: "Korea", "south korea": "South Korea",
+      china: "China", usa: "USA", "united states": "USA", asia: "Asia",
+    };
+    return map[raw.toLowerCase().trim()] || raw;
+  };
+
   const promoteMutation = useMutation({
     mutationFn: async () => {
       if (!modelName) throw new Error("No model name available");
@@ -61,7 +70,7 @@ export const PromoteToEncyclopediaButton = ({ guitar }: Props) => {
         // Update existing model with submission data, set published
         const updates: Record<string, unknown> = { is_published: true };
         if (guitar.body_style) updates.body_shape = guitar.body_style;
-        if (guitar.country_of_origin) updates.country_of_manufacture = guitar.country_of_origin;
+        if (guitar.country_of_origin) updates.country_of_manufacture = normalizeCountry(guitar.country_of_origin);
         if (guitar.estimated_year) {
           updates.production_start_year = guitar.estimated_year;
           updates.production_end_year = guitar.estimated_year;
@@ -77,7 +86,7 @@ export const PromoteToEncyclopediaButton = ({ guitar }: Props) => {
           .insert({
             model_name: modelName,
             body_shape: guitar.body_style || null,
-            country_of_manufacture: guitar.country_of_origin || null,
+            country_of_manufacture: normalizeCountry(guitar.country_of_origin),
             production_start_year: guitar.estimated_year || null,
             is_published: true,
           })
