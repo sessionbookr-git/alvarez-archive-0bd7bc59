@@ -70,7 +70,7 @@ export const PromoteToEncyclopediaButton = ({ guitar }: Props) => {
         // Update existing model with submission data, set published
         const updates: Record<string, unknown> = { is_published: true };
         if (guitar.body_style) updates.body_shape = guitar.body_style;
-        if (guitar.country_of_origin) updates.country_of_manufacture = guitar.country_of_origin;
+        if (guitar.country_of_origin) updates.country_of_manufacture = normalizeCountry(guitar.country_of_origin);
         if (guitar.estimated_year) {
           updates.production_start_year = guitar.estimated_year;
           updates.production_end_year = guitar.estimated_year;
