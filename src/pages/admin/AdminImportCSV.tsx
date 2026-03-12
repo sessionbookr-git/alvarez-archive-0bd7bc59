@@ -180,6 +180,7 @@ const AdminImportCSV = () => {
         is_published: true,
         country_of_manufacture: getCountry(row.series),
         key_features: keyFeatures,
+        description: buildDescription(row),
       };
 
       try {
