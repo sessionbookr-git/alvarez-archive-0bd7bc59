@@ -1,0 +1,1 @@
+ALTER TABLE public.models ADD COLUMN instrument_type text NOT NULL DEFAULT 'Acoustic';
