@@ -23,9 +23,9 @@ const instrumentIcons: Record<string, string> = {
 
 const Encyclopedia = () => {
   const [search, setSearch] = useState("");
-  const [selectedDecade, setSelectedDecade] = useState("All");
+  const [selectedDecade, setSelectedDecade] = useState("1970s");
   const [selectedCountry, setSelectedCountry] = useState("All");
-  const [selectedType, setSelectedType] = useState("All");
+  const [selectedType, setSelectedType] = useState("Acoustic");
   const [editingModel, setEditingModel] = useState<any>(null);
   const { isAdmin } = useAuth();
 
