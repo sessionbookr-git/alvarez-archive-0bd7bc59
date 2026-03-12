@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Star, Music, Calendar, Heart, Plus, BookOpen } from "lucide-react";
 
 const Community = () => {
+  const { isAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: stories, isLoading } = useQuery({
