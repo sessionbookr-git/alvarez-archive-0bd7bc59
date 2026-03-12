@@ -25,7 +25,7 @@ import AdminModels from "./pages/admin/AdminModels";
 import AdminPatterns from "./pages/admin/AdminPatterns";
 import AdminFeatures from "./pages/admin/AdminFeatures";
 import AdminImport from "./pages/admin/AdminImport";
-
+import AdminImportCSV from "./pages/admin/AdminImportCSV";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminInviteCodes from "./pages/admin/AdminInviteCodes";
 import AdminAccessRequests from "./pages/admin/AdminAccessRequests";
