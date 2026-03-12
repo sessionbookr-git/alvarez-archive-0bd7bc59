@@ -69,7 +69,7 @@ const ModelPhotoGallery = ({ photos, fallbackUrl, modelName, modelId, isAdmin }:
         <img
           src={currentPhoto.photo_url}
           alt={`${modelName} - Photo ${activeIndex + 1}`}
-          className="w-full aspect-square object-cover rounded-lg"
+          className="w-full aspect-[3/4] object-contain bg-secondary rounded-lg"
         />
         
         {/* Navigation Arrows */}
