@@ -6,8 +6,21 @@ import { useModels, INSTRUMENT_TYPES, type InstrumentType } from "@/hooks/useMod
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Edit, Guitar } from "lucide-react";
+import { Search, Loader2, Edit, Guitar, Trash2 } from "lucide-react";
 import EditModelDialog from "@/components/EditModelDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const decades = ["All", "1970s", "1980s", "1990s", "2000s", "2010s", "2020s"];
 const countries = ["All", "Japan", "Korea", "China", "USA", "Indonesia"];
@@ -27,7 +40,29 @@ const Encyclopedia = () => {
   const [selectedCountry, setSelectedCountry] = useState("All");
   const [selectedType, setSelectedType] = useState("Acoustic");
   const [editingModel, setEditingModel] = useState<any>(null);
+  const [deletingModel, setDeletingModel] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
+
+  const handleDeleteModel = async () => {
+    if (!deletingModel) return;
+    setIsDeleting(true);
+    try {
+      // Delete related records first
+      await supabase.from("model_photos").delete().eq("model_id", deletingModel.id);
+      await supabase.from("model_features").delete().eq("model_id", deletingModel.id);
+      const { error } = await supabase.from("models").delete().eq("id", deletingModel.id);
+      if (error) throw error;
+      toast({ title: "Model removed", description: `${deletingModel.model_name} has been removed from the encyclopedia.` });
+      queryClient.invalidateQueries({ queryKey: ["models"] });
+    } catch (err) {
+      toast({ title: "Error", description: String(err), variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+      setDeletingModel(null);
+    }
+  };
 
   const { data: models, isLoading, error } = useModels({
     decade: selectedDecade,
@@ -60,17 +95,30 @@ const Encyclopedia = () => {
       style={{ animationDelay: `${index * 30}ms` }}
     >
       {isAdmin && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setEditingModel(model);
-          }}
-          className="absolute top-2 right-2 z-10 p-2 bg-background/90 border border-border rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent"
-          title="Edit model"
-        >
-          <Edit className="h-4 w-4" />
-        </button>
+        <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setEditingModel(model);
+            }}
+            className="p-2 bg-background/90 border border-border rounded-md hover:bg-accent"
+            title="Edit model"
+          >
+            <Edit className="h-4 w-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDeletingModel(model);
+            }}
+            className="p-2 bg-background/90 border border-destructive/50 rounded-md hover:bg-destructive/10 text-destructive"
+            title="Remove model"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       )}
 
       <Link to={`/encyclopedia/${model.id}`}>
@@ -276,6 +324,27 @@ const Encyclopedia = () => {
           model={editingModel}
         />
       )}
+
+      <AlertDialog open={!!deletingModel} onOpenChange={(open) => !open && setDeletingModel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {deletingModel?.model_name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this model, its photos, and feature associations from the encyclopedia. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteModel}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Removing..." : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
