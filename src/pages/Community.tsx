@@ -2,13 +2,15 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { PromoteToEncyclopediaButton } from "@/components/PromoteToEncyclopediaButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Star, Music, Calendar, Heart, Plus } from "lucide-react";
+import { Search, Star, Music, Calendar, Heart, Plus, BookOpen } from "lucide-react";
 
 const Community = () => {
   const [searchQuery, setSearchQuery] = useState("");
