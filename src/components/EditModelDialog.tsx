@@ -16,6 +16,7 @@ interface ModelForm {
   series: string;
   body_shape: string;
   country_of_manufacture: string;
+  instrument_type: string;
   production_start_year: string;
   production_end_year: string;
   description: string;
