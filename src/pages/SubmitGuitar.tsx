@@ -546,12 +546,12 @@ const SubmitGuitar = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="purchase">Purchase Details</Label>
+                    <Label htmlFor="purchase">How did you acquire it?</Label>
                     <Input
                       id="purchase"
                       value={formData.purchaseLocation}
                       onChange={(e) => setFormData({ ...formData, purchaseLocation: e.target.value })}
-                      placeholder="Where and when did you acquire this guitar?"
+                      placeholder="e.g., Music store, estate sale, gift from family, online"
                       className="mt-1.5"
                     />
                   </div>
