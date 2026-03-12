@@ -185,7 +185,9 @@ const AdminImportCSV = () => {
 
     for (let i = 0; i < specRows.length; i++) {
       const row = specRows[i];
-      const modelName = row.model_name.trim();
+      // Normalize: uppercase prefix, lowercase ce/e/le suffixes after numbers
+      const rawName = row.model_name.trim().toUpperCase();
+      const modelName = rawName.replace(/(\d)(CE|LE|E)(\s|$|-)/g, (_, num, suffix, after) => `${num}${suffix.toLowerCase()}${after}`);
       const keyFeatures = buildKeyFeatures(row);
       const isExisting = existingModelNames.has(modelName);
 
