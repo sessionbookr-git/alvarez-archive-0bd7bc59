@@ -189,9 +189,11 @@ const AdminImportCSV = () => {
       const keyFeatures = buildKeyFeatures(row);
       const isExisting = existingModelNames.has(modelName);
 
+      const seriesFixed = fixSeries(row.series?.trim() || "", modelName);
+
       const record: Record<string, unknown> = {
         model_name: modelName,
-        series: row.series?.trim() || null,
+        series: seriesFixed,
         body_shape: row.shape?.trim() || null,
         product_status: row.product_status?.trim() || "current",
         production_start_year: row.year_model ? parseInt(row.year_model) || null : null,
@@ -199,7 +201,7 @@ const AdminImportCSV = () => {
         source_url: row.source_url?.trim() || null,
         instrument_type: "Acoustic",
         is_published: true,
-        country_of_manufacture: getCountry(row.series),
+        country_of_manufacture: getCountry(seriesFixed, modelName),
         key_features: keyFeatures,
         description: buildDescription(row),
       };
