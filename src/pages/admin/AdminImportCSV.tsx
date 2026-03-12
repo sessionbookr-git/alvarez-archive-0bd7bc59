@@ -183,7 +183,7 @@ const AdminImportCSV = () => {
             updated++;
           }
         } else {
-          const { error } = await supabase.from("models").insert(record);
+          const { error } = await supabase.from("models").insert(record as any);
           if (error) throw error;
           created++;
           existingModelNames.add(modelName);
