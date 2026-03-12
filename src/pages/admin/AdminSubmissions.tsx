@@ -208,6 +208,11 @@ const AdminSubmissions = () => {
                         </AlertDialogContent>
                       </AlertDialog>
 
+                      {/* Publish to Encyclopedia for approved */}
+                      {guitar.status === "approved" && (
+                        <PromoteToEncyclopediaButton guitar={guitar} />
+                      )}
+
                       {/* Approve/Reject for pending */}
                       {guitar.status === "pending" && (
                         <>
