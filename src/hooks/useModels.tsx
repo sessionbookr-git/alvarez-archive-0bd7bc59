@@ -38,7 +38,7 @@ export const useModels = (filters?: {
         .order("model_name");
 
       if (filters?.country && filters.country !== "All") {
-        query = query.eq("country_of_manufacture", filters.country);
+        query = query.ilike("country_of_manufacture", `%${filters.country}%`);
       }
 
       if (filters?.search) {
