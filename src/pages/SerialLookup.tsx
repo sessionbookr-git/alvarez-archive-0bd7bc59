@@ -115,8 +115,9 @@ const SerialLookup = () => {
               <li><strong>Yairi Series:</strong> 4-5 digit number (e.g., 51708)</li>
               <li><strong>Modern (E-prefix):</strong> E + year + month + sequence (e.g., E24113487 = Nov 2024)</li>
               <li><strong>2010s (CS-prefix):</strong> CS + year + month + sequence (e.g., CS12071753 = Jul 2012)</li>
-              <li><strong>2000s (F/CD-prefix):</strong> F or CD + year digits + sequence</li>
-              <li><strong>1990s (S-prefix):</strong> S + year digits + sequence (e.g., S99 = 1999)</li>
+              <li><strong>2000s (F/CD/CC/CB-prefix):</strong> Prefix + year digits + month + sequence</li>
+              <li><strong>1990s (S/SL-prefix):</strong> S + year + month + sequence (e.g., S99 = 1999); SL = Korean Regent/Artist</li>
+              <li><strong>Other (D/FS/FC/M/C/AL/HG):</strong> Various factory formats — year typically in first digits</li>
               <li><strong>Vintage (1970s-80s):</strong> May require neck block number for dating</li>
             </ul>
           </div>
