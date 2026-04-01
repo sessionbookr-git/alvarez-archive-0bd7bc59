@@ -52,6 +52,21 @@ const SerialLookup = () => {
             </p>
           </div>
 
+          {/* Disclaimer */}
+          <div className="max-w-xl mx-auto mb-8 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium text-amber-700 dark:text-amber-300 text-sm">Work in Progress</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  This tool is experimental and based entirely on data points we are still actively collecting. 
+                  Results may be incomplete or inaccurate — please treat them as estimates, not definitive answers. 
+                  As more guitars are submitted, accuracy will continue to improve.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Serial Format Help */}
           <div className="max-w-xl mx-auto mb-8 p-4 bg-secondary/30 rounded-lg">
             <h3 className="font-medium mb-2 flex items-center gap-2">
