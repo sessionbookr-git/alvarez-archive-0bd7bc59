@@ -1,17 +1,23 @@
 // Alvarez Serial Number Parser
 // Based on official Alvarez customer service documentation
 //
-// SERIAL PREFIX REFERENCE (Updated April 2026):
+// SERIAL PREFIX REFERENCE (Updated April 2026 — 499 registry data points):
 // ┌─────────┬────────────────┬─────────────────────┬────────────┐
 // │ Prefix  │ Era            │ Country             │ Confidence │
 // ├─────────┼────────────────┼─────────────────────┼────────────┤
-// │ E       │ 2010s-present  │ China ✓             │ High       │
+// │ E       │ 2004-present   │ China ✓             │ High       │
 // │ CS      │ 2010s          │ Unknown             │ Medium     │
 // │ CD      │ Mid-2000s      │ Unknown             │ Medium     │
-// │ F       │ 2000s          │ China/Korea         │ Medium     │
+// │ CC      │ 2004-2007+     │ Unknown             │ Medium     │
+// │ CB      │ 2004+          │ Unknown             │ Medium     │
+// │ F       │ 2000-2009      │ China/Korea         │ Medium     │
 // │ FC      │ 2000s-2010s    │ Unknown             │ Low        │
+// │ FS      │ 2012-2013+     │ Unknown             │ Medium     │
 // │ G       │ 1990s-2000s    │ Unknown             │ Low        │
-// │ S       │ 1990s          │ Korea/China         │ Medium     │
+// │ S       │ 1995-2024+     │ Korea/China         │ Medium     │
+// │ SL      │ 1986-1994+     │ Korea ✓             │ Medium     │
+// │ C       │ 2000s          │ Unknown             │ Medium     │
+// │ M       │ 2000s          │ Unknown             │ Low        │
 // │ A       │ 1970s-1980s    │ Japan               │ Low        │
 // └─────────┴────────────────┴─────────────────────┴────────────┘
 //
@@ -78,16 +84,26 @@ interface ModernYairiResult {
   notes: string;
 }
 
-// Verified anchor points from Alvarez serial checker
+// Verified anchor points from Alvarez serial checker + customer registry (April 2026)
+// Sources: official serial checker, verified customer emails, registry CSV (499 data points)
 const YAIRI_ANCHOR_POINTS = [
   { serial: 72000, year: 2015 },
-  { serial: 73000, year: 2018 },
-  { serial: 74000, year: 2020 },
-  { serial: 74968, year: 2021 }, // Verified customer example (WY1TS)
-  { serial: 75000, year: 2021 },
+  { serial: 72149, year: 2015 }, // Verified: DY-70 CE
+  { serial: 72339, year: 2017 }, // Verified: CYM75
+  { serial: 72555, year: 2018 }, // Verified: FYM60HD
+  { serial: 72900, year: 2018 }, // Verified: DYM60HD
+  { serial: 73444, year: 2022 }, // Verified: JYM80CE
+  { serial: 74676, year: 2021 }, // Verified: Yairi FYM70
+  { serial: 74968, year: 2021 }, // Verified: WY1TS
+  { serial: 75552, year: 2022 }, // Verified: FYM66HD (2022 or 2024)
   { serial: 76000, year: 2023 },
-  { serial: 77141, year: 2025 }, // Verified customer example (DYM74-NN)
-  { serial: 77525, year: 2024 }, // Verified customer example (FYM66HD) — note: 77525 shipped 2024 but 77141 confirmed 2025, production batches overlap
+  { serial: 77084, year: 2025 }, // Verified: FYM66HD (recent)
+  { serial: 77141, year: 2025 }, // Verified: DYM74-NN
+  { serial: 77148, year: 2025 }, // Verified: FYM60HD = 2025
+  { serial: 77192, year: 2024 }, // Verified: Yairi PYM60 (brand new 2024)
+  { serial: 77412, year: 2024 }, // Verified: PYM66HD = 2024
+  { serial: 77435, year: 2025 }, // Verified: Masterworks CYM75ce = 2025
+  { serial: 77525, year: 2024 }, // Verified: FYM66HD — production batches overlap
   { serial: 77920, year: 2026 }, // Projected based on ~750/year
 ];
 
@@ -265,47 +281,120 @@ export function parseSerial(serial: string): SerialParseResult {
     };
   }
   
-  // F-prefix: 2000s era, F + 1-3 digit year indicator + sequence
-  // Examples: F204, F305120169
-  const fMatch = cleaned.match(/^F(\d{1,3})(\d*)$/);
+  // F-prefix: Factory serial, F + single year digit + MMDD + sequence
+  // Verified from registry: F204200270 (RD8, ~2002), F305120169 (unknown, ~2003), 
+  // F706110509 (MD60, 2007), F810302775 (RF8, ~2008)
+  // Format: F[Y][MM][DD][XXXX] where Y=last digit of year (2000s decade)
+  const fMatch = cleaned.match(/^F(\d)(\d{2})(\d{2})(\d+)$/);
   if (fMatch) {
-    const [, yearIndicator] = fMatch;
-    let estimatedYear: number | null = null;
-    let yearRange = "Early-mid 2000s";
+    const [, yearDigit, monthDigits, , sequence] = fMatch;
+    const yearNum = parseInt(yearDigit, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
     
-    // F2xx or F3xx patterns seem to indicate early-mid 2000s
-    const firstDigit = parseInt(yearIndicator[0], 10);
-    if (firstDigit === 2 || firstDigit === 3) {
-      estimatedYear = 2000 + firstDigit;
-      yearRange = `${2002}-${2008}`;
-    }
+    // Year digit maps to 2000s decade (0-9 → 2000-2009)
+    const estimatedYear = 2000 + yearNum;
+    
+    const monthNote = validMonth 
+      ? `${getMonthName(validMonth)} ${estimatedYear}, unit #${sequence}`
+      : `${estimatedYear}, sequence #${monthDigits}${sequence}`;
     
     return {
       format: "modern",
       estimatedYear,
-      estimatedMonth: null,
-      yearRange,
+      estimatedMonth: validMonth,
+      yearRange: `${estimatedYear}`,
       confidence: "medium",
       country: "China/Korea",
-      notes: "F-prefix serial: Early-mid 2000s production",
+      notes: `F-prefix serial: Factory production, ${monthNote}. Common on Regent and budget models.`,
       isYairi: false,
       needsEmperorCode: false,
       prefix: "F",
     };
   }
   
-  // S-prefix: 1990s, S + 2-digit year + sequence
-  // Examples: S98, S99050225 = 1998, 1999
-  const sMatch = cleaned.match(/^S(\d{2})(\d*)$/);
+  // F-prefix short format (e.g., F004020153) — leading zero year
+  const fShortMatch = cleaned.match(/^F(\d+)$/);
+  if (fShortMatch && cleaned.length >= 4) {
+    return {
+      format: "modern",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: "2000s",
+      confidence: "low",
+      country: "China/Korea",
+      notes: "F-prefix serial: Factory production, 2000s era. Common on Regent and budget models.",
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "F",
+    };
+  }
+  
+  // S-prefix: 1990s-2020s, S + 2-digit year + 2-digit month + sequence
+  // Verified from registry: S95050382 (bass, 1995), S98060664 (R20-12, 1998),
+  // S99050225 (RD20-12, 1999), S16090997 (RD27CE, 2016), S24050138 (RD260CESB, 2024)
+  const sMatch = cleaned.match(/^S(\d{2})(\d{2})(\d+)$/);
   if (sMatch) {
-    const [, yearDigits] = sMatch;
+    const [, yearDigits, monthDigits, sequence] = sMatch;
+    const yearNum = parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    let estimatedYear: number | null = null;
+    if (yearNum >= 90 && yearNum <= 99) {
+      estimatedYear = 1900 + yearNum;
+    } else if (yearNum >= 0 && yearNum <= 30) {
+      estimatedYear = 2000 + yearNum;
+    }
+    
+    const monthNote = validMonth && estimatedYear
+      ? `${getMonthName(validMonth)} ${estimatedYear}, unit #${sequence}`
+      : estimatedYear ? `${estimatedYear}, sequence #${monthDigits}${sequence}`
+      : `sequence #${yearDigits}${monthDigits}${sequence}`;
+    
+    return {
+      format: "modern",
+      estimatedYear,
+      estimatedMonth: validMonth,
+      yearRange: estimatedYear ? `${estimatedYear}` : "1990s-2000s",
+      confidence: estimatedYear ? "medium" : "low",
+      country: "Korea/China",
+      notes: `S-prefix serial: ${monthNote}. Common on Regent and RD models.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "S",
+    };
+  }
+  
+  // S-prefix short format (2-digit only like S91)
+  const sShortMatch = cleaned.match(/^S(\d{1,2})$/);
+  if (sShortMatch) {
+    return {
+      format: "modern",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: "1990s-2000s",
+      confidence: "low",
+      country: "Korea/China",
+      notes: "S-prefix serial: Incomplete serial number. Check for additional digits.",
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "S",
+    };
+  }
+  // SL-prefix: Korean Regent/Artist line (1986-1994+)
+  // Verified from registry: SL86060995 (Regent 5212, 1986), SL89030448 (Regent 5106, ~1989),
+  // SL94100127 (Artist 5212, 1994), SL891100074 (5220C), SL9003000106 (Regent 5214)
+  // Format: SL + YY + MMDDXXXX or SLYYXXXXXXX
+  const slMatch = cleaned.match(/^SL\s*(\d{2})(\d*)$/);
+  if (slMatch) {
+    const [, yearDigits] = slMatch;
     const yearNum = parseInt(yearDigits, 10);
     let estimatedYear: number | null = null;
     
-    if (yearNum >= 90 && yearNum <= 99) {
+    if (yearNum >= 80 && yearNum <= 99) {
       estimatedYear = 1900 + yearNum;
     } else if (yearNum >= 0 && yearNum <= 10) {
-      // Could be early 2000s
       estimatedYear = 2000 + yearNum;
     }
     
@@ -313,19 +402,144 @@ export function parseSerial(serial: string): SerialParseResult {
       format: "modern",
       estimatedYear,
       estimatedMonth: null,
-      yearRange: estimatedYear ? `${estimatedYear}` : "1990s",
-      confidence: "medium",
-      country: "Korea/China",
-      notes: estimatedYear 
-        ? `S-prefix serial: Likely ${estimatedYear}` 
-        : "S-prefix serial: Likely 1990s production",
+      yearRange: estimatedYear ? `${estimatedYear}` : "1986-1994",
+      confidence: estimatedYear ? "medium" : "low",
+      country: "Korea",
+      notes: `SL-prefix serial: Korean-made Regent/Artist line.${estimatedYear ? ` Estimated ${estimatedYear}.` : ''} Common on 5000-series models (5212, 5106, 5220C, etc.).`,
       isYairi: false,
       needsEmperorCode: false,
-      prefix: "S",
+      prefix: "SL",
     };
   }
   
-  // FC-prefix: Fusion/discontinued models (newly documented April 2026)
+  // CB-prefix: Factory variant, same YYMM format as CC/CD
+  // Verified: CB04093609 (RD-9VP NAT, 2004)
+  const cbMatch = cleaned.match(/^CB(\d{2})(\d{2})(\d+)$/);
+  if (cbMatch) {
+    const [, yearDigits, monthDigits, sequence] = cbMatch;
+    const year = 2000 + parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    return {
+      format: "modern",
+      estimatedYear: year,
+      estimatedMonth: validMonth,
+      yearRange: `${year}`,
+      confidence: "medium",
+      country: "Unknown",
+      notes: `CB-prefix serial: ${validMonth ? `${getMonthName(validMonth)} ${year}` : year}, unit #${sequence}.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "CB",
+    };
+  }
+  
+  // CC-prefix: Factory variant (China or Korea)
+  // Verified: CC04033692 (AD-60-SC, 2004), CC05046789 (AD-70SC, 2005), CC07256919 (RD-20sc, 2007)
+  const ccMatch = cleaned.match(/^CC(\d{2})(\d{2})(\d+)$/);
+  if (ccMatch) {
+    const [, yearDigits, monthDigits, sequence] = ccMatch;
+    const year = 2000 + parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    return {
+      format: "modern",
+      estimatedYear: year,
+      estimatedMonth: validMonth,
+      yearRange: `${year}`,
+      confidence: "medium",
+      country: "Unknown",
+      notes: `CC-prefix serial: ${validMonth ? `${getMonthName(validMonth)} ${year}` : year}, unit #${sequence}. Common on AD and RD models.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "CC",
+    };
+  }
+  
+  // FS-prefix: Factory variant
+  // Verified: FS120800555 (AU60T ukulele), FS130403448 (RD26CE-EXP, 2013)
+  const fsMatch = cleaned.match(/^FS(\d{2})(\d{2})(\d+)$/);
+  if (fsMatch) {
+    const [, yearDigits, monthDigits, sequence] = fsMatch;
+    const year = 2000 + parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    return {
+      format: "modern",
+      estimatedYear: year,
+      estimatedMonth: validMonth,
+      yearRange: `${year}`,
+      confidence: "medium",
+      country: "Unknown",
+      notes: `FS-prefix serial: ${validMonth ? `${getMonthName(validMonth)} ${year}` : year}, unit #${sequence}.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "FS",
+    };
+  }
+  
+  // C-prefix (single C, not CS/CD/CC/CB): Factory format
+  // Verified: C01110916 (AW100, 2001), C04075494 (unknown, 2004), C809120606 (PD80, unknown)
+  const cMatch = cleaned.match(/^C(\d{2})(\d{2})(\d+)$/);
+  if (cMatch) {
+    const [, yearDigits, monthDigits, sequence] = cMatch;
+    const yearNum = parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    let estimatedYear: number | null = null;
+    if (yearNum >= 0 && yearNum <= 25) {
+      estimatedYear = 2000 + yearNum;
+    } else if (yearNum >= 80 && yearNum <= 99) {
+      estimatedYear = 1900 + yearNum;
+    }
+    
+    return {
+      format: "modern",
+      estimatedYear,
+      estimatedMonth: validMonth,
+      yearRange: estimatedYear ? `${estimatedYear}` : "Unknown",
+      confidence: estimatedYear ? "medium" : "low",
+      country: "Unknown",
+      notes: `C-prefix serial: ${estimatedYear && validMonth ? `${getMonthName(validMonth)} ${estimatedYear}` : estimatedYear ? `${estimatedYear}` : 'Unknown era'}, unit #${sequence}.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "C",
+    };
+  }
+  
+  // M-prefix: Various factories
+  // Verified: M00060881 (RD-305C, 2000), m21120466 (AD-60SC, 2004 or earlier)
+  const mMatch = cleaned.match(/^M(\d{2})(\d{2})(\d+)$/);
+  if (mMatch) {
+    const [, yearDigits, monthDigits, sequence] = mMatch;
+    const yearNum = parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    let estimatedYear: number | null = null;
+    if (yearNum >= 0 && yearNum <= 25) {
+      estimatedYear = 2000 + yearNum;
+    }
+    
+    return {
+      format: "modern",
+      estimatedYear,
+      estimatedMonth: validMonth,
+      yearRange: estimatedYear ? `${estimatedYear}` : "2000s",
+      confidence: "low",
+      country: "Unknown",
+      notes: `M-prefix serial: ${estimatedYear ? `Possibly ${estimatedYear}` : '2000s era'}, unit #${sequence}. Limited data for this prefix.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "M",
+    };
+  }
+  
+
   // Examples: FC090302 (FDT243CCSBU), FC070900233 (FD60CSBU)
   const fcMatch = cleaned.match(/^FC(\d{2})(\d*)$/);
   if (fcMatch) {
