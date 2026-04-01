@@ -1,7 +1,7 @@
 // Alvarez Serial Number Parser
 // Based on official Alvarez customer service documentation
 //
-// SERIAL PREFIX REFERENCE (Updated January 2026):
+// SERIAL PREFIX REFERENCE (Updated April 2026):
 // ┌─────────┬────────────────┬─────────────────────┬────────────┐
 // │ Prefix  │ Era            │ Country             │ Confidence │
 // ├─────────┼────────────────┼─────────────────────┼────────────┤
@@ -9,6 +9,8 @@
 // │ CS      │ 2010s          │ Unknown             │ Medium     │
 // │ CD      │ Mid-2000s      │ Unknown             │ Medium     │
 // │ F       │ 2000s          │ China/Korea         │ Medium     │
+// │ FC      │ 2000s-2010s    │ Unknown             │ Low        │
+// │ G       │ 1990s-2000s    │ Unknown             │ Low        │
 // │ S       │ 1990s          │ Korea/China         │ Medium     │
 // │ A       │ 1970s-1980s    │ Japan               │ Low        │
 // └─────────┴────────────────┴─────────────────────┴────────────┘
@@ -323,6 +325,49 @@ export function parseSerial(serial: string): SerialParseResult {
     };
   }
   
+  // FC-prefix: Fusion/discontinued models (newly documented April 2026)
+  // Examples: FC090302 (FDT243CCSBU), FC070900233 (FD60CSBU)
+  const fcMatch = cleaned.match(/^FC(\d{2})(\d*)$/);
+  if (fcMatch) {
+    const [, yearIndicator] = fcMatch;
+    const yearNum = parseInt(yearIndicator, 10);
+    let estimatedYear: number | null = null;
+    if (yearNum >= 0 && yearNum <= 25) {
+      estimatedYear = 2000 + yearNum;
+    }
+    
+    return {
+      format: "modern",
+      estimatedYear,
+      estimatedMonth: null,
+      yearRange: estimatedYear ? `~${estimatedYear}` : "2000s-2010s",
+      confidence: "low",
+      country: "Unknown",
+      notes: `FC-prefix serial: Likely discontinued Fusion/specialty model.${estimatedYear ? ` Estimated ~${estimatedYear} based on prefix digits.` : ''} Limited data available for this prefix.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "FC",
+    };
+  }
+  
+  // G-prefix: Rare/undocumented prefix (newly documented April 2026)
+  // Example: G0020838 (RD20CU)
+  const gMatch = cleaned.match(/^G(\d{2})(\d*)$/);
+  if (gMatch) {
+    return {
+      format: "modern",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: "1990s-2000s",
+      confidence: "low",
+      country: "Unknown",
+      notes: "G-prefix serial: Rare prefix with limited documentation. Era and country of manufacture uncertain.",
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "G",
+    };
+  }
+  
   // A-prefix: Vintage models
   // Example: A82246 (5054)
   const aMatch = cleaned.match(/^A(\d+)$/);
@@ -451,9 +496,43 @@ export function parseSerial(serial: string): SerialParseResult {
   // Note: 6-digit numerics are now handled inside the yairiMatch block above
   // (Korean 600000+ and legacy Japanese sub-600000)
   
-  // Other numeric formats
+  // Other numeric formats (7-9+ digits)
   const numericMatch = cleaned.match(/^\d+$/);
   if (numericMatch) {
+    const len = cleaned.length;
+    
+    // 7-digit numerics (e.g., 1139450 SLM80) — uncommon format
+    if (len === 7) {
+      return {
+        format: "legacy",
+        estimatedYear: null,
+        estimatedMonth: null,
+        yearRange: "1990s-2000s",
+        confidence: "low",
+        country: "Unknown",
+        notes: "7-digit serial: Uncommon format. Limited documentation available. Check neck block for date code.",
+        isYairi: false,
+        needsEmperorCode: true,
+        prefix: null,
+      };
+    }
+    
+    // 8-digit numerics (e.g., 86080004, 70625188, 80916017) — various eras
+    if (len === 8) {
+      return {
+        format: "legacy",
+        estimatedYear: null,
+        estimatedMonth: null,
+        yearRange: "Late 1970s-1990s",
+        confidence: "low",
+        country: "Japan/Korea",
+        notes: "8-digit serial: No letter prefix — common for late 1970s through early 1990s production. Check neck block for Emperor date code.",
+        isYairi: false,
+        needsEmperorCode: true,
+        prefix: null,
+      };
+    }
+    
     const num = parseInt(cleaned, 10);
     return {
       format: "legacy",
