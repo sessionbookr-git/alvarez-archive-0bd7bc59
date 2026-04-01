@@ -400,18 +400,62 @@ const SerialLookup = () => {
 
               {/* Feedback */}
               <div className="p-6 bg-secondary/30 rounded-lg text-center">
-                <h3 className="font-semibold mb-2">Does this match your guitar?</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Your feedback helps improve our database accuracy
-                </p>
-                <div className="flex justify-center gap-3">
-                  <Button variant="outline" className="gap-2">
-                    <Check className="h-4 w-4" /> Yes, it matches
-                  </Button>
-                  <Button variant="outline" className="gap-2">
-                    <X className="h-4 w-4" /> Not quite right
-                  </Button>
-                </div>
+                {feedbackSubmitted ? (
+                  <div className="flex items-center justify-center gap-2 text-primary">
+                    <Check className="h-5 w-5" />
+                    <p className="font-medium">Thanks for your feedback!</p>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="font-semibold mb-2">Does this match your guitar?</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Your feedback helps improve our database accuracy
+                    </p>
+                    {!showCorrectionForm ? (
+                      <div className="flex justify-center gap-3">
+                        <Button 
+                          variant="outline" 
+                          className="gap-2" 
+                          disabled={submittingFeedback}
+                          onClick={() => submitFeedback(true)}
+                        >
+                          <Check className="h-4 w-4" /> Yes, it matches
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="gap-2"
+                          onClick={() => setShowCorrectionForm(true)}
+                        >
+                          <X className="h-4 w-4" /> Not quite right
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="max-w-md mx-auto text-left space-y-3">
+                        <Label htmlFor="correction">What's different? (optional)</Label>
+                        <Textarea
+                          id="correction"
+                          placeholder="e.g., My guitar is actually from 1998, not 2005. It's a model RD20."
+                          value={correctionNotes}
+                          onChange={(e) => setCorrectionNotes(e.target.value)}
+                          rows={3}
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button variant="ghost" size="sm" onClick={() => setShowCorrectionForm(false)}>
+                            Cancel
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            disabled={submittingFeedback}
+                            onClick={() => submitFeedback(false)}
+                          >
+                            <MessageSquare className="mr-1 h-4 w-4" />
+                            Submit Correction
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* CTA */}
