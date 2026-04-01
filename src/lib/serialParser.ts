@@ -376,8 +376,164 @@ export function parseSerial(serial: string): SerialParseResult {
       prefix: "S",
     };
   }
+  // SL-prefix: Korean Regent/Artist line (1986-1994+)
+  // Verified from registry: SL86060995 (Regent 5212, 1986), SL89030448 (Regent 5106, ~1989),
+  // SL94100127 (Artist 5212, 1994), SL891100074 (5220C), SL9003000106 (Regent 5214)
+  // Format: SL + YY + MMDDXXXX or SLYYXXXXXXX
+  const slMatch = cleaned.match(/^SL\s*(\d{2})(\d*)$/);
+  if (slMatch) {
+    const [, yearDigits] = slMatch;
+    const yearNum = parseInt(yearDigits, 10);
+    let estimatedYear: number | null = null;
+    
+    if (yearNum >= 80 && yearNum <= 99) {
+      estimatedYear = 1900 + yearNum;
+    } else if (yearNum >= 0 && yearNum <= 10) {
+      estimatedYear = 2000 + yearNum;
+    }
+    
+    return {
+      format: "modern",
+      estimatedYear,
+      estimatedMonth: null,
+      yearRange: estimatedYear ? `${estimatedYear}` : "1986-1994",
+      confidence: estimatedYear ? "medium" : "low",
+      country: "Korea",
+      notes: `SL-prefix serial: Korean-made Regent/Artist line.${estimatedYear ? ` Estimated ${estimatedYear}.` : ''} Common on 5000-series models (5212, 5106, 5220C, etc.).`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "SL",
+    };
+  }
   
-  // FC-prefix: Fusion/discontinued models (newly documented April 2026)
+  // CB-prefix: Factory variant, same YYMM format as CC/CD
+  // Verified: CB04093609 (RD-9VP NAT, 2004)
+  const cbMatch = cleaned.match(/^CB(\d{2})(\d{2})(\d+)$/);
+  if (cbMatch) {
+    const [, yearDigits, monthDigits, sequence] = cbMatch;
+    const year = 2000 + parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    return {
+      format: "modern",
+      estimatedYear: year,
+      estimatedMonth: validMonth,
+      yearRange: `${year}`,
+      confidence: "medium",
+      country: "Unknown",
+      notes: `CB-prefix serial: ${validMonth ? `${getMonthName(validMonth)} ${year}` : year}, unit #${sequence}.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "CB",
+    };
+  }
+  
+  // CC-prefix: Factory variant (China or Korea)
+  // Verified: CC04033692 (AD-60-SC, 2004), CC05046789 (AD-70SC, 2005), CC07256919 (RD-20sc, 2007)
+  const ccMatch = cleaned.match(/^CC(\d{2})(\d{2})(\d+)$/);
+  if (ccMatch) {
+    const [, yearDigits, monthDigits, sequence] = ccMatch;
+    const year = 2000 + parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    return {
+      format: "modern",
+      estimatedYear: year,
+      estimatedMonth: validMonth,
+      yearRange: `${year}`,
+      confidence: "medium",
+      country: "Unknown",
+      notes: `CC-prefix serial: ${validMonth ? `${getMonthName(validMonth)} ${year}` : year}, unit #${sequence}. Common on AD and RD models.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "CC",
+    };
+  }
+  
+  // FS-prefix: Factory variant
+  // Verified: FS120800555 (AU60T ukulele), FS130403448 (RD26CE-EXP, 2013)
+  const fsMatch = cleaned.match(/^FS(\d{2})(\d{2})(\d+)$/);
+  if (fsMatch) {
+    const [, yearDigits, monthDigits, sequence] = fsMatch;
+    const year = 2000 + parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    return {
+      format: "modern",
+      estimatedYear: year,
+      estimatedMonth: validMonth,
+      yearRange: `${year}`,
+      confidence: "medium",
+      country: "Unknown",
+      notes: `FS-prefix serial: ${validMonth ? `${getMonthName(validMonth)} ${year}` : year}, unit #${sequence}.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "FS",
+    };
+  }
+  
+  // C-prefix (single C, not CS/CD/CC/CB): Factory format
+  // Verified: C01110916 (AW100, 2001), C04075494 (unknown, 2004), C809120606 (PD80, unknown)
+  const cMatch = cleaned.match(/^C(\d{2})(\d{2})(\d+)$/);
+  if (cMatch) {
+    const [, yearDigits, monthDigits, sequence] = cMatch;
+    const yearNum = parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    let estimatedYear: number | null = null;
+    if (yearNum >= 0 && yearNum <= 25) {
+      estimatedYear = 2000 + yearNum;
+    } else if (yearNum >= 80 && yearNum <= 99) {
+      estimatedYear = 1900 + yearNum;
+    }
+    
+    return {
+      format: "modern",
+      estimatedYear,
+      estimatedMonth: validMonth,
+      yearRange: estimatedYear ? `${estimatedYear}` : "Unknown",
+      confidence: estimatedYear ? "medium" : "low",
+      country: "Unknown",
+      notes: `C-prefix serial: ${estimatedYear && validMonth ? `${getMonthName(validMonth)} ${estimatedYear}` : estimatedYear ? `${estimatedYear}` : 'Unknown era'}, unit #${sequence}.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "C",
+    };
+  }
+  
+  // M-prefix: Various factories
+  // Verified: M00060881 (RD-305C, 2000), m21120466 (AD-60SC, 2004 or earlier)
+  const mMatch = cleaned.match(/^M(\d{2})(\d{2})(\d+)$/);
+  if (mMatch) {
+    const [, yearDigits, monthDigits, sequence] = mMatch;
+    const yearNum = parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    let estimatedYear: number | null = null;
+    if (yearNum >= 0 && yearNum <= 25) {
+      estimatedYear = 2000 + yearNum;
+    }
+    
+    return {
+      format: "modern",
+      estimatedYear,
+      estimatedMonth: validMonth,
+      yearRange: estimatedYear ? `${estimatedYear}` : "2000s",
+      confidence: "low",
+      country: "Unknown",
+      notes: `M-prefix serial: ${estimatedYear ? `Possibly ${estimatedYear}` : '2000s era'}, unit #${sequence}. Limited data for this prefix.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "M",
+    };
+  }
+  
+
   // Examples: FC090302 (FDT243CCSBU), FC070900233 (FD60CSBU)
   const fcMatch = cleaned.match(/^FC(\d{2})(\d*)$/);
   if (fcMatch) {
