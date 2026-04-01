@@ -4,10 +4,14 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ConfidenceMeter from "@/components/ConfidenceMeter";
 import { useSerialLookup } from "@/hooks/useSerialLookup";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, X, ArrowRight, Loader2, Search, AlertCircle, Info, Calendar } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Check, X, ArrowRight, Loader2, Search, AlertCircle, Info, Calendar, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
 
 // Emperor Code reference chart
 const EMPEROR_CODES = [
@@ -23,8 +27,13 @@ const SerialLookup = () => {
   const [serial, setSerial] = useState(initialSerial);
   const [neckBlock, setNeckBlock] = useState("");
   const [showEmperorChart, setShowEmperorChart] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [showCorrectionForm, setShowCorrectionForm] = useState(false);
+  const [correctionNotes, setCorrectionNotes] = useState("");
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
   
   const { lookup, loading, error, result, reset } = useSerialLookup();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (initialSerial) {
@@ -34,7 +43,37 @@ const SerialLookup = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedbackSubmitted(false);
+    setShowCorrectionForm(false);
+    setCorrectionNotes("");
     lookup(serial, neckBlock);
+  };
+
+  const submitFeedback = async (isMatch: boolean) => {
+    if (!user || !result) return;
+    setSubmittingFeedback(true);
+    try {
+      const { error: fbError } = await supabase
+        .from("serial_feedback" as any)
+        .insert({
+          serial_number: serial,
+          neck_block: neckBlock || null,
+          is_match: isMatch,
+          correction_notes: isMatch ? null : correctionNotes || null,
+          parsed_year: result.estimatedYear,
+          parsed_country: result.country,
+          parsed_format: result.serialFormat,
+          user_id: user.id,
+        } as any);
+      if (fbError) throw fbError;
+      setFeedbackSubmitted(true);
+      toast.success(isMatch ? "Thanks! Your confirmation helps improve accuracy." : "Thanks for the correction — we'll review it.");
+    } catch (err) {
+      console.error("Feedback error:", err);
+      toast.error("Failed to submit feedback. Please try again.");
+    } finally {
+      setSubmittingFeedback(false);
+    }
   };
 
   return (
@@ -76,8 +115,9 @@ const SerialLookup = () => {
               <li><strong>Yairi Series:</strong> 4-5 digit number (e.g., 51708)</li>
               <li><strong>Modern (E-prefix):</strong> E + year + month + sequence (e.g., E24113487 = Nov 2024)</li>
               <li><strong>2010s (CS-prefix):</strong> CS + year + month + sequence (e.g., CS12071753 = Jul 2012)</li>
-              <li><strong>2000s (F/CD-prefix):</strong> F or CD + year digits + sequence</li>
-              <li><strong>1990s (S-prefix):</strong> S + year digits + sequence (e.g., S99 = 1999)</li>
+              <li><strong>2000s (F/CD/CC/CB-prefix):</strong> Prefix + year digits + month + sequence</li>
+              <li><strong>1990s (S/SL-prefix):</strong> S + year + month + sequence (e.g., S99 = 1999); SL = Korean Regent/Artist</li>
+              <li><strong>Other (D/FS/FC/M/C/AL/HG):</strong> Various factory formats — year typically in first digits</li>
               <li><strong>Vintage (1970s-80s):</strong> May require neck block number for dating</li>
             </ul>
           </div>
@@ -360,18 +400,62 @@ const SerialLookup = () => {
 
               {/* Feedback */}
               <div className="p-6 bg-secondary/30 rounded-lg text-center">
-                <h3 className="font-semibold mb-2">Does this match your guitar?</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Your feedback helps improve our database accuracy
-                </p>
-                <div className="flex justify-center gap-3">
-                  <Button variant="outline" className="gap-2">
-                    <Check className="h-4 w-4" /> Yes, it matches
-                  </Button>
-                  <Button variant="outline" className="gap-2">
-                    <X className="h-4 w-4" /> Not quite right
-                  </Button>
-                </div>
+                {feedbackSubmitted ? (
+                  <div className="flex items-center justify-center gap-2 text-primary">
+                    <Check className="h-5 w-5" />
+                    <p className="font-medium">Thanks for your feedback!</p>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="font-semibold mb-2">Does this match your guitar?</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Your feedback helps improve our database accuracy
+                    </p>
+                    {!showCorrectionForm ? (
+                      <div className="flex justify-center gap-3">
+                        <Button 
+                          variant="outline" 
+                          className="gap-2" 
+                          disabled={submittingFeedback}
+                          onClick={() => submitFeedback(true)}
+                        >
+                          <Check className="h-4 w-4" /> Yes, it matches
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="gap-2"
+                          onClick={() => setShowCorrectionForm(true)}
+                        >
+                          <X className="h-4 w-4" /> Not quite right
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="max-w-md mx-auto text-left space-y-3">
+                        <Label htmlFor="correction">What's different? (optional)</Label>
+                        <Textarea
+                          id="correction"
+                          placeholder="e.g., My guitar is actually from 1998, not 2005. It's a model RD20."
+                          value={correctionNotes}
+                          onChange={(e) => setCorrectionNotes(e.target.value)}
+                          rows={3}
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button variant="ghost" size="sm" onClick={() => setShowCorrectionForm(false)}>
+                            Cancel
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            disabled={submittingFeedback}
+                            onClick={() => submitFeedback(false)}
+                          >
+                            <MessageSquare className="mr-1 h-4 w-4" />
+                            Submit Correction
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* CTA */}
