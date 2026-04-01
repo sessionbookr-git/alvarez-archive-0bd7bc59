@@ -84,14 +84,15 @@ const YAIRI_ANCHOR_POINTS = [
   { serial: 74968, year: 2021 }, // Verified customer example (WY1TS)
   { serial: 75000, year: 2021 },
   { serial: 76000, year: 2023 },
-  { serial: 77525, year: 2024 }, // Verified customer example (FYM66HD)
-  { serial: 77920, year: 2025 }, // Projected based on ~750/year
+  { serial: 77141, year: 2025 }, // Verified customer example (DYM74-NN)
+  { serial: 77525, year: 2024 }, // Verified customer example (FYM66HD) — note: 77525 shipped 2024 but 77141 confirmed 2025, production batches overlap
+  { serial: 77920, year: 2026 }, // Projected based on ~750/year
 ];
 
 function parseModernYairiSerial(serialNum: number): ModernYairiResult {
   // Find surrounding anchors for interpolation
   let lowerAnchor = YAIRI_ANCHOR_POINTS[0];
-  let upperAnchor = YAIRI_ANCHOR_POINTS[YAIRI_ANCHOR_POINTS.length - 1];
+  let upperAnchor: typeof YAIRI_ANCHOR_POINTS[0] | null = null;
   
   // Check for exact match first
   for (const anchor of YAIRI_ANCHOR_POINTS) {
@@ -101,6 +102,8 @@ function parseModernYairiSerial(serialNum: number): ModernYairiResult {
         verifiedNote = 'Verified: Serial 74968 (WY1TS model) = 2021. ';
       } else if (serialNum === 77525) {
         verifiedNote = 'Verified: Serial 77525 (FYM66HD model) = 2024. ';
+      } else if (serialNum === 77141) {
+        verifiedNote = 'Verified: Serial 77141 (DYM74-NN model) = 2025. ';
       }
       
       return {
@@ -119,12 +122,19 @@ function parseModernYairiSerial(serialNum: number): ModernYairiResult {
     }
   }
   
-  // Interpolate year between anchors
-  const serialRange = upperAnchor.serial - lowerAnchor.serial;
-  const yearRange = upperAnchor.year - lowerAnchor.year;
-  const serialOffset = serialNum - lowerAnchor.serial;
-  const yearOffset = (serialOffset / serialRange) * yearRange;
-  const estimatedYear = Math.round(lowerAnchor.year + yearOffset);
+  // If serial is beyond all anchors, clamp to the last anchor's year
+  let estimatedYear: number;
+  if (!upperAnchor) {
+    // Serial is above our highest anchor — use last anchor year (don't extrapolate into NaN)
+    estimatedYear = lowerAnchor.year;
+  } else {
+    // Interpolate year between anchors
+    const serialRange = upperAnchor.serial - lowerAnchor.serial;
+    const yearRange = upperAnchor.year - lowerAnchor.year;
+    const serialOffset = serialNum - lowerAnchor.serial;
+    const yearOffset = serialRange > 0 ? (serialOffset / serialRange) * yearRange : 0;
+    estimatedYear = Math.round(lowerAnchor.year + yearOffset);
+  }
   
   // Determine confidence level based on proximity to any anchor point
   let confidence: "high" | "medium" | "low" = 'medium';
@@ -367,9 +377,26 @@ export function parseSerial(serial: string): SerialParseResult {
   // Yairi format: 4-6 digit numeric serials (e.g., 5152, 75466, 510812)
   // Modern Yairis (72000+): Can estimate year from verified anchor points
   // Vintage Yairis (<72000): Check NECK BLOCK stamp for Emperor code
+  // Korean 6-digit (600000+): Made in Korea, not Yairi
   const yairiMatch = cleaned.match(/^(\d{4,6})$/);
   if (yairiMatch) {
     const serialNum = parseInt(cleaned, 10);
+    
+    // 6-digit Korean serials (600000+): These are NOT Yairi
+    if (serialNum >= 600000 && cleaned.length === 6) {
+      return {
+        format: "legacy",
+        estimatedYear: null,
+        estimatedMonth: null,
+        yearRange: "1980s-1990s",
+        confidence: "low",
+        country: "Korea",
+        notes: "6-digit serial in the 600,000+ range: Made in Korea (1980s-1990s). These were produced in Korean factories during Alvarez's transition period.",
+        isYairi: false,
+        needsEmperorCode: false,
+        prefix: null,
+      };
+    }
     
     // Modern Yairi range (72000+, 2015-present): Can estimate year from serial
     if (serialNum >= 72000 && cleaned.length <= 5) {
@@ -404,38 +431,25 @@ export function parseSerial(serial: string): SerialParseResult {
       };
     }
     
-    // 6-digit Yairi or legacy format
-    return {
-      format: "yairi",
-      estimatedYear: null,
-      estimatedMonth: null,
-      yearRange: "See notes",
-      confidence: "low",
-      country: "Japan",
-      notes: `Alvarez-Yairi serial #${cleaned}. This may be a vintage Yairi or legacy format. Check neck block stamp inside the body for Emperor date code.`,
-      isYairi: true,
-      needsEmperorCode: true,
-      prefix: null,
-    };
+    // Other 6-digit numbers (under 600000) — legacy Japanese format
+    if (cleaned.length === 6) {
+      return {
+        format: "legacy",
+        estimatedYear: null,
+        estimatedMonth: null,
+        yearRange: "1980s",
+        confidence: "low",
+        country: "Japan",
+        notes: "Vintage Alvarez serial number. Guitars from this era were made in several Japanese factories. Check neck block for Emperor date code if applicable.",
+        isYairi: false,
+        needsEmperorCode: true,
+        prefix: null,
+      };
+    }
   }
   
-  // Legacy format: 6-digit numbers (1980s-1990s)
-  const sixDigitMatch = cleaned.match(/^(\d{6})$/);
-  if (sixDigitMatch) {
-    const num = parseInt(cleaned, 10);
-    return {
-      format: "legacy",
-      estimatedYear: null,
-      estimatedMonth: null,
-      yearRange: num < 500000 ? "1980s" : "1980s-1990s",
-      confidence: "low",
-      country: "Japan",
-      notes: "Vintage Alvarez serial number. Guitars from this era were made in several Japanese factories. Check neck block for Emperor date code if applicable.",
-      isYairi: false,
-      needsEmperorCode: true,
-      prefix: null,
-    };
-  }
+  // Note: 6-digit numerics are now handled inside the yairiMatch block above
+  // (Korean 600000+ and legacy Japanese sub-600000)
   
   // Other numeric formats
   const numericMatch = cleaned.match(/^\d+$/);
@@ -477,50 +491,91 @@ export function parseSerial(serial: string): SerialParseResult {
 export function parseNeckBlock(neckBlock: string): { year: number | null; possibleYears?: number[]; notes: string } {
   const cleaned = neckBlock.trim();
   
-  // Handle 2-digit codes with leading zeros (e.g., "07" vs "7")
-  const num = parseInt(cleaned, 10);
+  // Tokenize: extract all numeric and alpha tokens from multi-part stamps
+  // Handles: "0111 439", "9708439", "S 802075", "56", "07"
+  const tokens = cleaned.toUpperCase().match(/[A-Z]+|\d+/g) ?? [];
+  const numericTokens = tokens.filter(t => /^\d+$/.test(t));
   
-  if (isNaN(num)) {
-    return { year: null, notes: "Invalid neck block number format." };
+  // If no numeric tokens at all, invalid
+  if (numericTokens.length === 0) {
+    return { year: null, notes: "No numeric data found in neck block stamp." };
   }
   
+  // Strategy: try the first short numeric token (1-2 digits) as an Emperor code
+  // For stamps like "0111 439" → tokens ["0111", "439"], try first 2 digits of "0111" = "01"
+  // For stamps like "56" → tokens ["56"], direct Emperor lookup
+  // For stamps like "S 802075" → tokens ["S", "802075"], try first 2 digits = "80"
+  
+  let candidateCode: number | null = null;
+  
+  // First pass: look for a standalone 1-2 digit token (classic Emperor code)
+  for (const token of numericTokens) {
+    if (token.length <= 2) {
+      candidateCode = parseInt(token, 10);
+      break;
+    }
+  }
+  
+  // Second pass: if no short token, try first 2 digits of the first numeric token
+  // e.g., "0111" → 01, "9708439" → 97
+  if (candidateCode === null && numericTokens.length > 0) {
+    const first2 = numericTokens[0].substring(0, 2);
+    candidateCode = parseInt(first2, 10);
+  }
+  
+  if (candidateCode === null || isNaN(candidateCode)) {
+    return { year: null, notes: "Could not extract date code from neck block stamp." };
+  }
+  
+  const stampInfo = numericTokens.length > 1 
+    ? ` (from stamp "${cleaned}", additional numbers: ${numericTokens.slice(1).join(', ')})` 
+    : '';
+  
   // Check Showa era first (45-63 = 1970-1988) - unambiguous
-  if (num >= 45 && num <= 63) {
-    const emperorYear = EMPEROR_CODE[num];
+  if (candidateCode >= 45 && candidateCode <= 63) {
+    const emperorYear = EMPEROR_CODE[candidateCode];
     return { 
       year: emperorYear, 
-      notes: `Showa era code ${num} = ${emperorYear}` 
+      notes: `Showa era code ${candidateCode} = ${emperorYear}${stampInfo}` 
     };
   }
   
   // Ambiguous range: 1-12 could be Heisei (1989-2000) OR post-2000 (2001-2012)
-  if (num >= 1 && num <= 12) {
-    const heiseiYear = EMPEROR_CODE[num]; // 1989-2000
-    const modernYear = 2000 + num; // 2001-2012
+  if (candidateCode >= 1 && candidateCode <= 12) {
+    const heiseiYear = EMPEROR_CODE[candidateCode]; // 1989-2000
+    const modernYear = 2000 + candidateCode; // 2001-2012
     return { 
       year: null,
       possibleYears: [heiseiYear, modernYear],
-      notes: `Ambiguous code ${num}: Could be ${heiseiYear} (Heisei era) or ${modernYear} (post-2000). Check model production dates and guitar features to determine era.` 
+      notes: `Ambiguous code ${candidateCode}: Could be ${heiseiYear} (Heisei era) or ${modernYear} (post-2000). Check model production dates and guitar features to determine era.${stampInfo}` 
     };
   }
   
-  // Clear post-2000 codes (13-99 = 2013-2099)
-  if (num >= 13 && num <= 99) {
-    const year = 2000 + num;
+  // Clear post-2000 codes (13-44 = 2013-2044)
+  if (candidateCode >= 13 && candidateCode <= 44) {
+    const year = 2000 + candidateCode;
     return { 
       year, 
-      notes: `Post-2000 format: ${year}` 
+      notes: `Post-2000 format: ${year}${stampInfo}` 
     };
   }
   
-  // Six-digit neck block stamps (e.g., 230130 from AC40SC)
-  // May indicate manufacturing date but format varies
-  if (cleaned.length === 6) {
+  // Codes 64-99: Not standard Emperor codes. Could be factory batch numbers.
+  // Try interpreting as post-2000 if reasonable (e.g., 97 → 2097 is unlikely)
+  if (candidateCode >= 64 && candidateCode <= 99) {
     return { 
       year: null, 
-      notes: `6-digit neck block stamp. May contain date information but format varies by factory.` 
+      notes: `Neck block code ${candidateCode} doesn't match known Emperor eras. May be a factory batch number.${stampInfo}` 
     };
   }
   
-  return { year: null, notes: "Neck block number not found in chart. May be from a factory that used different numbering." };
+  // Fallback for multi-digit stamps
+  if (cleaned.length >= 6) {
+    return { 
+      year: null, 
+      notes: `Multi-digit neck block stamp "${cleaned}". May contain date information but format varies by factory.` 
+    };
+  }
+  
+  return { year: null, notes: `Neck block stamp "${cleaned}" not recognized. May be from a factory that used different numbering.` };
 }
