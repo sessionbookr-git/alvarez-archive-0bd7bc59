@@ -324,31 +324,53 @@ export function parseSerial(serial: string): SerialParseResult {
     };
   }
   
-  // S-prefix: 1990s, S + 2-digit year + sequence
-  // Examples: S98, S99050225 = 1998, 1999
-  const sMatch = cleaned.match(/^S(\d{2})(\d*)$/);
+  // S-prefix: 1990s-2020s, S + 2-digit year + 2-digit month + sequence
+  // Verified from registry: S95050382 (bass, 1995), S98060664 (R20-12, 1998),
+  // S99050225 (RD20-12, 1999), S16090997 (RD27CE, 2016), S24050138 (RD260CESB, 2024)
+  const sMatch = cleaned.match(/^S(\d{2})(\d{2})(\d+)$/);
   if (sMatch) {
-    const [, yearDigits] = sMatch;
+    const [, yearDigits, monthDigits, sequence] = sMatch;
     const yearNum = parseInt(yearDigits, 10);
-    let estimatedYear: number | null = null;
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
     
+    let estimatedYear: number | null = null;
     if (yearNum >= 90 && yearNum <= 99) {
       estimatedYear = 1900 + yearNum;
-    } else if (yearNum >= 0 && yearNum <= 10) {
-      // Could be early 2000s
+    } else if (yearNum >= 0 && yearNum <= 30) {
       estimatedYear = 2000 + yearNum;
     }
+    
+    const monthNote = validMonth && estimatedYear
+      ? `${getMonthName(validMonth)} ${estimatedYear}, unit #${sequence}`
+      : estimatedYear ? `${estimatedYear}, sequence #${monthDigits}${sequence}`
+      : `sequence #${yearDigits}${monthDigits}${sequence}`;
     
     return {
       format: "modern",
       estimatedYear,
-      estimatedMonth: null,
-      yearRange: estimatedYear ? `${estimatedYear}` : "1990s",
-      confidence: "medium",
+      estimatedMonth: validMonth,
+      yearRange: estimatedYear ? `${estimatedYear}` : "1990s-2000s",
+      confidence: estimatedYear ? "medium" : "low",
       country: "Korea/China",
-      notes: estimatedYear 
-        ? `S-prefix serial: Likely ${estimatedYear}` 
-        : "S-prefix serial: Likely 1990s production",
+      notes: `S-prefix serial: ${monthNote}. Common on Regent and RD models.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "S",
+    };
+  }
+  
+  // S-prefix short format (2-digit only like S91)
+  const sShortMatch = cleaned.match(/^S(\d{1,2})$/);
+  if (sShortMatch) {
+    return {
+      format: "modern",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: "1990s-2000s",
+      confidence: "low",
+      country: "Korea/China",
+      notes: "S-prefix serial: Incomplete serial number. Check for additional digits.",
       isYairi: false,
       needsEmperorCode: false,
       prefix: "S",
