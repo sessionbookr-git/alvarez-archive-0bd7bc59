@@ -377,9 +377,26 @@ export function parseSerial(serial: string): SerialParseResult {
   // Yairi format: 4-6 digit numeric serials (e.g., 5152, 75466, 510812)
   // Modern Yairis (72000+): Can estimate year from verified anchor points
   // Vintage Yairis (<72000): Check NECK BLOCK stamp for Emperor code
+  // Korean 6-digit (600000+): Made in Korea, not Yairi
   const yairiMatch = cleaned.match(/^(\d{4,6})$/);
   if (yairiMatch) {
     const serialNum = parseInt(cleaned, 10);
+    
+    // 6-digit Korean serials (600000+): These are NOT Yairi
+    if (serialNum >= 600000 && cleaned.length === 6) {
+      return {
+        format: "legacy",
+        estimatedYear: null,
+        estimatedMonth: null,
+        yearRange: "1980s-1990s",
+        confidence: "low",
+        country: "Korea",
+        notes: "6-digit serial in the 600,000+ range: Made in Korea (1980s-1990s). These were produced in Korean factories during Alvarez's transition period.",
+        isYairi: false,
+        needsEmperorCode: false,
+        prefix: null,
+      };
+    }
     
     // Modern Yairi range (72000+, 2015-present): Can estimate year from serial
     if (serialNum >= 72000 && cleaned.length <= 5) {
@@ -414,19 +431,21 @@ export function parseSerial(serial: string): SerialParseResult {
       };
     }
     
-    // 6-digit Yairi or legacy format
-    return {
-      format: "yairi",
-      estimatedYear: null,
-      estimatedMonth: null,
-      yearRange: "See notes",
-      confidence: "low",
-      country: "Japan",
-      notes: `Alvarez-Yairi serial #${cleaned}. This may be a vintage Yairi or legacy format. Check neck block stamp inside the body for Emperor date code.`,
-      isYairi: true,
-      needsEmperorCode: true,
-      prefix: null,
-    };
+    // Other 6-digit numbers (under 600000) — legacy Japanese format
+    if (cleaned.length === 6) {
+      return {
+        format: "legacy",
+        estimatedYear: null,
+        estimatedMonth: null,
+        yearRange: "1980s",
+        confidence: "low",
+        country: "Japan",
+        notes: "Vintage Alvarez serial number. Guitars from this era were made in several Japanese factories. Check neck block for Emperor date code if applicable.",
+        isYairi: false,
+        needsEmperorCode: true,
+        prefix: null,
+      };
+    }
   }
   
   // Legacy format: 6-digit numbers (1980s-1990s)
