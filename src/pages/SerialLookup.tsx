@@ -4,10 +4,14 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ConfidenceMeter from "@/components/ConfidenceMeter";
 import { useSerialLookup } from "@/hooks/useSerialLookup";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, X, ArrowRight, Loader2, Search, AlertCircle, Info, Calendar } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Check, X, ArrowRight, Loader2, Search, AlertCircle, Info, Calendar, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
 
 // Emperor Code reference chart
 const EMPEROR_CODES = [
