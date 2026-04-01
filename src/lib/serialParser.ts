@@ -448,23 +448,8 @@ export function parseSerial(serial: string): SerialParseResult {
     }
   }
   
-  // Legacy format: 6-digit numbers (1980s-1990s)
-  const sixDigitMatch = cleaned.match(/^(\d{6})$/);
-  if (sixDigitMatch) {
-    const num = parseInt(cleaned, 10);
-    return {
-      format: "legacy",
-      estimatedYear: null,
-      estimatedMonth: null,
-      yearRange: num < 500000 ? "1980s" : "1980s-1990s",
-      confidence: "low",
-      country: "Japan",
-      notes: "Vintage Alvarez serial number. Guitars from this era were made in several Japanese factories. Check neck block for Emperor date code if applicable.",
-      isYairi: false,
-      needsEmperorCode: true,
-      prefix: null,
-    };
-  }
+  // Note: 6-digit numerics are now handled inside the yairiMatch block above
+  // (Korean 600000+ and legacy Japanese sub-600000)
   
   // Other numeric formats
   const numericMatch = cleaned.match(/^\d+$/);
