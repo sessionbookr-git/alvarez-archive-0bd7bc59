@@ -84,8 +84,9 @@ const YAIRI_ANCHOR_POINTS = [
   { serial: 74968, year: 2021 }, // Verified customer example (WY1TS)
   { serial: 75000, year: 2021 },
   { serial: 76000, year: 2023 },
-  { serial: 77525, year: 2024 }, // Verified customer example (FYM66HD)
-  { serial: 77920, year: 2025 }, // Projected based on ~750/year
+  { serial: 77141, year: 2025 }, // Verified customer example (DYM74-NN)
+  { serial: 77525, year: 2024 }, // Verified customer example (FYM66HD) — note: 77525 shipped 2024 but 77141 confirmed 2025, production batches overlap
+  { serial: 77920, year: 2026 }, // Projected based on ~750/year
 ];
 
 function parseModernYairiSerial(serialNum: number): ModernYairiResult {
