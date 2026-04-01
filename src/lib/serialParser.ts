@@ -496,9 +496,43 @@ export function parseSerial(serial: string): SerialParseResult {
   // Note: 6-digit numerics are now handled inside the yairiMatch block above
   // (Korean 600000+ and legacy Japanese sub-600000)
   
-  // Other numeric formats
+  // Other numeric formats (7-9+ digits)
   const numericMatch = cleaned.match(/^\d+$/);
   if (numericMatch) {
+    const len = cleaned.length;
+    
+    // 7-digit numerics (e.g., 1139450 SLM80) — uncommon format
+    if (len === 7) {
+      return {
+        format: "legacy",
+        estimatedYear: null,
+        estimatedMonth: null,
+        yearRange: "1990s-2000s",
+        confidence: "low",
+        country: "Unknown",
+        notes: "7-digit serial: Uncommon format. Limited documentation available. Check neck block for date code.",
+        isYairi: false,
+        needsEmperorCode: true,
+        prefix: null,
+      };
+    }
+    
+    // 8-digit numerics (e.g., 86080004, 70625188, 80916017) — various eras
+    if (len === 8) {
+      return {
+        format: "legacy",
+        estimatedYear: null,
+        estimatedMonth: null,
+        yearRange: "Late 1970s-1990s",
+        confidence: "low",
+        country: "Japan/Korea",
+        notes: "8-digit serial: No letter prefix — common for late 1970s through early 1990s production. Check neck block for Emperor date code.",
+        isYairi: false,
+        needsEmperorCode: true,
+        prefix: null,
+      };
+    }
+    
     const num = parseInt(cleaned, 10);
     return {
       format: "legacy",
