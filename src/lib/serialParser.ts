@@ -275,29 +275,49 @@ export function parseSerial(serial: string): SerialParseResult {
     };
   }
   
-  // F-prefix: 2000s era, F + 1-3 digit year indicator + sequence
-  // Examples: F204, F305120169
-  const fMatch = cleaned.match(/^F(\d{1,3})(\d*)$/);
+  // F-prefix: Factory serial, F + single year digit + MMDD + sequence
+  // Verified from registry: F204200270 (RD8, ~2002), F305120169 (unknown, ~2003), 
+  // F706110509 (MD60, 2007), F810302775 (RF8, ~2008)
+  // Format: F[Y][MM][DD][XXXX] where Y=last digit of year (2000s decade)
+  const fMatch = cleaned.match(/^F(\d)(\d{2})(\d{2})(\d+)$/);
   if (fMatch) {
-    const [, yearIndicator] = fMatch;
-    let estimatedYear: number | null = null;
-    let yearRange = "Early-mid 2000s";
+    const [, yearDigit, monthDigits, , sequence] = fMatch;
+    const yearNum = parseInt(yearDigit, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
     
-    // F2xx or F3xx patterns seem to indicate early-mid 2000s
-    const firstDigit = parseInt(yearIndicator[0], 10);
-    if (firstDigit === 2 || firstDigit === 3) {
-      estimatedYear = 2000 + firstDigit;
-      yearRange = `${2002}-${2008}`;
-    }
+    // Year digit maps to 2000s decade (0-9 → 2000-2009)
+    const estimatedYear = 2000 + yearNum;
+    
+    const monthNote = validMonth 
+      ? `${getMonthName(validMonth)} ${estimatedYear}, unit #${sequence}`
+      : `${estimatedYear}, sequence #${monthDigits}${sequence}`;
     
     return {
       format: "modern",
       estimatedYear,
-      estimatedMonth: null,
-      yearRange,
+      estimatedMonth: validMonth,
+      yearRange: `${estimatedYear}`,
       confidence: "medium",
       country: "China/Korea",
-      notes: "F-prefix serial: Early-mid 2000s production",
+      notes: `F-prefix serial: Factory production, ${monthNote}. Common on Regent and budget models.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "F",
+    };
+  }
+  
+  // F-prefix short format (e.g., F004020153) — leading zero year
+  const fShortMatch = cleaned.match(/^F(\d+)$/);
+  if (fShortMatch && cleaned.length >= 4) {
+    return {
+      format: "modern",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: "2000s",
+      confidence: "low",
+      country: "China/Korea",
+      notes: "F-prefix serial: Factory production, 2000s era. Common on Regent and budget models.",
       isYairi: false,
       needsEmperorCode: false,
       prefix: "F",
