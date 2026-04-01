@@ -325,6 +325,49 @@ export function parseSerial(serial: string): SerialParseResult {
     };
   }
   
+  // FC-prefix: Fusion/discontinued models (newly documented April 2026)
+  // Examples: FC090302 (FDT243CCSBU), FC070900233 (FD60CSBU)
+  const fcMatch = cleaned.match(/^FC(\d{2})(\d*)$/);
+  if (fcMatch) {
+    const [, yearIndicator] = fcMatch;
+    const yearNum = parseInt(yearIndicator, 10);
+    let estimatedYear: number | null = null;
+    if (yearNum >= 0 && yearNum <= 25) {
+      estimatedYear = 2000 + yearNum;
+    }
+    
+    return {
+      format: "modern",
+      estimatedYear,
+      estimatedMonth: null,
+      yearRange: estimatedYear ? `~${estimatedYear}` : "2000s-2010s",
+      confidence: "low",
+      country: "Unknown",
+      notes: `FC-prefix serial: Likely discontinued Fusion/specialty model.${estimatedYear ? ` Estimated ~${estimatedYear} based on prefix digits.` : ''} Limited data available for this prefix.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "FC",
+    };
+  }
+  
+  // G-prefix: Rare/undocumented prefix (newly documented April 2026)
+  // Example: G0020838 (RD20CU)
+  const gMatch = cleaned.match(/^G(\d{2})(\d*)$/);
+  if (gMatch) {
+    return {
+      format: "modern",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: "1990s-2000s",
+      confidence: "low",
+      country: "Unknown",
+      notes: "G-prefix serial: Rare prefix with limited documentation. Era and country of manufacture uncertain.",
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "G",
+    };
+  }
+  
   // A-prefix: Vintage models
   // Example: A82246 (5054)
   const aMatch = cleaned.match(/^A(\d+)$/);
