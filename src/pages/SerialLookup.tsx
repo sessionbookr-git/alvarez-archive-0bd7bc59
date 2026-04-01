@@ -27,8 +27,13 @@ const SerialLookup = () => {
   const [serial, setSerial] = useState(initialSerial);
   const [neckBlock, setNeckBlock] = useState("");
   const [showEmperorChart, setShowEmperorChart] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [showCorrectionForm, setShowCorrectionForm] = useState(false);
+  const [correctionNotes, setCorrectionNotes] = useState("");
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
   
   const { lookup, loading, error, result, reset } = useSerialLookup();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (initialSerial) {
