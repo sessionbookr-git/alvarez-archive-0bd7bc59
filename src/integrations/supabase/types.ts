@@ -516,6 +516,45 @@ export type Database = {
         }
         Relationships: []
       }
+      serial_feedback: {
+        Row: {
+          correction_notes: string | null
+          created_at: string
+          id: string
+          is_match: boolean
+          neck_block: string | null
+          parsed_country: string | null
+          parsed_format: string | null
+          parsed_year: number | null
+          serial_number: string
+          user_id: string | null
+        }
+        Insert: {
+          correction_notes?: string | null
+          created_at?: string
+          id?: string
+          is_match: boolean
+          neck_block?: string | null
+          parsed_country?: string | null
+          parsed_format?: string | null
+          parsed_year?: number | null
+          serial_number: string
+          user_id?: string | null
+        }
+        Update: {
+          correction_notes?: string | null
+          created_at?: string
+          id?: string
+          is_match?: boolean
+          neck_block?: string | null
+          parsed_country?: string | null
+          parsed_format?: string | null
+          parsed_year?: number | null
+          serial_number?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       serial_patterns: {
         Row: {
           confidence_notes: string | null
