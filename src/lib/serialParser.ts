@@ -491,50 +491,91 @@ export function parseSerial(serial: string): SerialParseResult {
 export function parseNeckBlock(neckBlock: string): { year: number | null; possibleYears?: number[]; notes: string } {
   const cleaned = neckBlock.trim();
   
-  // Handle 2-digit codes with leading zeros (e.g., "07" vs "7")
-  const num = parseInt(cleaned, 10);
+  // Tokenize: extract all numeric and alpha tokens from multi-part stamps
+  // Handles: "0111 439", "9708439", "S 802075", "56", "07"
+  const tokens = cleaned.toUpperCase().match(/[A-Z]+|\d+/g) ?? [];
+  const numericTokens = tokens.filter(t => /^\d+$/.test(t));
   
-  if (isNaN(num)) {
-    return { year: null, notes: "Invalid neck block number format." };
+  // If no numeric tokens at all, invalid
+  if (numericTokens.length === 0) {
+    return { year: null, notes: "No numeric data found in neck block stamp." };
   }
   
+  // Strategy: try the first short numeric token (1-2 digits) as an Emperor code
+  // For stamps like "0111 439" → tokens ["0111", "439"], try first 2 digits of "0111" = "01"
+  // For stamps like "56" → tokens ["56"], direct Emperor lookup
+  // For stamps like "S 802075" → tokens ["S", "802075"], try first 2 digits = "80"
+  
+  let candidateCode: number | null = null;
+  
+  // First pass: look for a standalone 1-2 digit token (classic Emperor code)
+  for (const token of numericTokens) {
+    if (token.length <= 2) {
+      candidateCode = parseInt(token, 10);
+      break;
+    }
+  }
+  
+  // Second pass: if no short token, try first 2 digits of the first numeric token
+  // e.g., "0111" → 01, "9708439" → 97
+  if (candidateCode === null && numericTokens.length > 0) {
+    const first2 = numericTokens[0].substring(0, 2);
+    candidateCode = parseInt(first2, 10);
+  }
+  
+  if (candidateCode === null || isNaN(candidateCode)) {
+    return { year: null, notes: "Could not extract date code from neck block stamp." };
+  }
+  
+  const stampInfo = numericTokens.length > 1 
+    ? ` (from stamp "${cleaned}", additional numbers: ${numericTokens.slice(1).join(', ')})` 
+    : '';
+  
   // Check Showa era first (45-63 = 1970-1988) - unambiguous
-  if (num >= 45 && num <= 63) {
-    const emperorYear = EMPEROR_CODE[num];
+  if (candidateCode >= 45 && candidateCode <= 63) {
+    const emperorYear = EMPEROR_CODE[candidateCode];
     return { 
       year: emperorYear, 
-      notes: `Showa era code ${num} = ${emperorYear}` 
+      notes: `Showa era code ${candidateCode} = ${emperorYear}${stampInfo}` 
     };
   }
   
   // Ambiguous range: 1-12 could be Heisei (1989-2000) OR post-2000 (2001-2012)
-  if (num >= 1 && num <= 12) {
-    const heiseiYear = EMPEROR_CODE[num]; // 1989-2000
-    const modernYear = 2000 + num; // 2001-2012
+  if (candidateCode >= 1 && candidateCode <= 12) {
+    const heiseiYear = EMPEROR_CODE[candidateCode]; // 1989-2000
+    const modernYear = 2000 + candidateCode; // 2001-2012
     return { 
       year: null,
       possibleYears: [heiseiYear, modernYear],
-      notes: `Ambiguous code ${num}: Could be ${heiseiYear} (Heisei era) or ${modernYear} (post-2000). Check model production dates and guitar features to determine era.` 
+      notes: `Ambiguous code ${candidateCode}: Could be ${heiseiYear} (Heisei era) or ${modernYear} (post-2000). Check model production dates and guitar features to determine era.${stampInfo}` 
     };
   }
   
-  // Clear post-2000 codes (13-99 = 2013-2099)
-  if (num >= 13 && num <= 99) {
-    const year = 2000 + num;
+  // Clear post-2000 codes (13-44 = 2013-2044)
+  if (candidateCode >= 13 && candidateCode <= 44) {
+    const year = 2000 + candidateCode;
     return { 
       year, 
-      notes: `Post-2000 format: ${year}` 
+      notes: `Post-2000 format: ${year}${stampInfo}` 
     };
   }
   
-  // Six-digit neck block stamps (e.g., 230130 from AC40SC)
-  // May indicate manufacturing date but format varies
-  if (cleaned.length === 6) {
+  // Codes 64-99: Not standard Emperor codes. Could be factory batch numbers.
+  // Try interpreting as post-2000 if reasonable (e.g., 97 → 2097 is unlikely)
+  if (candidateCode >= 64 && candidateCode <= 99) {
     return { 
       year: null, 
-      notes: `6-digit neck block stamp. May contain date information but format varies by factory.` 
+      notes: `Neck block code ${candidateCode} doesn't match known Emperor eras. May be a factory batch number.${stampInfo}` 
     };
   }
   
-  return { year: null, notes: "Neck block number not found in chart. May be from a factory that used different numbering." };
+  // Fallback for multi-digit stamps
+  if (cleaned.length >= 6) {
+    return { 
+      year: null, 
+      notes: `Multi-digit neck block stamp "${cleaned}". May contain date information but format varies by factory.` 
+    };
+  }
+  
+  return { year: null, notes: `Neck block stamp "${cleaned}" not recognized. May be from a factory that used different numbering.` };
 }
