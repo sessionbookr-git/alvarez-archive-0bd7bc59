@@ -78,16 +78,26 @@ interface ModernYairiResult {
   notes: string;
 }
 
-// Verified anchor points from Alvarez serial checker
+// Verified anchor points from Alvarez serial checker + customer registry (April 2026)
+// Sources: official serial checker, verified customer emails, registry CSV (499 data points)
 const YAIRI_ANCHOR_POINTS = [
   { serial: 72000, year: 2015 },
-  { serial: 73000, year: 2018 },
-  { serial: 74000, year: 2020 },
-  { serial: 74968, year: 2021 }, // Verified customer example (WY1TS)
-  { serial: 75000, year: 2021 },
+  { serial: 72149, year: 2015 }, // Verified: DY-70 CE
+  { serial: 72339, year: 2017 }, // Verified: CYM75
+  { serial: 72555, year: 2018 }, // Verified: FYM60HD
+  { serial: 72900, year: 2018 }, // Verified: DYM60HD
+  { serial: 73444, year: 2022 }, // Verified: JYM80CE
+  { serial: 74676, year: 2021 }, // Verified: Yairi FYM70
+  { serial: 74968, year: 2021 }, // Verified: WY1TS
+  { serial: 75552, year: 2022 }, // Verified: FYM66HD (2022 or 2024)
   { serial: 76000, year: 2023 },
-  { serial: 77141, year: 2025 }, // Verified customer example (DYM74-NN)
-  { serial: 77525, year: 2024 }, // Verified customer example (FYM66HD) — note: 77525 shipped 2024 but 77141 confirmed 2025, production batches overlap
+  { serial: 77084, year: 2025 }, // Verified: FYM66HD (recent)
+  { serial: 77141, year: 2025 }, // Verified: DYM74-NN
+  { serial: 77148, year: 2025 }, // Verified: FYM60HD = 2025
+  { serial: 77192, year: 2024 }, // Verified: Yairi PYM60 (brand new 2024)
+  { serial: 77412, year: 2024 }, // Verified: PYM66HD = 2024
+  { serial: 77435, year: 2025 }, // Verified: Masterworks CYM75ce = 2025
+  { serial: 77525, year: 2024 }, // Verified: FYM66HD — production batches overlap
   { serial: 77920, year: 2026 }, // Projected based on ~750/year
 ];
 
