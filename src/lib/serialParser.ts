@@ -1,17 +1,23 @@
 // Alvarez Serial Number Parser
 // Based on official Alvarez customer service documentation
 //
-// SERIAL PREFIX REFERENCE (Updated April 2026):
+// SERIAL PREFIX REFERENCE (Updated April 2026 — 499 registry data points):
 // ┌─────────┬────────────────┬─────────────────────┬────────────┐
 // │ Prefix  │ Era            │ Country             │ Confidence │
 // ├─────────┼────────────────┼─────────────────────┼────────────┤
-// │ E       │ 2010s-present  │ China ✓             │ High       │
+// │ E       │ 2004-present   │ China ✓             │ High       │
 // │ CS      │ 2010s          │ Unknown             │ Medium     │
 // │ CD      │ Mid-2000s      │ Unknown             │ Medium     │
-// │ F       │ 2000s          │ China/Korea         │ Medium     │
+// │ CC      │ 2004-2007+     │ Unknown             │ Medium     │
+// │ CB      │ 2004+          │ Unknown             │ Medium     │
+// │ F       │ 2000-2009      │ China/Korea         │ Medium     │
 // │ FC      │ 2000s-2010s    │ Unknown             │ Low        │
+// │ FS      │ 2012-2013+     │ Unknown             │ Medium     │
 // │ G       │ 1990s-2000s    │ Unknown             │ Low        │
-// │ S       │ 1990s          │ Korea/China         │ Medium     │
+// │ S       │ 1995-2024+     │ Korea/China         │ Medium     │
+// │ SL      │ 1986-1994+     │ Korea ✓             │ Medium     │
+// │ C       │ 2000s          │ Unknown             │ Medium     │
+// │ M       │ 2000s          │ Unknown             │ Low        │
 // │ A       │ 1970s-1980s    │ Japan               │ Low        │
 // └─────────┴────────────────┴─────────────────────┴────────────┘
 //
