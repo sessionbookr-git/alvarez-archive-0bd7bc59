@@ -92,7 +92,7 @@ const YAIRI_ANCHOR_POINTS = [
 function parseModernYairiSerial(serialNum: number): ModernYairiResult {
   // Find surrounding anchors for interpolation
   let lowerAnchor = YAIRI_ANCHOR_POINTS[0];
-  let upperAnchor = YAIRI_ANCHOR_POINTS[YAIRI_ANCHOR_POINTS.length - 1];
+  let upperAnchor: typeof YAIRI_ANCHOR_POINTS[0] | null = null;
   
   // Check for exact match first
   for (const anchor of YAIRI_ANCHOR_POINTS) {
@@ -102,6 +102,8 @@ function parseModernYairiSerial(serialNum: number): ModernYairiResult {
         verifiedNote = 'Verified: Serial 74968 (WY1TS model) = 2021. ';
       } else if (serialNum === 77525) {
         verifiedNote = 'Verified: Serial 77525 (FYM66HD model) = 2024. ';
+      } else if (serialNum === 77141) {
+        verifiedNote = 'Verified: Serial 77141 (DYM74-NN model) = 2025. ';
       }
       
       return {
@@ -120,12 +122,19 @@ function parseModernYairiSerial(serialNum: number): ModernYairiResult {
     }
   }
   
-  // Interpolate year between anchors
-  const serialRange = upperAnchor.serial - lowerAnchor.serial;
-  const yearRange = upperAnchor.year - lowerAnchor.year;
-  const serialOffset = serialNum - lowerAnchor.serial;
-  const yearOffset = (serialOffset / serialRange) * yearRange;
-  const estimatedYear = Math.round(lowerAnchor.year + yearOffset);
+  // If serial is beyond all anchors, clamp to the last anchor's year
+  let estimatedYear: number;
+  if (!upperAnchor) {
+    // Serial is above our highest anchor — use last anchor year (don't extrapolate into NaN)
+    estimatedYear = lowerAnchor.year;
+  } else {
+    // Interpolate year between anchors
+    const serialRange = upperAnchor.serial - lowerAnchor.serial;
+    const yearRange = upperAnchor.year - lowerAnchor.year;
+    const serialOffset = serialNum - lowerAnchor.serial;
+    const yearOffset = serialRange > 0 ? (serialOffset / serialRange) * yearRange : 0;
+    estimatedYear = Math.round(lowerAnchor.year + yearOffset);
+  }
   
   // Determine confidence level based on proximity to any anchor point
   let confidence: "high" | "medium" | "low" = 'medium';
