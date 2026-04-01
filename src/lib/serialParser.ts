@@ -600,6 +600,70 @@ export function parseSerial(serial: string): SerialParseResult {
     };
   }
   
+  // AL-prefix: Mid-1990s production
+  // Verified: ALV83782 (5220 CEQVS, 1996)
+  const alMatch = cleaned.match(/^AL[V]?(\d+)$/);
+  if (alMatch) {
+    return {
+      format: "modern",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: "1990s",
+      confidence: "low",
+      country: "Korea",
+      notes: "AL-prefix serial: Mid-1990s Korean production. Common on 5000-series models.",
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "AL",
+    };
+  }
+  
+  // D-prefix: 2000s production
+  // Verified: D307070205 (MD90, ~2003, estimated from heel number)
+  const dMatch = cleaned.match(/^D(\d{2})(\d{2})(\d+)$/);
+  if (dMatch) {
+    const [, yearDigits, monthDigits, sequence] = dMatch;
+    const yearNum = parseInt(yearDigits, 10);
+    const monthNum = parseInt(monthDigits, 10);
+    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    
+    let estimatedYear: number | null = null;
+    if (yearNum >= 0 && yearNum <= 25) {
+      estimatedYear = 2000 + yearNum;
+    }
+    
+    return {
+      format: "modern",
+      estimatedYear,
+      estimatedMonth: validMonth,
+      yearRange: estimatedYear ? `${estimatedYear}` : "2000s",
+      confidence: estimatedYear ? "medium" : "low",
+      country: "Unknown",
+      notes: `D-prefix serial: ${estimatedYear && validMonth ? `${getMonthName(validMonth)} ${estimatedYear}` : estimatedYear ? `${estimatedYear}` : '2000s era'}, unit #${sequence}. Limited data for this prefix.`,
+      isYairi: false,
+      needsEmperorCode: false,
+      prefix: "D",
+    };
+  }
+  
+  // HG-prefix: S.Yairi (Sadao Yairi) instruments
+  // Verified: HG80 24613 (HG80 S.Yairi, 1981)
+  const hgMatch = cleaned.match(/^HG\s*(\d+)\s*(\d*)$/);
+  if (hgMatch) {
+    return {
+      format: "legacy",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: "1970s-1980s",
+      confidence: "low",
+      country: "Japan",
+      notes: "HG-prefix serial: S.Yairi (Sadao Yairi) instrument. Different from K.Yairi (Alvarez-Yairi). Check neck block for Emperor date code.",
+      isYairi: false,
+      needsEmperorCode: true,
+      prefix: "HG",
+    };
+  }
+  
   // Nine-digit format: YYMMXXXXX
   // Example: 081201626 = 08 (2008), 12 (December), 01626 (unit)
   const nineDigitMatch = cleaned.match(/^(\d{2})(\d{2})(\d{5})$/);
