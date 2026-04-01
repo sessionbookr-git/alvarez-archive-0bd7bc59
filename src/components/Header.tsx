@@ -15,6 +15,7 @@ const Header = () => {
     ? [
         { to: "/encyclopedia", label: "Encyclopedia" },
         { to: "/community", label: "Community" },
+        { to: "/lookup", label: "Serial Checker" },
         { to: "/submit", label: "Submit" },
       ]
     : [
