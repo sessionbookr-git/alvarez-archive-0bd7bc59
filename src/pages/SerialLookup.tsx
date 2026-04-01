@@ -43,7 +43,37 @@ const SerialLookup = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedbackSubmitted(false);
+    setShowCorrectionForm(false);
+    setCorrectionNotes("");
     lookup(serial, neckBlock);
+  };
+
+  const submitFeedback = async (isMatch: boolean) => {
+    if (!user || !result) return;
+    setSubmittingFeedback(true);
+    try {
+      const { error: fbError } = await supabase
+        .from("serial_feedback" as any)
+        .insert({
+          serial_number: serial,
+          neck_block: neckBlock || null,
+          is_match: isMatch,
+          correction_notes: isMatch ? null : correctionNotes || null,
+          parsed_year: result.estimatedYear,
+          parsed_country: result.country,
+          parsed_format: result.serialFormat,
+          user_id: user.id,
+        } as any);
+      if (fbError) throw fbError;
+      setFeedbackSubmitted(true);
+      toast.success(isMatch ? "Thanks! Your confirmation helps improve accuracy." : "Thanks for the correction — we'll review it.");
+    } catch (err) {
+      console.error("Feedback error:", err);
+      toast.error("Failed to submit feedback. Please try again.");
+    } finally {
+      setSubmittingFeedback(false);
+    }
   };
 
   return (
