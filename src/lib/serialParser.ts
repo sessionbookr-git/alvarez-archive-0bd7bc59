@@ -511,28 +511,32 @@ export function parseSerial(serial: string): SerialParseResult {
     };
   }
   
-  // M-prefix: Various factories
+  // M-prefix: Pre-2010 era, various factories
   // Verified: M00060881 (RD-305C, 2000), m21120466 (AD-60SC, 2004 or earlier)
+  // The digit pattern does NOT reliably follow YYMM — only trust year digits 00-09.
+  // By ~2010 the E-prefix had taken over; M-prefix guitars predate that transition.
   const mMatch = cleaned.match(/^M(\d{2})(\d{2})(\d+)$/);
   if (mMatch) {
     const [, yearDigits, monthDigits, sequence] = mMatch;
     const yearNum = parseInt(yearDigits, 10);
     const monthNum = parseInt(monthDigits, 10);
-    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
     
+    // Only trust YYMM decode for 00-09 (2000-2009); anything else is unreliable
     let estimatedYear: number | null = null;
-    if (yearNum >= 0 && yearNum <= 25) {
+    let validMonth: number | null = null;
+    if (yearNum >= 0 && yearNum <= 9) {
       estimatedYear = 2000 + yearNum;
+      validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
     }
     
     return {
       format: "modern",
       estimatedYear,
       estimatedMonth: validMonth,
-      yearRange: estimatedYear ? `${estimatedYear}` : "2000s",
+      yearRange: estimatedYear ? `${estimatedYear}` : "Late 1990s–2000s",
       confidence: "low",
       country: "Unknown",
-      notes: `M-prefix serial: ${estimatedYear ? `Possibly ${estimatedYear}` : '2000s era'}, unit #${sequence}. Limited data for this prefix.`,
+      notes: `M-prefix serial: ${estimatedYear ? `Possibly ${estimatedYear}` : 'Pre-2010 era (digit pattern not reliably decoded)'}, unit #${sequence}. M-prefix was replaced by E-prefix around 2010.`,
       isYairi: false,
       needsEmperorCode: false,
       prefix: "M",
