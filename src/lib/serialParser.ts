@@ -224,29 +224,49 @@ export function parseSerial(serial: string): SerialParseResult {
     };
   }
   
-  // CS-prefix: 2010s production (NOT China - E-prefix is China)
+  // CS-prefix: Pre-2010 production (E-prefix replaced CS after ~2010)
   // CS + 2-digit year + 2-digit month + sequence
-  // Example: CS12071753 = 2012, July, unit 1753 (verified: RD16CE model)
+  // Only trust YYMM decode for 00-09 (2000-2009); digits suggesting 2010+ are unreliable
+  // since E-prefix was the standard by then
   // Country of origin uncertain - pattern-based dating only
   const csMatch = cleaned.match(/^CS(\d{2})(\d{2})(\d+)$/);
   if (csMatch) {
     const [, yearDigits, monthDigits, sequence] = csMatch;
-    const year = 2000 + parseInt(yearDigits, 10);
-    const monthNum = parseInt(monthDigits, 10);
-    const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+    const yearNum = parseInt(yearDigits, 10);
     
-    const monthNote = validMonth 
-      ? `${getMonthName(validMonth)} ${year}, unit #${sequence}`
-      : `${year}, unit #${monthDigits}${sequence}`;
+    // Only trust YYMM decode for 2000-2009; CS was replaced by E around 2010
+    if (yearNum >= 0 && yearNum <= 9) {
+      const year = 2000 + yearNum;
+      const monthNum = parseInt(monthDigits, 10);
+      const validMonth = monthNum >= 1 && monthNum <= 12 ? monthNum : null;
+      
+      const monthNote = validMonth 
+        ? `${getMonthName(validMonth)} ${year}, unit #${sequence}`
+        : `${year}, unit #${monthDigits}${sequence}`;
+      
+      return {
+        format: "modern",
+        estimatedYear: year,
+        estimatedMonth: validMonth,
+        yearRange: `${year}`,
+        confidence: "medium",
+        country: "Unknown",
+        notes: `CS-prefix serial: ${monthNote}. Country of manufacture not confirmed for this prefix.`,
+        isYairi: false,
+        needsEmperorCode: false,
+        prefix: "CS",
+      };
+    }
     
+    // Year digits suggest 2010+ but CS wasn't used then — treat as pre-2010 era
     return {
       format: "modern",
-      estimatedYear: year,
-      estimatedMonth: validMonth,
-      yearRange: `${year}`,
-      confidence: "medium",
+      estimatedYear: null,
+      estimatedMonth: null,
+      yearRange: "2000s (pre-2010)",
+      confidence: "low",
       country: "Unknown",
-      notes: `CS-prefix serial: 2010s production, ${monthNote}. Country of manufacture not confirmed for this prefix.`,
+      notes: `CS-prefix serial: Digit pattern "${yearDigits}" doesn't map to a reliable year. CS prefix was used pre-2010; E-prefix replaced it for later production.`,
       isYairi: false,
       needsEmperorCode: false,
       prefix: "CS",
