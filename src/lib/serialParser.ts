@@ -6,7 +6,7 @@
 // │ Prefix  │ Era            │ Country             │ Confidence │
 // ├─────────┼────────────────┼─────────────────────┼────────────┤
 // │ E       │ 2004-present   │ China ✓             │ High       │
-// │ CS      │ 2010s          │ Unknown             │ Medium     │
+// │ CS      │ Pre-2010       │ Unknown             │ Medium     │
 // │ CD      │ Mid-2000s      │ Unknown             │ Medium     │
 // │ CC      │ 2004-2007+     │ Unknown             │ Medium     │
 // │ CB      │ 2004+          │ Unknown             │ Medium     │
