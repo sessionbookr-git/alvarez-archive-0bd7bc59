@@ -93,7 +93,7 @@ const Footer = () => {
 
         <div className="mt-6">
           <p className="text-xs text-muted-foreground text-center">
-            © {new Date().getFullYear()} Alvarez Legacy Archive. An official Alvarez Guitars community project in partnership with St. Louis Music.
+            © {new Date().getFullYear()} Alvarez Legacy Archive. An Alvarez Guitars community project.
           </p>
         </div>
       </div>
