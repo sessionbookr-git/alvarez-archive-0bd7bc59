@@ -14,6 +14,7 @@ import { toast } from "sonner";
 const AdminAccessRequests = () => {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<string>("pending");
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["access-requests", filter],
