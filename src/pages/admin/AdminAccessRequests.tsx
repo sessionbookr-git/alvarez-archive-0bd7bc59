@@ -7,12 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CheckCircle2, XCircle, Clock, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminAccessRequests = () => {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<string>("pending");
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ["access-requests", filter],
@@ -158,7 +160,11 @@ const AdminAccessRequests = () => {
                   </TableRow>
                 ) : (
                   requests?.map((req) => (
-                    <TableRow key={req.id}>
+                    <TableRow
+                      key={req.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setSelectedRequest(req)}
+                    >
                       <TableCell className="font-medium">{req.name}</TableCell>
                       <TableCell className="font-mono text-sm">{req.email}</TableCell>
                       <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
@@ -168,7 +174,7 @@ const AdminAccessRequests = () => {
                         {new Date(req.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>{statusBadge(req.status)}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         {req.status === "pending" && (
                           <div className="flex gap-1 justify-end">
                             <Button
@@ -198,6 +204,63 @@ const AdminAccessRequests = () => {
           </CardContent>
         </Card>
       </main>
+
+      <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Access Request</DialogTitle>
+            <DialogDescription>
+              Submitted {selectedRequest && new Date(selectedRequest.created_at).toLocaleString()}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs uppercase text-muted-foreground mb-1">Name</p>
+                <p className="font-medium">{selectedRequest.name}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-muted-foreground mb-1">Email</p>
+                <p className="font-mono text-sm">{selectedRequest.email}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-muted-foreground mb-1">Status</p>
+                <div>{statusBadge(selectedRequest.status)}</div>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-muted-foreground mb-1">Message / What they're offering</p>
+                <p className="whitespace-pre-wrap text-sm bg-muted/50 rounded-md p-3 border">
+                  {selectedRequest.message || "No message provided"}
+                </p>
+              </div>
+            </div>
+          )}
+          {selectedRequest?.status === "pending" && (
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                className="text-red-700 border-red-500/50 hover:bg-red-500/10"
+                onClick={() => {
+                  updateStatus.mutate({ id: selectedRequest.id, status: "rejected" });
+                  setSelectedRequest(null);
+                }}
+              >
+                Reject
+              </Button>
+              <Button
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  updateStatus.mutate({ id: selectedRequest.id, status: "approved" });
+                  setSelectedRequest(null);
+                }}
+              >
+                Approve
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );
