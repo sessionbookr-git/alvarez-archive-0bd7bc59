@@ -54,7 +54,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/lookup" element={<BetaRoute><SerialLookup /></BetaRoute>} />
+            <Route path="/lookup" element={<AdminRoute><SerialLookup /></AdminRoute>} />
             <Route path="/encyclopedia" element={<BetaRoute><Encyclopedia /></BetaRoute>} />
             <Route path="/encyclopedia/:modelId" element={<BetaRoute><ModelDetail /></BetaRoute>} />
             <Route path="/identify" element={<BetaRoute><Identify /></BetaRoute>} />
