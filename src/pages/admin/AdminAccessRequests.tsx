@@ -160,7 +160,11 @@ const AdminAccessRequests = () => {
                   </TableRow>
                 ) : (
                   requests?.map((req) => (
-                    <TableRow key={req.id}>
+                    <TableRow
+                      key={req.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setSelectedRequest(req)}
+                    >
                       <TableCell className="font-medium">{req.name}</TableCell>
                       <TableCell className="font-mono text-sm">{req.email}</TableCell>
                       <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
@@ -170,7 +174,7 @@ const AdminAccessRequests = () => {
                         {new Date(req.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>{statusBadge(req.status)}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         {req.status === "pending" && (
                           <div className="flex gap-1 justify-end">
                             <Button
