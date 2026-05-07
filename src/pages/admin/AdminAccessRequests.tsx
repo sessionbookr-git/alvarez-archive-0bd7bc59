@@ -204,6 +204,63 @@ const AdminAccessRequests = () => {
           </CardContent>
         </Card>
       </main>
+
+      <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Access Request</DialogTitle>
+            <DialogDescription>
+              Submitted {selectedRequest && new Date(selectedRequest.created_at).toLocaleString()}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs uppercase text-muted-foreground mb-1">Name</p>
+                <p className="font-medium">{selectedRequest.name}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-muted-foreground mb-1">Email</p>
+                <p className="font-mono text-sm">{selectedRequest.email}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-muted-foreground mb-1">Status</p>
+                <div>{statusBadge(selectedRequest.status)}</div>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-muted-foreground mb-1">Message / What they're offering</p>
+                <p className="whitespace-pre-wrap text-sm bg-muted/50 rounded-md p-3 border">
+                  {selectedRequest.message || "No message provided"}
+                </p>
+              </div>
+            </div>
+          )}
+          {selectedRequest?.status === "pending" && (
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                className="text-red-700 border-red-500/50 hover:bg-red-500/10"
+                onClick={() => {
+                  updateStatus.mutate({ id: selectedRequest.id, status: "rejected" });
+                  setSelectedRequest(null);
+                }}
+              >
+                Reject
+              </Button>
+              <Button
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  updateStatus.mutate({ id: selectedRequest.id, status: "approved" });
+                  setSelectedRequest(null);
+                }}
+              >
+                Approve
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );
