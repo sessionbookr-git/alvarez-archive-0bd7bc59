@@ -15,7 +15,6 @@ const Header = () => {
     ? [
         { to: "/encyclopedia", label: "Encyclopedia" },
         { to: "/community", label: "Community" },
-        { to: "/lookup", label: "Serial Checker" },
         { to: "/submit", label: "Submit" },
       ]
     : [
@@ -25,6 +24,7 @@ const Header = () => {
   // Expert tools only shown to admins
   const expertLinks = isAdmin
     ? [
+        { to: "/lookup", label: "Serial Checker" },
         { to: "/identify", label: "Identify" },
       ]
     : [];
