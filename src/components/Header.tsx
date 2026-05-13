@@ -22,11 +22,7 @@ const Header = () => {
       ];
 
   // Expert tools only shown to admins
-  const expertLinks = isAdmin
-    ? [
-        { to: "/identify", label: "Identify" },
-      ]
-    : [];
+  const expertLinks: { to: string; label: string }[] = [];
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
