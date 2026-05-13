@@ -19,6 +19,7 @@ const Header = () => {
       ]
     : [
         { to: "/request-access", label: "Request Access" },
+        { to: "/auth", label: "Sign In" },
       ];
 
   // Expert tools only shown to admins
